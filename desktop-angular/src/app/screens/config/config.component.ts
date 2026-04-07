@@ -72,6 +72,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <th>Name</th>
                     <th>Skills Path</th>
                     <th>Commands Path</th>
+                    <th>Scripts Path</th>
                     <th>Agents Path</th>
                     <th>Global Path</th>
                     <th class="actions-col">Actions</th>
@@ -90,6 +91,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     </td>
                     <td>{{ target.skillsPath }}</td>
                     <td>{{ target.commandsPath }}</td>
+                    <td>{{ target.scriptsPath }}</td>
                     <td>{{ target.agentsPath }}</td>
                     <td>{{ target.globalPath }}</td>
                     <td class="actions-col" (click)="$event.stopPropagation()">
@@ -132,6 +134,12 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <mat-form-field class="full-width" appearance="outline">
                   <mat-label>Commands Path</mat-label>
                   <input matInput [(ngModel)]="targetForm.commandsPath" placeholder="e.g., .opencode/commands">
+                  <mat-icon matPrefix>folder</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>Scripts Path</mat-label>
+                  <input matInput [(ngModel)]="targetForm.scriptsPath" placeholder="e.g., .opencode/scripts">
                   <mat-icon matPrefix>folder</mat-icon>
                 </mat-form-field>
 
@@ -566,12 +574,14 @@ export class ConfigComponent implements OnInit {
     name: string;
     skillsPath: string;
     commandsPath: string;
+    scriptsPath: string;
     globalPath: string;
     agentsPath: string;
   } = {
     name: '',
     skillsPath: '',
     commandsPath: '',
+    scriptsPath: '',
     globalPath: '',
     agentsPath: ''
   };
@@ -611,6 +621,7 @@ export class ConfigComponent implements OnInit {
       name: 'opencode',
       skillsPath: '.opencode\\skills',
       commandsPath: '.opencode\\commands',
+      scriptsPath: '.opencode\\scripts',
       agentsPath: '.opencode\\agents',
       globalPath: '.config\\opencode'
     };
@@ -640,6 +651,7 @@ export class ConfigComponent implements OnInit {
       name: target.name,
       skillsPath: target.skillsPath || '',
       commandsPath: target.commandsPath || '',
+      scriptsPath: target.scriptsPath || '',
       globalPath: target.globalPath || '',
       agentsPath: target.agentsPath || ''
     };
@@ -653,6 +665,7 @@ export class ConfigComponent implements OnInit {
       name: '',
       skillsPath: '',
       commandsPath: '',
+      scriptsPath: '',
       globalPath: '',
       agentsPath: ''
     };
@@ -665,6 +678,7 @@ export class ConfigComponent implements OnInit {
       name: '',
       skillsPath: '',
       commandsPath: '',
+      scriptsPath: '',
       globalPath: '',
       agentsPath: ''
     };
@@ -713,6 +727,7 @@ export class ConfigComponent implements OnInit {
       name: this.targetForm.name,
       skillsPath: this.targetForm.skillsPath,
       commandsPath: this.targetForm.commandsPath,
+      scriptsPath: this.targetForm.scriptsPath,
       globalPath: this.targetForm.globalPath,
       agentsPath: this.targetForm.agentsPath
     };

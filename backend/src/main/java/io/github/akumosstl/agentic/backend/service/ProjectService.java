@@ -4,11 +4,13 @@ import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Skill;
 import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Target;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.SkillRepository;
 import io.github.akumosstl.agentic.backend.repository.CommandRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
+import io.github.akumosstl.agentic.backend.repository.AgentRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,9 @@ public class ProjectService {
     
     @Autowired
     private ScriptRepository scriptRepository;
+    
+    @Autowired
+    private AgentRepository agentRepository;
     
     @Autowired
     private TargetRepository targetRepository;
@@ -90,6 +95,7 @@ public class ProjectService {
         return projectRepository.save(project);
     }
     
+    @Transactional
     public void deleteProject(Long id) {
         projectRepository.deleteById(id);
     }
@@ -222,6 +228,14 @@ public class ProjectService {
                 String fileName = skillName + ".md";
                 Path filePath = skillPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
+
+                File skillDir = skillPathObj.toFile();
+                if (skillDir.exists() && skillDir.isDirectory()) {
+                    File[] files = skillDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(skillDir.toPath());
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to delete skill file: " + e.getMessage(), e);
             }
@@ -332,6 +346,14 @@ public class ProjectService {
                 String fileName = commandName + ".md";
                 Path filePath = commandPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
+
+                File commandDir = commandPathObj.toFile();
+                if (commandDir.exists() && commandDir.isDirectory()) {
+                    File[] files = commandDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(commandDir.toPath());
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to delete command file: " + e.getMessage(), e);
             }
@@ -351,11 +373,54 @@ public class ProjectService {
     @Transactional
     public Project addScriptsToProject(Long projectId, List<Long> scriptIds) {
         Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetScriptsPath = "scripts";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getScriptsPath() != null && !target.getScriptsPath().isEmpty()) {
+            targetScriptsPath = target.getScriptsPath();
+        }
+        
         for (Long scriptId : scriptIds) {
             Script script = scriptRepository.findById(scriptId)
                     .orElseThrow(() -> new RuntimeException("Script not found: " + scriptId));
-            if (!project.getScripts().contains(script)) {
-                project.addScript(script);
+            
+            String fullPath = project.getPath() + File.separator + targetScriptsPath;
+            if (script.getPath() != null && !script.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + script.getPath();
+            }
+            
+            Path scriptPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(scriptPathObj);
+                String scriptName = script.getName();
+                if (scriptName.toLowerCase().endsWith(".sh") || scriptName.toLowerCase().endsWith(".ps1")) {
+                    // keep extension
+                } else {
+                    scriptName = scriptName + ".sh";
+                }
+                Path filePath = scriptPathObj.resolve(scriptName);
+                Files.deleteIfExists(filePath);
+                String content = script.getContent() != null ? script.getContent() : "";
+                Files.write(filePath, content.getBytes());
+                
+                if (!project.getScripts().contains(script)) {
+                    project.addScript(script);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create script file: " + e.getMessage(), e);
             }
         }
         return projectRepository.save(project);
@@ -364,7 +429,141 @@ public class ProjectService {
     @Transactional
     public Project removeScriptFromProject(Long projectId, Long scriptId) {
         Project project = getProjectById(projectId);
+        
+        Script scriptToRemove = project.getScripts().stream()
+                .filter(script -> script.getId().equals(scriptId))
+                .findFirst()
+                .orElse(null);
+        
+        if (scriptToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetScriptsPath = "scripts";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getScriptsPath() != null && !target.getScriptsPath().isEmpty()) {
+                targetScriptsPath = target.getScriptsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetScriptsPath;
+            if (scriptToRemove.getPath() != null && !scriptToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + scriptToRemove.getPath();
+            }
+            
+            Path scriptPathObj = Paths.get(fullPath);
+            try {
+                String scriptName = scriptToRemove.getName();
+                if (scriptName.toLowerCase().endsWith(".sh") || scriptName.toLowerCase().endsWith(".ps1")) {
+                    // keep extension
+                } else {
+                    scriptName = scriptName + ".sh";
+                }
+                Path filePath = scriptPathObj.resolve(scriptName);
+                Files.deleteIfExists(filePath);
+                
+                File scriptDir = scriptPathObj.toFile();
+                if (scriptDir.exists() && scriptDir.isDirectory()) {
+                    File[] files = scriptDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(scriptDir.toPath());
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete script file: " + e.getMessage(), e);
+            }
+        }
+        
         project.getScripts().removeIf(script -> script.getId().equals(scriptId));
+        return projectRepository.save(project);
+    }
+    
+    // Agents management
+    @Transactional(readOnly = true)
+    public List<Agent> getProjectAgents(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getAgents();
+    }
+    
+    @Transactional
+    public Project addAgentsToProject(Long projectId, List<Long> agentIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetAgentsPath = "agents";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getAgentsPath() != null && !target.getAgentsPath().isEmpty()) {
+            targetAgentsPath = target.getAgentsPath();
+        }
+        
+        for (Long agentId : agentIds) {
+            Agent agent = agentRepository.findById(agentId)
+                    .orElseThrow(() -> new RuntimeException("Agent not found: " + agentId));
+            
+            String fullPath = project.getPath() + File.separator + targetAgentsPath;
+            
+            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + agent.getPath();
+            }
+            
+            Path agentPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(agentPathObj);
+                
+                String fileName = agent.getName() + ".md";
+                Path filePath = agentPathObj.resolve(fileName);
+                
+                StringBuilder content = new StringBuilder();
+                content.append("# ").append(agent.getName()).append("\n\n");
+                if (agent.getDescription() != null && !agent.getDescription().isEmpty()) {
+                    content.append(agent.getDescription()).append("\n\n");
+                }
+                if (agent.getPrompt() != null && !agent.getPrompt().isEmpty()) {
+                    content.append("## System Prompt\n\n").append(agent.getPrompt()).append("\n");
+                }
+                
+                Files.write(filePath, content.toString().getBytes());
+                
+                String agentRelativePath;
+                if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                    agentRelativePath = agent.getPath() + File.separator + fileName;
+                } else {
+                    agentRelativePath = targetAgentsPath + File.separator + fileName;
+                }
+                agent.setPath(agentRelativePath);
+                agentRepository.save(agent);
+                
+                if (!project.getAgents().contains(agent)) {
+                    project.addAgent(agent);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create agent file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeAgentFromProject(Long projectId, Long agentId) {
+        Project project = getProjectById(projectId);
+        project.getAgents().removeIf(agent -> agent.getId().equals(agentId));
         return projectRepository.save(project);
     }
 }

@@ -45,7 +45,10 @@ public class AgentController {
     }
     
     @PostMapping
-    public Agent createAgent(@RequestBody Agent agent) {
+    public Agent createAgent(@RequestBody Agent agent, @RequestParam(required = false) Long projectId) {
+        if (projectId != null) {
+            return agentService.createAgent(agent, projectId);
+        }
         return agentService.createAgent(agent);
     }
     

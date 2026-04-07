@@ -4,6 +4,7 @@ import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Skill;
 import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,6 +70,22 @@ public class ProjectController {
     @DeleteMapping("/{projectId}/scripts/{scriptId}")
     public Project removeScriptFromProject(@PathVariable Long projectId, @PathVariable Long scriptId) {
         return projectService.removeScriptFromProject(projectId, scriptId);
+    }
+    
+    // Agents endpoints
+    @GetMapping("/{id}/agents")
+    public List<Agent> getProjectAgents(@PathVariable Long id) {
+        return projectService.getProjectAgents(id);
+    }
+    
+    @PostMapping("/{id}/agents")
+    public Project addAgentsToProject(@PathVariable Long id, @RequestBody List<Long> agentIds) {
+        return projectService.addAgentsToProject(id, agentIds);
+    }
+    
+    @DeleteMapping("/{projectId}/agents/{agentId}")
+    public Project removeAgentFromProject(@PathVariable Long projectId, @PathVariable Long agentId) {
+        return projectService.removeAgentFromProject(projectId, agentId);
     }
     
     @GetMapping

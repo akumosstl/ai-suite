@@ -916,7 +916,7 @@ export class ScriptsComponent implements OnInit {
             this.statusMessage = `Script '${updated.name}' updated successfully`;
             this.selectedScript = { ...updated };
             this.cdr.detectChanges();
-            this.loadScripts();
+            setTimeout(() => this.loadScripts(), 0);
           });
         },
         error: (err) => {
@@ -935,7 +935,7 @@ export class ScriptsComponent implements OnInit {
             this.selectedScript = { ...created };
             this.formScript = { ...created };
             this.cdr.detectChanges();
-            this.loadScripts();
+            setTimeout(() => this.loadScripts(), 0);
           });
         },
         error: (err) => {
@@ -961,7 +961,7 @@ export class ScriptsComponent implements OnInit {
           this.statusMessage = `Script '${name}' deleted successfully`;
           this.selectedScript = null;
           this.cdr.detectChanges();
-          this.loadScripts();
+          setTimeout(() => this.loadScripts(), 0);
         });
       },
       error: (err) => {
@@ -1002,10 +1002,12 @@ export class ScriptsComponent implements OnInit {
                   message: `Script "${scriptName}" excluído com sucesso!`
                 }
               }).afterClosed().subscribe(() => {
-                if (this.selectedScript?.id === scriptId) {
-                  this.selectedScript = null;
-                }
-                this.loadScripts();
+                setTimeout(() => {
+                  if (this.selectedScript?.id === scriptId) {
+                    this.selectedScript = null;
+                  }
+                  this.loadScripts();
+                }, 0);
               });
             });
           },

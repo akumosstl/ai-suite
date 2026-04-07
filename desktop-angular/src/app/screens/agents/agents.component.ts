@@ -172,6 +172,12 @@ import { ProjectContextService } from '../../services/project-context.service';
                 </mat-autocomplete>
                 <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
+              
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>Path</mat-label>
+                <input matInput [(ngModel)]="formAgent.path" placeholder="Enter path">
+                <mat-icon matPrefix>link</mat-icon>
+              </mat-form-field>
             </div>
             
             <mat-form-field class="full-width" appearance="outline">
@@ -777,7 +783,8 @@ export class AgentsComponent implements OnInit {
       category: this.namespaces.length > 0 ? this.namespaces[0] : '',
       description: '',
       prompt: '',
-      scope: 'global'
+      scope: 'global',
+      path: ''
     };
   }
 
@@ -933,7 +940,7 @@ export class AgentsComponent implements OnInit {
             this.statusMessage = `Agent '${updated.name}' updated successfully`;
             this.selectedAgent = { ...updated };
             this.cdr.detectChanges();
-            this.loadAgents();
+            setTimeout(() => this.loadAgents(), 0);
           });
         },
         error: (err) => {
@@ -945,14 +952,15 @@ export class AgentsComponent implements OnInit {
       });
     } else {
       // Create new agent
-      this.apiService.createAgent(this.formAgent).subscribe({
+      const projectId = this.projectContext.getProjectId();
+      this.apiService.createAgent(this.formAgent, projectId || undefined).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
             this.statusMessage = `Agent '${created.name}' created successfully`;
             this.selectedAgent = { ...created };
             this.formAgent = { ...created };
             this.cdr.detectChanges();
-            this.loadAgents();
+            setTimeout(() => this.loadAgents(), 0);
           });
         },
         error: (err) => {
@@ -978,7 +986,7 @@ export class AgentsComponent implements OnInit {
           this.statusMessage = `Agent '${name}' deleted successfully`;
           this.selectedAgent = null;
           this.cdr.detectChanges();
-          this.loadAgents();
+          setTimeout(() => this.loadAgents(), 0);
         });
       },
       error: (err) => {
@@ -1019,10 +1027,12 @@ export class AgentsComponent implements OnInit {
                   message: `Agente "${agentName}" excluído com sucesso!`
                 }
               }).afterClosed().subscribe(() => {
-                if (this.selectedAgent?.id === agentId) {
-                  this.selectedAgent = null;
-                }
-                this.loadAgents();
+                setTimeout(() => {
+                  if (this.selectedAgent?.id === agentId) {
+                    this.selectedAgent = null;
+                  }
+                  this.loadAgents();
+                }, 0);
               });
             });
           },

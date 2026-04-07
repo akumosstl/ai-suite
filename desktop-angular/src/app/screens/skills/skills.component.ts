@@ -1088,10 +1088,10 @@ export class SkillsComponent implements OnInit {
         );
         Promise.all(filePromises).then(() => {
           this.formSkillFiles = [];
-          this.loadSkills();
+          setTimeout(() => this.loadSkills(), 0);
         });
       } else {
-        this.loadSkills();
+        setTimeout(() => this.loadSkills(), 0);
       }
     };
 
@@ -1146,7 +1146,7 @@ export class SkillsComponent implements OnInit {
           this.statusMessage = `Skill '${name}' deleted successfully`;
           this.selectedSkill = null;
           this.cdr.detectChanges();
-          this.loadSkills();
+          setTimeout(() => this.loadSkills(), 0);
         });
       },
       error: (err) => {
@@ -1187,10 +1187,12 @@ export class SkillsComponent implements OnInit {
                   message: `Skill "${skillName}" excluída com sucesso!`
                 }
               }).afterClosed().subscribe(() => {
-                if (this.selectedSkill?.id === skillId) {
-                  this.selectedSkill = null;
-                }
-                this.loadSkills();
+                setTimeout(() => {
+                  if (this.selectedSkill?.id === skillId) {
+                    this.selectedSkill = null;
+                  }
+                  this.loadSkills();
+                }, 0);
               });
             });
           },

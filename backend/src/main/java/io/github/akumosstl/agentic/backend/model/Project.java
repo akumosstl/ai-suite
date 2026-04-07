@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.akumosstl.agentic.backend.model.Agent;
+
 @Entity
 @Table(name = "project")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -67,6 +69,14 @@ public class Project {
         inverseJoinColumns = @JoinColumn(name = "script_id")
     )
     private List<Script> scripts = new ArrayList<>();
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "project_agents",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "agent_id")
+    )
+    private List<Agent> agents = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -129,6 +139,9 @@ public class Project {
     public List<Script> getScripts() { return scripts; }
     public void setScripts(List<Script> scripts) { this.scripts = scripts; }
     
+    public List<Agent> getAgents() { return agents; }
+    public void setAgents(List<Agent> agents) { this.agents = agents; }
+    
     public void addSkill(Skill skill) {
         skills.add(skill);
     }
@@ -151,6 +164,14 @@ public class Project {
     
     public void removeScript(Script script) {
         scripts.remove(script);
+    }
+    
+    public void addAgent(Agent agent) {
+        agents.add(agent);
+    }
+    
+    public void removeAgent(Agent agent) {
+        agents.remove(agent);
     }
     
     public void addPipeline(Pipeline pipeline) {

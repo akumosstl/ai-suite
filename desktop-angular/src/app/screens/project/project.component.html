@@ -64,6 +64,17 @@
         <div class="toolbar">
             <div class="toolbar-section">
                 <div class="button-group">
+                    <button mat-icon-button class="tool-btn" title="Agents" matTooltip="agents"
+                        (click)="openViewAgentsDialog()">
+                        <mat-icon>smart_toy</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" title="Add Agent" matTooltip="Add agent"
+                        (click)="openAddAgentDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
                     <button mat-icon-button class="tool-btn" title="Skills" matTooltip="skills"
                         (click)="openViewSkillsDialog()">
                         <mat-icon>format_list_bulleted</mat-icon>

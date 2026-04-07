@@ -19,6 +19,9 @@ public class Target {
     @Column(name = "commands_path")
     private String commandsPath;
 
+    @Column(name = "scripts_path")
+    private String scriptsPath;
+
     @Column(name = "agents_path")
     private String agentsPath;
 
@@ -28,10 +31,11 @@ public class Target {
     public Target() {
     }
 
-    public Target(String name, String skillsPath, String commandsPath, String agentsPath, String globalPath) {
+    public Target(String name, String skillsPath, String commandsPath, String scriptsPath, String agentsPath, String globalPath) {
         this.name = name;
         this.skillsPath = skillsPath;
         this.commandsPath = commandsPath;
+        this.scriptsPath = scriptsPath;
         this.agentsPath = agentsPath;
         this.globalPath = globalPath;
     }
@@ -66,6 +70,14 @@ public class Target {
 
     public void setCommandsPath(String commandsPath) {
         this.commandsPath = commandsPath;
+    }
+
+    public String getScriptsPath() {
+        return scriptsPath;
+    }
+
+    public void setScriptsPath(String scriptsPath) {
+        this.scriptsPath = scriptsPath;
     }
 
     public String getAgentsPath() {

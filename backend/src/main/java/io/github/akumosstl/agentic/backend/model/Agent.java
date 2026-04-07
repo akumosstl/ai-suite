@@ -26,6 +26,8 @@ public class Agent {
     @Column(nullable = false)
     private String scope; // "global" or "project"
     
+    private String path;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -71,6 +73,9 @@ public class Agent {
     
     public String getScope() { return scope; }
     public void setScope(String scope) { this.scope = scope; }
+    
+    public String getPath() { return path; }
+    public void setPath(String path) { this.path = path; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

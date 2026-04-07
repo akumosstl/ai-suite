@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
 
 @Entity
 @Table(name = "pipeline")
@@ -38,6 +42,16 @@ public class Pipeline {
     
     @Column(name = "type")
     private String type;
+    
+    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("stepOrder ASC")
+    @JsonIgnore
+    private List<PipelineStep> steps = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    @JsonIgnore
+    private List<PipelineRun> pipelineRuns = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -93,4 +107,10 @@ public class Pipeline {
     
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    
+    public List<PipelineRun> getPipelineRuns() { return pipelineRuns; }
+    public void setPipelineRuns(List<PipelineRun> pipelineRuns) { this.pipelineRuns = pipelineRuns; }
+    
+    public List<PipelineStep> getSteps() { return steps; }
+    public void setSteps(List<PipelineStep> steps) { this.steps = steps; }
 }

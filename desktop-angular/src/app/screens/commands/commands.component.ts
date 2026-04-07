@@ -938,7 +938,7 @@ export class CommandsComponent implements OnInit {
             this.statusMessage = `Command '${updated.name}' updated successfully`;
             this.selectedCommand = { ...updated };
             this.cdr.detectChanges();
-            this.loadCommands();
+            setTimeout(() => this.loadCommands(), 0);
           });
         },
         error: (err) => {
@@ -957,7 +957,7 @@ export class CommandsComponent implements OnInit {
             this.selectedCommand = { ...created };
             this.formCommand = { ...created };
             this.cdr.detectChanges();
-            this.loadCommands();
+            setTimeout(() => this.loadCommands(), 0);
           });
         },
         error: (err) => {
@@ -983,7 +983,7 @@ export class CommandsComponent implements OnInit {
           this.statusMessage = `Command '${name}' deleted successfully`;
           this.selectedCommand = null;
           this.cdr.detectChanges();
-          this.loadCommands();
+          setTimeout(() => this.loadCommands(), 0);
         });
       },
       error: (err) => {
@@ -1024,10 +1024,12 @@ export class CommandsComponent implements OnInit {
                   message: `Comando "${commandName}" excluído com sucesso!`
                 }
               }).afterClosed().subscribe(() => {
-                if (this.selectedCommand?.id === commandId) {
-                  this.selectedCommand = null;
-                }
-                this.loadCommands();
+                setTimeout(() => {
+                  if (this.selectedCommand?.id === commandId) {
+                    this.selectedCommand = null;
+                  }
+                  this.loadCommands();
+                }, 0);
               });
             });
           },

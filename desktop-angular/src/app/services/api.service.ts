@@ -84,6 +84,7 @@ export interface Agent {
   description?: string;
   prompt?: string;
   scope: string;
+  path?: string;
 }
 
 export interface Script {
@@ -128,6 +129,7 @@ export interface Target {
   name: string;
   skillsPath?: string;
   commandsPath?: string;
+  scriptsPath?: string;
   agentsPath?: string;
   globalPath?: string;
 }
@@ -295,6 +297,25 @@ export class ApiService {
   removeScriptFromProject(projectId: number, scriptId: number): Observable<Project> {
     return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/scripts/${scriptId}`).pipe(
       catchError(this.handleError('removeScriptFromProject', {} as Project))
+    );
+  }
+
+  // Project Agents
+  getProjectAgents(projectId: number): Observable<Agent[]> {
+    return this.http.get<Agent[]>(`${this.baseUrl}/projects/${projectId}/agents`).pipe(
+      catchError(this.handleError('getProjectAgents', []))
+    );
+  }
+
+  addAgentsToProject(projectId: number, agentIds: number[]): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/agents`, agentIds).pipe(
+      catchError(this.handleError('addAgentsToProject', {} as Project))
+    );
+  }
+
+  removeAgentFromProject(projectId: number, agentId: number): Observable<Project> {
+    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/agents/${agentId}`).pipe(
+      catchError(this.handleError('removeAgentFromProject', {} as Project))
     );
   }
 
@@ -524,8 +545,12 @@ export class ApiService {
     );
   }
 
-  createAgent(agent: Agent): Observable<Agent> {
-    return this.http.post<Agent>(`${this.baseUrl}/agents`, agent).pipe(
+  createAgent(agent: Agent, projectId?: number): Observable<Agent> {
+    let url = `${this.baseUrl}/agents`;
+    if (projectId) {
+      url += `?projectId=${projectId}`;
+    }
+    return this.http.post<Agent>(url, agent).pipe(
       catchError(this.handleError('createAgent', agent))
     );
   }

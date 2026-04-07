@@ -9,10 +9,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService, Agent, Script } from '../../services/api.service';
 
 export interface SelectAgentDialogData {
+  projectId?: number;
+  mode: 'project' | 'pipeline';
 }
 
 export interface SelectedStep {
@@ -34,59 +37,64 @@ export interface SelectedStep {
     MatTableModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
     MatTabsModule
   ],
   template: `
     <div class="dialog-header">
-      <mat-icon class="header-icon">add_task</mat-icon>
-      <h2 class="dialog-title">Add Step to Pipeline</h2>
+      <mat-icon class="header-icon">{{ data.mode === 'pipeline' ? 'playlist_add' : 'smart_toy' }}</mat-icon>
+      <h2 class="dialog-title">{{ data.mode === 'pipeline' ? 'Add Step to Pipeline' : 'Add Agents to Project' }}</h2>
     </div>
     
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="custom-tabs" (selectedTabChange)="onTabChange($event)">
+      <mat-tab-group *ngIf="data.mode === 'pipeline'" [(selectedIndex)]="selectedTab" class="custom-tabs">
         <mat-tab>
           <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">smart_toy</mat-icon>
+            <mat-icon>smart_toy</mat-icon>
             <span>Agents</span>
           </ng-template>
-          
           <div class="tab-content">
             <div class="search-section">
               <mat-form-field class="search-field" appearance="outline">
                 <mat-label>Search agents...</mat-label>
-                <input matInput [(ngModel)]="agentSearchTerm" (keyup.enter)="searchAgents()" placeholder="Type to search...">
+                <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
                 <mat-icon matPrefix>search</mat-icon>
               </mat-form-field>
-              <button mat-stroked-button (click)="searchAgents()" class="search-btn">
+              <button mat-stroked-button (click)="search()" class="search-btn">
                 <mat-icon>search</mat-icon>
                 Search
               </button>
-              <button mat-icon-button (click)="clearAgentSearch()" aria-label="Clear search" class="clear-btn" *ngIf="agentSearchTerm">
+              <button mat-icon-button (click)="clearSearch()" aria-label="Clear search" class="clear-btn" *ngIf="searchTerm">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
-
             <div class="table-container">
-              <div *ngIf="loadingAgents" class="loading-overlay">
+              <div *ngIf="loading" class="loading-overlay">
                 <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
                 <span>Loading agents...</span>
               </div>
-              
-              <div *ngIf="!loadingAgents && agents.length === 0" class="empty-state">
-                <mat-icon class="empty-icon">person_off</mat-icon>
+              <div *ngIf="!loading && agents.length === 0" class="empty-state">
+                <mat-icon class="empty-icon">smart_toy</mat-icon>
                 <span class="empty-text">No agents found</span>
                 <span class="empty-hint">Create a new agent or adjust your search</span>
               </div>
-              
-              <table mat-table [dataSource]="agents" class="agent-table" *ngIf="!loadingAgents && agents.length > 0">
+              <table mat-table [dataSource]="agents" class="agent-table" *ngIf="!loading && agents.length > 0">
+                <ng-container matColumnDef="select">
+                  <th mat-header-cell *matHeaderCellDef>
+                    <mat-checkbox (change)="$event ? toggleAllRows() : null" [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="selection.hasValue() && !isAllSelected()"></mat-checkbox>
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? toggleRow(row) : null" [checked]="selection.isSelected(row)"></mat-checkbox>
+                  </td>
+                </ng-container>
                 <ng-container matColumnDef="name">
                   <th mat-header-cell *matHeaderCellDef>
                     <mat-icon class="column-icon">badge</mat-icon>
                     Agent Name
                   </th>
                   <td mat-cell *matCellDef="let agent">
-                    <div class="item-name">
-                      <mat-icon class="item-icon agent-icon">smart_toy</mat-icon>
+                    <div class="agent-name">
+                      <mat-icon class="agent-icon">smart_toy</mat-icon>
                       {{ agent.name }}
                     </div>
                   </td>
@@ -108,32 +116,17 @@ export interface SelectedStep {
                   <td mat-cell *matCellDef="let agent">{{ agent.scope }}</td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="agent-row"
-                    [class.selected]="row === selectedAgent"
-                    (click)="selectAgent(row)">
-                </tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="agent-row" [class.selected]="selection.isSelected(row)" (click)="toggleRow(row)"></tr>
               </table>
             </div>
-
-            <mat-paginator
-              [length]="totalAgentElements"
-              [pageSize]="agentPageSize"
-              [pageIndex]="agentCurrentPage"
-              [pageSizeOptions]="[5, 10, 25]"
-              (page)="onAgentPageChange($event)"
-              showFirstLastButtons
-              class="custom-paginator">
-            </mat-paginator>
+            <mat-paginator [length]="totalElements" [pageSize]="pageSize" [pageIndex]="currentPage" [pageSizeOptions]="[5, 10, 25]" (page)="onPageChange($event)" showFirstLastButtons class="custom-paginator"></mat-paginator>
           </div>
         </mat-tab>
-        
         <mat-tab>
           <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">code</mat-icon>
+            <mat-icon>code</mat-icon>
             <span>Scripts</span>
           </ng-template>
-          
           <div class="tab-content">
             <div class="search-section">
               <mat-form-field class="search-field" appearance="outline">
@@ -149,69 +142,122 @@ export interface SelectedStep {
                 <mat-icon>close</mat-icon>
               </button>
             </div>
-
             <div class="table-container">
-              <div *ngIf="loadingScripts" class="loading-overlay">
+              <div *ngIf="scriptsLoading" class="loading-overlay">
                 <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
                 <span>Loading scripts...</span>
               </div>
-              
-              <div *ngIf="!loadingScripts && scripts.length === 0" class="empty-state">
-                <mat-icon class="empty-icon">code_off</mat-icon>
+              <div *ngIf="!scriptsLoading && scripts.length === 0" class="empty-state">
+                <mat-icon class="empty-icon">code</mat-icon>
                 <span class="empty-text">No scripts found</span>
                 <span class="empty-hint">Create a new script or adjust your search</span>
               </div>
-              
-              <table mat-table [dataSource]="scripts" class="script-table" *ngIf="!loadingScripts && scripts.length > 0">
+              <table mat-table [dataSource]="scripts" class="agent-table" *ngIf="!scriptsLoading && scripts.length > 0">
+                <ng-container matColumnDef="select">
+                  <th mat-header-cell *matHeaderCellDef>
+                    <mat-checkbox (change)="$event ? toggleAllScriptRows() : null" [checked]="scriptSelection.hasValue() && isAllScriptsSelected()" [indeterminate]="scriptSelection.hasValue() && !isAllScriptsSelected()"></mat-checkbox>
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? toggleScriptRow(row) : null" [checked]="scriptSelection.isSelected(row)"></mat-checkbox>
+                  </td>
+                </ng-container>
                 <ng-container matColumnDef="name">
                   <th mat-header-cell *matHeaderCellDef>
-                    <mat-icon class="column-icon">badge</mat-icon>
+                    <mat-icon class="column-icon">description</mat-icon>
                     Script Name
                   </th>
                   <td mat-cell *matCellDef="let script">
-                    <div class="item-name">
-                      <mat-icon class="item-icon script-icon">code</mat-icon>
+                    <div class="agent-name">
+                      <mat-icon class="agent-icon">code</mat-icon>
                       {{ script.name }}
                     </div>
                   </td>
                 </ng-container>
-                <ng-container matColumnDef="category">
+                <ng-container matColumnDef="language">
                   <th mat-header-cell *matHeaderCellDef>
-                    <mat-icon class="column-icon">category</mat-icon>
-                    Category
+                    <mat-icon class="column-icon">translate</mat-icon>
+                    Language
                   </th>
                   <td mat-cell *matCellDef="let script">
-                    <span class="category-badge script-badge">{{ script.category }}</span>
+                    <span class="category-badge">{{ script.language }}</span>
                   </td>
                 </ng-container>
-                <ng-container matColumnDef="scope">
-                  <th mat-header-cell *matHeaderCellDef>
-                    <mat-icon class="column-icon">language</mat-icon>
-                    Scope
-                  </th>
-                  <td mat-cell *matCellDef="let script">{{ script.scope }}</td>
-                </ng-container>
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="script-row"
-                    [class.selected]="row === selectedScript"
-                    (click)="selectScript(row)">
-                </tr>
+                <tr mat-header-row *matHeaderRowDef="scriptColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: scriptColumns;" class="agent-row" [class.selected]="scriptSelection.isSelected(row)" (click)="toggleScriptRow(row)"></tr>
               </table>
             </div>
-
-            <mat-paginator
-              [length]="totalScriptElements"
-              [pageSize]="scriptPageSize"
-              [pageIndex]="scriptCurrentPage"
-              [pageSizeOptions]="[5, 10, 25]"
-              (page)="onScriptPageChange($event)"
-              showFirstLastButtons
-              class="custom-paginator">
-            </mat-paginator>
+            <mat-paginator [length]="scriptTotalElements" [pageSize]="scriptPageSize" [pageIndex]="scriptCurrentPage" [pageSizeOptions]="[5, 10, 25]" (page)="onScriptPageChange($event)" showFirstLastButtons class="custom-paginator"></mat-paginator>
           </div>
         </mat-tab>
       </mat-tab-group>
+      <div *ngIf="data.mode === 'project'">
+        <div class="search-section">
+          <mat-form-field class="search-field" appearance="outline">
+            <mat-label>Search agents...</mat-label>
+            <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+          <button mat-stroked-button (click)="search()" class="search-btn">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+          <button mat-icon-button (click)="clearSearch()" aria-label="Clear search" class="clear-btn" *ngIf="searchTerm">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="table-container">
+          <div *ngIf="loading" class="loading-overlay">
+            <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+            <span>Loading agents...</span>
+          </div>
+          <div *ngIf="!loading && agents.length === 0" class="empty-state">
+            <mat-icon class="empty-icon">smart_toy</mat-icon>
+            <span class="empty-text">No agents found</span>
+            <span class="empty-hint">Create a new agent or adjust your search</span>
+          </div>
+          <table mat-table [dataSource]="agents" class="agent-table" *ngIf="!loading && agents.length > 0">
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox (change)="$event ? toggleAllRows() : null" [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="selection.hasValue() && !isAllSelected()"></mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? toggleRow(row) : null" [checked]="selection.isSelected(row)"></mat-checkbox>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-icon class="column-icon">badge</mat-icon>
+                Agent Name
+              </th>
+              <td mat-cell *matCellDef="let agent">
+                <div class="agent-name">
+                  <mat-icon class="agent-icon">smart_toy</mat-icon>
+                  {{ agent.name }}
+                </div>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-icon class="column-icon">category</mat-icon>
+                Category
+              </th>
+              <td mat-cell *matCellDef="let agent">
+                <span class="category-badge">{{ agent.category }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-icon class="column-icon">language</mat-icon>
+                Scope
+              </th>
+              <td mat-cell *matCellDef="let agent">{{ agent.scope }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="agent-row" [class.selected]="selection.isSelected(row)" (click)="toggleRow(row)"></tr>
+          </table>
+        </div>
+        <mat-paginator [length]="totalElements" [pageSize]="pageSize" [pageIndex]="currentPage" [pageSizeOptions]="[5, 10, 25]" (page)="onPageChange($event)" showFirstLastButtons class="custom-paginator"></mat-paginator>
+      </div>
     </mat-dialog-content>
 
     <mat-dialog-actions class="dialog-actions">
@@ -219,9 +265,9 @@ export interface SelectedStep {
         <mat-icon>close</mat-icon>
         Cancel
       </button>
-      <button mat-raised-button color="primary" (click)="onSelect()" [disabled]="!selectedAgent && !selectedScript" class="select-btn">
+      <button mat-raised-button color="primary" (click)="onSelect()" [disabled]="data.mode === 'pipeline' ? (selectedTab === 0 ? selection.isEmpty() : scriptSelection.isEmpty()) : selection.isEmpty()" class="select-btn">
         <mat-icon>check</mat-icon>
-        Add Step
+        {{ data.mode === 'pipeline' ? 'Add to Pipeline' : ('Add ' + (selection.selected.length > 0 ? selection.selected.length + ' ' : '') + 'Agent' + (selection.selected.length !== 1 ? 's' : '')) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -256,35 +302,6 @@ export interface SelectedStep {
       min-width: 520px;
       max-width: 600px;
       background: #1e1e1e !important;
-    }
-    
-    ::ng-deep .custom-tabs .mat-mdc-tab-header {
-      background: #1a1a1a;
-      border-bottom: 1px solid #3a3a3a;
-    }
-    
-    ::ng-deep .custom-tabs .mat-mdc-tab {
-      color: #b0b0b0 !important;
-      opacity: 1 !important;
-    }
-    
-    ::ng-deep .custom-tabs .mat-mdc-tab.mdc-tab--active {
-      color: #ffffff !important;
-    }
-    
-    ::ng-deep .custom-tabs .mat-mdc-tab .mdc-tab-indicator__content--underline {
-      border-color: #4fc3f7 !important;
-    }
-    
-    .tab-icon {
-      margin-right: 8px;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-    
-    .tab-content {
-      padding: 0;
     }
     
     .search-section {
@@ -384,8 +401,7 @@ export interface SelectedStep {
       color: #666;
     }
     
-    .agent-table,
-    .script-table {
+    .agent-table {
       width: 100%;
       background: transparent;
     }
@@ -416,24 +432,17 @@ export interface SelectedStep {
       border-bottom: 1px solid #333 !important;
     }
     
-    .item-name {
+    .agent-name {
       display: flex;
       align-items: center;
       gap: 10px;
     }
     
-    .item-icon {
+    .agent-icon {
       font-size: 20px;
       width: 20px;
       height: 20px;
-    }
-    
-    .agent-icon {
       color: #4fc3f7;
-    }
-    
-    .script-icon {
-      color: #ba68c8;
     }
     
     .category-badge {
@@ -448,13 +457,7 @@ export interface SelectedStep {
       color: #4fc3f7;
     }
     
-    .script-badge {
-      background: rgba(186, 104, 200, 0.2);
-      color: #ba68c8;
-    }
-    
-    .agent-row,
-    .script-row {
+    .agent-row {
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -463,25 +466,15 @@ export interface SelectedStep {
       background-color: #333 !important;
     }
     
-    .script-row:hover {
-      background-color: #333 !important;
-    }
-    
     .agent-row.selected {
       background-color: #1565c0 !important;
     }
     
-    .script-row.selected {
-      background-color: #7b1fa2 !important;
-    }
-    
-    .agent-row.selected .agent-icon,
-    .script-row.selected .script-icon {
+    .agent-row.selected .agent-icon {
       color: #ffffff;
     }
     
-    .agent-row.selected .category-badge,
-    .script-row.selected .category-badge {
+    .agent-row.selected .category-badge {
       background: rgba(255, 255, 255, 0.2);
       color: #ffffff;
     }
@@ -562,28 +555,94 @@ export interface SelectedStep {
     ::ng-deep .mat-mdc-progress-spinner circle {
       stroke: #4fc3f7 !important;
     }
+    
+    ::ng-deep .mat-mdc-checkbox .mdc-checkbox__background {
+      border-color: #888 !important;
+    }
+    
+    ::ng-deep .mat-mdc-checkbox.mat-mdc-checkbox-checked .mdc-checkbox__background {
+      background-color: #4fc3f7 !important;
+      border-color: #4fc3f7 !important;
+    }
+
+    .custom-tabs {
+      background: #1a1a1a;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab-header {
+      background: #252525;
+      border-bottom: 1px solid #3a3a3a;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab {
+      color: #b0b0b0 !important;
+      opacity: 1 !important;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab.mdc-tab--active {
+      color: #4fc3f7 !important;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab .mdc-tab__text-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab .mdc-tab__text-label mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    ::ng-deep .custom-tabs .mat-mdc-tab-indicator .mdc-tab-indicator__content--underline {
+      border-color: #4fc3f7 !important;
+    }
+
+    .tab-content {
+      padding: 0;
+      background: #1e1e1e;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SelectAgentDialogComponent {
-  agentSearchTerm = '';
-  scriptSearchTerm = '';
+  searchTerm = '';
   agents: Agent[] = [];
+  loading = false;
+
   scripts: Script[] = [];
-  selectedAgent: Agent | null = null;
-  selectedScript: Script | null = null;
-  loadingAgents = false;
-  loadingScripts = false;
-
-  agentCurrentPage = 0;
-  agentPageSize = 10;
-  totalAgentElements = 0;
-
+  scriptsLoading = false;
+  scriptSearchTerm = '';
   scriptCurrentPage = 0;
   scriptPageSize = 10;
-  totalScriptElements = 0;
+  scriptTotalElements = 0;
 
-  displayedColumns = ['name', 'category', 'scope'];
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+
+  selectedTab = 0;
+
+  displayedColumns = ['select', 'name', 'category', 'scope'];
+  scriptColumns = ['select', 'name', 'language'];
+  selection: { isSelected: (row: Agent) => boolean; hasValue: () => boolean; selected: Agent[]; toggle: (row: Agent) => void; clear: () => void; isEmpty: () => boolean } = {
+    isSelected: () => false,
+    hasValue: () => false,
+    selected: [],
+    toggle: () => {},
+    clear: () => {},
+    isEmpty: () => true
+  };
+  scriptSelection: { isSelected: (row: Script) => boolean; hasValue: () => boolean; selected: Script[]; toggle: (row: Script) => void; clear: () => void; isEmpty: () => boolean } = {
+    isSelected: () => false,
+    hasValue: () => false,
+    selected: [],
+    toggle: () => {},
+    clear: () => {},
+    isEmpty: () => true
+  };
 
   constructor(
     public dialogRef: MatDialogRef<SelectAgentDialogComponent>,
@@ -591,63 +650,94 @@ export class SelectAgentDialogComponent {
     private cdr: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) public data: SelectAgentDialogData
   ) {
+    if (!this.data.mode) {
+      this.data.mode = 'project';
+    }
     this.loadAgents();
-    this.loadScripts();
+    this.initSelection();
+    if (this.data.mode === 'pipeline') {
+      this.loadScripts();
+      this.initScriptSelection();
+    }
   }
 
-  onTabChange(event: any): void {
-    if (event.index === 0) {
-      if (this.agents.length === 0) {
-        this.loadAgents();
-      }
-    } else {
-      if (this.scripts.length === 0) {
-        this.loadScripts();
-      }
-    }
+  private initSelection(): void {
+    const selectedAgents: Agent[] = [];
+    this.selection = {
+      isSelected: (row: Agent) => selectedAgents.some(s => s.id === row.id),
+      hasValue: () => selectedAgents.length > 0,
+      get selected() {
+        return selectedAgents;
+      },
+      toggle: (row: Agent) => {
+        const index = selectedAgents.findIndex(s => s.id === row.id);
+        if (index >= 0) {
+          selectedAgents.splice(index, 1);
+        } else {
+          selectedAgents.push(row);
+        }
+        this.cdr.detectChanges();
+      },
+      clear: () => {
+        selectedAgents.length = 0;
+        this.cdr.detectChanges();
+      },
+      isEmpty: () => selectedAgents.length === 0
+    };
+  }
+
+  private initScriptSelection(): void {
+    const selectedScripts: Script[] = [];
+    this.scriptSelection = {
+      isSelected: (row: Script) => selectedScripts.some(s => s.id === row.id),
+      hasValue: () => selectedScripts.length > 0,
+      get selected() {
+        return selectedScripts;
+      },
+      toggle: (row: Script) => {
+        const index = selectedScripts.findIndex(s => s.id === row.id);
+        if (index >= 0) {
+          selectedScripts.splice(index, 1);
+        } else {
+          selectedScripts.push(row);
+        }
+        this.cdr.detectChanges();
+      },
+      clear: () => {
+        selectedScripts.length = 0;
+        this.cdr.detectChanges();
+      },
+      isEmpty: () => selectedScripts.length === 0
+    };
   }
 
   loadAgents(): void {
-    this.loadingAgents = true;
-    if (this.agentSearchTerm.trim()) {
-      this.apiService.searchAgents(this.agentSearchTerm, '', this.agentCurrentPage, this.agentPageSize).subscribe({
+    this.loading = true;
+    if (this.searchTerm.trim()) {
+      this.apiService.searchAgents(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({
         next: (response) => {
-          this.handleAgentResponse(response);
+          this.handleResponse(response);
         },
         error: (err) => {
           console.error('Error searching agents:', err);
-          this.loadingAgents = false;
+          this.loading = false;
         }
       });
     } else {
-      this.apiService.getAgents(this.agentCurrentPage, this.agentPageSize).subscribe({
+      this.apiService.getAgents(this.currentPage, this.pageSize).subscribe({
         next: (response) => {
-          this.handleAgentResponse(response);
+          this.handleResponse(response);
         },
         error: (err) => {
           console.error('Error loading agents:', err);
-          this.loadingAgents = false;
+          this.loading = false;
         }
       });
     }
   }
 
-  handleAgentResponse(response: any): void {
-    if (response && Array.isArray(response.agents)) {
-      this.agents = response.agents;
-    } else if (Array.isArray(response)) {
-      this.agents = response;
-    } else {
-      this.agents = [];
-    }
-    this.totalAgentElements = response?.totalElements ?? this.agents.length;
-    this.loadingAgents = false;
-    this.selectedAgent = null;
-    this.cdr.detectChanges();
-  }
-
   loadScripts(): void {
-    this.loadingScripts = true;
+    this.scriptsLoading = true;
     if (this.scriptSearchTerm.trim()) {
       this.apiService.searchScripts(this.scriptSearchTerm, '', this.scriptCurrentPage, this.scriptPageSize).subscribe({
         next: (response) => {
@@ -655,7 +745,7 @@ export class SelectAgentDialogComponent {
         },
         error: (err) => {
           console.error('Error searching scripts:', err);
-          this.loadingScripts = false;
+          this.scriptsLoading = false;
         }
       });
     } else {
@@ -665,10 +755,24 @@ export class SelectAgentDialogComponent {
         },
         error: (err) => {
           console.error('Error loading scripts:', err);
-          this.loadingScripts = false;
+          this.scriptsLoading = false;
         }
       });
     }
+  }
+
+  handleResponse(response: any): void {
+    if (response && Array.isArray(response.agents)) {
+      this.agents = response.agents;
+    } else if (Array.isArray(response)) {
+      this.agents = response;
+    } else {
+      this.agents = [];
+    }
+    this.totalElements = response?.totalElements ?? this.agents.length;
+    this.totalPages = response?.totalPages ?? 1;
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
   handleScriptResponse(response: any): void {
@@ -679,20 +783,19 @@ export class SelectAgentDialogComponent {
     } else {
       this.scripts = [];
     }
-    this.totalScriptElements = response?.totalElements ?? this.scripts.length;
-    this.loadingScripts = false;
-    this.selectedScript = null;
+    this.scriptTotalElements = response?.totalElements ?? this.scripts.length;
+    this.scriptsLoading = false;
     this.cdr.detectChanges();
   }
 
-  searchAgents(): void {
-    this.agentCurrentPage = 0;
+  search(): void {
+    this.currentPage = 0;
     this.loadAgents();
   }
 
-  clearAgentSearch(): void {
-    this.agentSearchTerm = '';
-    this.agentCurrentPage = 0;
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.currentPage = 0;
     this.loadAgents();
   }
 
@@ -707,9 +810,9 @@ export class SelectAgentDialogComponent {
     this.loadScripts();
   }
 
-  onAgentPageChange(event: PageEvent): void {
-    this.agentCurrentPage = event.pageIndex;
-    this.agentPageSize = event.pageSize;
+  onPageChange(event: PageEvent): void {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
     this.loadAgents();
   }
 
@@ -719,21 +822,70 @@ export class SelectAgentDialogComponent {
     this.loadScripts();
   }
 
-  selectAgent(agent: Agent): void {
-    this.selectedAgent = agent;
-    this.selectedScript = null;
+  toggleRow(row: Agent): void {
+    this.selection.toggle(row);
   }
 
-  selectScript(script: Script): void {
-    this.selectedScript = script;
-    this.selectedAgent = null;
+  toggleScriptRow(row: Script): void {
+    this.scriptSelection.toggle(row);
+  }
+
+  toggleAllRows(): void {
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
+      this.agents.forEach(agent => {
+        if (!this.selection.isSelected(agent)) {
+          this.selection.toggle(agent);
+        }
+      });
+    }
+  }
+
+  toggleAllScriptRows(): void {
+    if (this.isAllScriptsSelected()) {
+      this.scriptSelection.clear();
+    } else {
+      this.scripts.forEach(script => {
+        if (!this.scriptSelection.isSelected(script)) {
+          this.scriptSelection.toggle(script);
+        }
+      });
+    }
+  }
+
+  isAllSelected(): boolean {
+    return this.agents.length > 0 && this.agents.every(agent => this.selection.isSelected(agent));
+  }
+
+  isAllScriptsSelected(): boolean {
+    return this.scripts.length > 0 && this.scripts.every(script => this.scriptSelection.isSelected(script));
   }
 
   onSelect(): void {
-    if (this.selectedAgent) {
-      this.dialogRef.close({ type: 'agent', item: this.selectedAgent });
-    } else if (this.selectedScript) {
-      this.dialogRef.close({ type: 'script', item: this.selectedScript });
+    if (this.data.mode === 'pipeline') {
+      if (this.selectedTab === 0 && this.selection.selected.length > 0) {
+        this.dialogRef.close({ type: 'agent', item: this.selection.selected[0] });
+      } else if (this.selectedTab === 1 && this.scriptSelection.selected.length > 0) {
+        this.dialogRef.close({ type: 'script', item: this.scriptSelection.selected[0] });
+      }
+    } else {
+      if (this.selection.selected.length > 0 && this.data.projectId) {
+        const agentIds = this.selection.selected
+          .filter(s => s.id)
+          .map(s => s.id as number);
+        
+        this.apiService.addAgentsToProject(this.data.projectId, agentIds).subscribe({
+          next: () => {
+            this.dialogRef.close(this.selection.selected);
+          },
+          error: (err) => {
+            console.error('Error adding agents to project:', err);
+          }
+        });
+      } else {
+        this.dialogRef.close(this.selection.selected);
+      }
     }
   }
 

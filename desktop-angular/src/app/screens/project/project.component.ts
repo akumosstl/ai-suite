@@ -16,7 +16,7 @@ import { PipelineResultDialogComponent } from '../../components/pipeline-result-
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ApiService, Project, Pipeline, PipelineStep } from '../../services/api.service';
+import { ApiService, Project, Pipeline, PipelineStep, Agent } from '../../services/api.service';
 import { SelectAgentDialogComponent, SelectedStep } from '../../components/select-agent-dialog/select-agent-dialog.component';
 import { SelectSkillDialogComponent } from '../../components/select-skill-dialog/select-skill-dialog.component';
 import { SelectCommandDialogComponent } from '../../components/select-command-dialog/select-command-dialog.component';
@@ -24,6 +24,7 @@ import { SelectScriptDialogComponent } from '../../components/select-script-dial
 import { ViewProjectSkillsDialogComponent } from '../../components/view-project-skills-dialog/view-project-skills-dialog.component';
 import { ViewProjectCommandsDialogComponent } from '../../components/view-project-commands-dialog/view-project-commands-dialog.component';
 import { ViewProjectScriptsDialogComponent } from '../../components/view-project-scripts-dialog/view-project-scripts-dialog.component';
+import { ViewProjectAgentsDialogComponent } from '../../components/view-project-agents-dialog/view-project-agents-dialog.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-dialog.component';
@@ -33,7 +34,7 @@ import { StepSettingsDialogComponent } from '../../components/step-settings-dial
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, ViewProjectSkillsDialogComponent, ViewProjectCommandsDialogComponent, ViewProjectScriptsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, ViewProjectSkillsDialogComponent, ViewProjectCommandsDialogComponent, ViewProjectScriptsDialogComponent, ViewProjectAgentsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -363,7 +364,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openAddStepDialog() {
     const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
       width: '600px',
-      data: {}
+      data: { mode: 'pipeline' }
     });
 
     dialogRef.afterClosed().subscribe((selected: SelectedStep) => {
@@ -510,6 +511,38 @@ export class ProjectComponent implements OnInit, OnDestroy {
           data: {
             success: true,
             message: `${selectedScripts.length} script(s) added to project!`
+          }
+        });
+      }
+    });
+  }
+
+  openViewAgentsDialog() {
+    if (!this.project?.id) {
+      return;
+    }
+    this.dialog.open(ViewProjectAgentsDialogComponent, {
+      width: '600px',
+      data: { projectId: this.project.id }
+    });
+  }
+
+  openAddAgentDialog() {
+    const projectId = this.project?.id;
+    if (!projectId) {
+      return;
+    }
+    const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
+      width: '600px',
+      data: { projectId, mode: 'project' }
+    });
+
+    dialogRef.afterClosed().subscribe((selectedAgents: Agent[]) => {
+      if (selectedAgents && selectedAgents.length > 0) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: {
+            success: true,
+            message: `${selectedAgents.length} agent(s) added to project!`
           }
         });
       }
