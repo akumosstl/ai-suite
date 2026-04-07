@@ -1,0 +1,370 @@
+package io.github.akumosstl.agentic.backend.service;
+
+import io.github.akumosstl.agentic.backend.model.Project;
+import io.github.akumosstl.agentic.backend.model.Skill;
+import io.github.akumosstl.agentic.backend.model.Command;
+import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Target;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
+import io.github.akumosstl.agentic.backend.repository.SkillRepository;
+import io.github.akumosstl.agentic.backend.repository.CommandRepository;
+import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
+import io.github.akumosstl.agentic.backend.repository.TargetRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+@Service
+public class ProjectService {
+    
+    @Autowired
+    private ProjectRepository projectRepository;
+    
+    @Autowired
+    private SkillRepository skillRepository;
+    
+    @Autowired
+    private CommandRepository commandRepository;
+    
+    @Autowired
+    private ScriptRepository scriptRepository;
+    
+    @Autowired
+    private TargetRepository targetRepository;
+    
+    public List<Project> getRecentProjects(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Project> projectPage = projectRepository.findAll(pageable);
+        return projectPage.getContent();
+    }
+    
+    public List<Project> getTop10RecentProjects() {
+        return projectRepository.findTop10ByOrderByCreatedAtDesc();
+    }
+    
+    public Project getProjectById(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        if (project.getTargetId() != null) {
+            Target target = targetRepository.findById(project.getTargetId()).orElse(null);
+            if (target != null) {
+                project.setTarget(target.getName());
+            }
+        }
+        
+        return project;
+    }
+    
+    public Project createProject(Project project) {
+        if (project.getPath() != null && !project.getPath().isEmpty()) {
+            File path = new File(project.getPath());
+            if (!path.exists()) {
+                throw new RuntimeException("Path does not exist: " + project.getPath());
+            }
+            if (!path.isDirectory()) {
+                throw new RuntimeException("Path is not a directory: " + project.getPath());
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    public Project updateProject(Long id, Project projectDetails) {
+        Project project = getProjectById(id);
+        project.setName(projectDetails.getName());
+        project.setDescription(projectDetails.getDescription());
+        project.setPath(projectDetails.getPath());
+        project.setTarget(projectDetails.getTarget());
+        project.setStatus(projectDetails.getStatus());
+        return projectRepository.save(project);
+    }
+    
+    public void deleteProject(Long id) {
+        projectRepository.deleteById(id);
+    }
+    
+    public List<Project> getProjectsByStatus(String status) {
+        return projectRepository.findByStatus(status);
+    }
+    
+    public List<Project> searchProjects(String searchTerm, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Project> projectPage = projectRepository.searchProjects(searchTerm, pageable);
+        return projectPage.getContent();
+    }
+    
+    public long countSearchResults(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return projectRepository.count();
+        }
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+        return projectRepository.searchProjects(searchTerm.trim(), pageable).getTotalElements();
+    }
+    
+    public long countAllProjects() {
+        return projectRepository.count();
+    }
+    
+    public Page<Project> findAllPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return projectRepository.findAll(pageable);
+    }
+    
+    // Skills management
+    @Transactional(readOnly = true)
+    public List<Skill> getProjectSkills(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getSkills();
+    }
+    
+    @Transactional
+    public Project addSkillsToProject(Long projectId, List<Long> skillIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetSkillsPath = "skills";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getSkillsPath() != null && !target.getSkillsPath().isEmpty()) {
+            targetSkillsPath = target.getSkillsPath();
+        }
+        
+        for (Long skillId : skillIds) {
+            Skill skill = skillRepository.findById(skillId)
+                    .orElseThrow(() -> new RuntimeException("Skill not found: " + skillId));
+            
+            String fullPath = project.getPath() + File.separator + targetSkillsPath;
+            if (skill.getPath() != null && !skill.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + skill.getPath();
+            }
+            
+            Path skillPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(skillPathObj);
+                String skillName = skill.getName();
+                if (skillName.toLowerCase().endsWith(".md")) {
+                    skillName = skillName.substring(0, skillName.length() - 3);
+                }
+                String fileName = skillName + ".md";
+                Path filePath = skillPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+                String content = skill.getInstructions() != null ? skill.getInstructions() : "";
+                Files.write(filePath, content.getBytes());
+                
+                if (!project.getSkills().contains(skill)) {
+                    project.addSkill(skill);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create skill file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeSkillFromProject(Long projectId, Long skillId) {
+        Project project = getProjectById(projectId);
+        
+        Skill skillToRemove = project.getSkills().stream()
+                .filter(skill -> skill.getId().equals(skillId))
+                .findFirst()
+                .orElse(null);
+        
+        if (skillToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetSkillsPath = "skills";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getSkillsPath() != null && !target.getSkillsPath().isEmpty()) {
+                targetSkillsPath = target.getSkillsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetSkillsPath;
+            if (skillToRemove.getPath() != null && !skillToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + skillToRemove.getPath();
+            }
+            
+            Path skillPathObj = Paths.get(fullPath);
+            try {
+                String skillName = skillToRemove.getName();
+                if (skillName.toLowerCase().endsWith(".md")) {
+                    skillName = skillName.substring(0, skillName.length() - 3);
+                }
+                String fileName = skillName + ".md";
+                Path filePath = skillPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete skill file: " + e.getMessage(), e);
+            }
+        }
+        
+        project.getSkills().removeIf(skill -> skill.getId().equals(skillId));
+        return projectRepository.save(project);
+    }
+    
+    // Commands management
+    @Transactional(readOnly = true)
+    public List<Command> getProjectCommands(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getCommands();
+    }
+    
+    @Transactional
+    public Project addCommandsToProject(Long projectId, List<Long> commandIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetCommandsPath = "commands";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getCommandsPath() != null && !target.getCommandsPath().isEmpty()) {
+            targetCommandsPath = target.getCommandsPath();
+        }
+        
+        for (Long commandId : commandIds) {
+            Command command = commandRepository.findById(commandId)
+                    .orElseThrow(() -> new RuntimeException("Command not found: " + commandId));
+            
+            String fullPath = project.getPath() + File.separator + targetCommandsPath;
+            if (command.getPath() != null && !command.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + command.getPath();
+            }
+            
+            Path commandPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(commandPathObj);
+                String commandName = command.getName();
+                if (commandName.toLowerCase().endsWith(".md")) {
+                    commandName = commandName.substring(0, commandName.length() - 3);
+                }
+                String fileName = commandName + ".md";
+                Path filePath = commandPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+                String content = command.getCommand() != null ? command.getCommand() : "";
+                Files.write(filePath, content.getBytes());
+                
+                if (!project.getCommands().contains(command)) {
+                    project.addCommand(command);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create command file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeCommandFromProject(Long projectId, Long commandId) {
+        Project project = getProjectById(projectId);
+        
+        Command commandToRemove = project.getCommands().stream()
+                .filter(command -> command.getId().equals(commandId))
+                .findFirst()
+                .orElse(null);
+        
+        if (commandToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetCommandsPath = "commands";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getCommandsPath() != null && !target.getCommandsPath().isEmpty()) {
+                targetCommandsPath = target.getCommandsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetCommandsPath;
+            if (commandToRemove.getPath() != null && !commandToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + commandToRemove.getPath();
+            }
+            
+            Path commandPathObj = Paths.get(fullPath);
+            try {
+                String commandName = commandToRemove.getName();
+                if (commandName.toLowerCase().endsWith(".md")) {
+                    commandName = commandName.substring(0, commandName.length() - 3);
+                }
+                String fileName = commandName + ".md";
+                Path filePath = commandPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete command file: " + e.getMessage(), e);
+            }
+        }
+        
+        project.getCommands().removeIf(command -> command.getId().equals(commandId));
+        return projectRepository.save(project);
+    }
+    
+    // Scripts management
+    @Transactional(readOnly = true)
+    public List<Script> getProjectScripts(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getScripts();
+    }
+    
+    @Transactional
+    public Project addScriptsToProject(Long projectId, List<Long> scriptIds) {
+        Project project = getProjectById(projectId);
+        for (Long scriptId : scriptIds) {
+            Script script = scriptRepository.findById(scriptId)
+                    .orElseThrow(() -> new RuntimeException("Script not found: " + scriptId));
+            if (!project.getScripts().contains(script)) {
+                project.addScript(script);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeScriptFromProject(Long projectId, Long scriptId) {
+        Project project = getProjectById(projectId);
+        project.getScripts().removeIf(script -> script.getId().equals(scriptId));
+        return projectRepository.save(project);
+    }
+}

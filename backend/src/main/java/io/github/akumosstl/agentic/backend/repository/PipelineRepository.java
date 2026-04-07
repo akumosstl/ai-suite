@@ -1,0 +1,21 @@
+package io.github.akumosstl.agentic.backend.repository;
+
+import io.github.akumosstl.agentic.backend.model.Pipeline;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
+    
+    List<Pipeline> findTop10ByProject_IdOrderByCreatedAtDesc(Long projectId);
+    
+    Page<Pipeline> findByProject_IdOrderByCreatedAtDesc(Long projectId, Pageable pageable);
+    
+    List<Pipeline> findByProject_IdAndStatus(Long projectId, String status);
+    
+    List<Pipeline> findByStatus(String status);
+}

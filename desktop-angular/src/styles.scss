@@ -1,0 +1,194 @@
+// Include theming for Angular Material with `mat.theme()`.
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+body {
+  // Dark theme
+  color-scheme: dark;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables.
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-family: Roboto, sans-serif;
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+
+// Global overrides for dark theme
+.mat-mdc-button, .mat-mdc-raised-button {
+  background-color: #333 !important;
+  color: white !important;
+}
+
+.mat-mdc-card {
+  background-color: #2a2a2a !important;
+  color: white !important;
+}
+
+.mat-mdc-form-field {
+  color: white !important;
+}
+
+.mat-mdc-select-panel {
+  background-color: #333 !important;
+}
+
+// Menu dropdown dark theme
+.mat-mdc-menu-panel {
+  background-color: #2a2a2a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid #3a3a3a !important;
+  padding: 4px 0 !important;
+}
+
+.mat-mdc-menu-item {
+  color: #e0e0e0 !important;
+  font-size: 0.95rem !important;
+  padding: 12px 16px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.mat-mdc-menu-item:hover {
+  background-color: #3a3a3a !important;
+}
+
+.mat-mdc-menu-item .mat-icon {
+  color: #888 !important;
+  margin-right: 12px !important;
+}
+
+// Dialog dark theme
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: #2a2a2a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid #3a3a3a !important;
+  overflow: hidden !important;
+}
+
+.mat-mdc-dialog-surface {
+  background-color: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.mat-mdc-dialog-title {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-size: 1.25rem !important;
+  margin-bottom: 16px !important;
+}
+
+// Form field adjustments for dialogs
+.mat-mdc-form-field-subscript-wrapper {
+  color: #888 !important;
+}
+
+.mat-mdc-form-field-focus-overlay {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+// Table adjustments for dialogs
+.mat-mdc-table {
+  background-color: transparent !important;
+}
+
+.mat-mdc-header-cell {
+  color: #888 !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.mat-mdc-cell {
+  color: #e0e0e0 !important;
+  font-size: 0.9rem !important;
+}
+
+// Paginator adjustments
+.mat-mdc-paginator {
+  background-color: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-top: 1px solid #3a3a3a !important;
+}
+
+// Progress spinner
+.mat-mdc-progress-spinner circle {
+  stroke: #1976d2 !important;
+}
+
+// Icon button
+.mat-mdc-icon-button {
+  color: #e0e0e0 !important;
+}
+
+// Button text color adjustments for dark theme
+.mat-mdc-button .mdc-button__label,
+.mat-mdc-raised-button .mdc-button__label {
+  color: inherit !important;
+}
+
+// Stroked button adjustments
+.mat-mdc-outlined-button {
+  border-color: #555 !important;
+  color: #e0e0e0 !important;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+// Dialog styling
+.cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: #121212;
+  --mdc-dialog-container-shape: 12px;
+}
+
+.mat-mdc-dialog-surface {
+  background: #121212 !important;
+  border: 1px solid #2a2a2a;
+}
+
+.console-dialog-panel {
+  .mat-mdc-dialog-surface {
+    width: 95vw;
+    height: 90vh;
+    max-width: none;
+    max-height: none;
+  }
+}

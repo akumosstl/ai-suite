@@ -1,0 +1,86 @@
+package io.github.akumosstl.agentic.backend.controller;
+
+import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.service.ScriptService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/scripts")
+@CrossOrigin(origins = "*")
+public class ScriptController {
+
+    @Autowired
+    private ScriptService scriptService;
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getRecentScripts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        List<Script> scripts = scriptService.getRecentScripts(page, size);
+        long totalElements = scriptService.countAllScripts();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("scripts", scripts);
+        response.put("currentPage", page);
+        response.put("totalElements", totalElements);
+        response.put("totalPages", (int) Math.ceil((double) totalElements / size));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public Script getScript(@PathVariable Long id) {
+        return scriptService.getScriptById(id);
+    }
+
+    @PostMapping
+    public Script createScript(@RequestBody Script script) {
+        return scriptService.createScript(script);
+    }
+
+    @PutMapping("/{id}")
+    public Script updateScript(@PathVariable Long id, @RequestBody Script scriptDetails) {
+        return scriptService.updateScript(id, scriptDetails);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteScript(@PathVariable Long id) {
+        scriptService.deleteScript(id);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Script deleted successfully");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchScripts(
+            @RequestParam(required = false) String term,
+            @RequestParam(required = false) String namespace,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        List<Script> scripts = scriptService.searchScripts(term, namespace, page, size);
+        long totalElements = scriptService.countSearchResults(term, namespace);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("scripts", scripts);
+        response.put("currentPage", page);
+        response.put("totalElements", totalElements);
+        response.put("totalPages", (int) Math.ceil((double) totalElements / size));
+        response.put("searchTerm", term);
+        response.put("namespace", namespace);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/namespaces")
+    public List<String> getDistinctNamespaces() {
+        return scriptService.getDistinctNamespaces();
+    }
+}

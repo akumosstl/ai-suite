@@ -1,0 +1,407 @@
+<app-menu-bar></app-menu-bar>
+<div class="project-screen" [class.left-collapsed]="leftPanelCollapsed">
+    <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
+        <div class="panel-header">
+            <div class="panel-title">
+                <mat-icon>folder</mat-icon>
+                <span>Pipelines</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" (click)="project && loadPipelines(project.id)" title="Refresh pipelines">
+                    <mat-icon>refresh</mat-icon>
+                </button>
+                <button class="icon-btn add-btn" (click)="showCreatePipelineForm()" title="Create new pipeline">
+                    <mat-icon>add</mat-icon>
+                </button>
+                <button class="icon-btn info-btn" (click)="showProjectInfoPanel()" [class.active]="showProjectInfo"
+                    title="Show project info">
+                    <mat-icon>info</mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <div class="pipelines-list">
+            <div class="list-header">
+                <span class="list-count clickable" *ngIf="pipelines.length > 0" (click)="togglePipelines()">{{
+                    pipelines.length }} pipeline(s)</span>
+                <button class="toggle-btn" (click)="togglePipelines()">
+                    <mat-icon [class.expanded]="pipelinesExpanded">expand_more</mat-icon>
+                </button>
+            </div>
+
+            <ul *ngIf="pipelinesExpanded">
+                <li *ngFor="let pipeline of pipelines" (click)="selectPipeline(pipeline)"
+                    [class.selected]="selectedPipeline === pipeline">
+                    <div class="pipeline-item">
+                        <mat-icon class="pipeline-icon">alt_route</mat-icon>
+                        <div class="pipeline-info">
+                            <span class="pipeline-name">{{ pipeline.name }}</span>
+                            <span class="pipeline-status" [ngClass]="pipeline.status || 'pending'">
+                                {{ pipeline.status || 'pending' }}
+                            </span>
+                        </div>
+                        <button class="icon-btn delete-btn" (click)="deletePipeline(pipeline, $event)"
+                            title="Delete pipeline">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
+                </li>
+            </ul>
+
+            <div *ngIf="pipelines.length === 0" class="empty-state">
+                <mat-icon>folder_off</mat-icon>
+                <span>No pipelines yet</span>
+                <small>Create your first pipeline</small>
+            </div>
+        </div>
+    </div>
+
+    <app-panel-toggle [isCollapsed]="leftPanelCollapsed" (toggle)="toggleLeftPanel()"
+        [class.collapsed]="leftPanelCollapsed">
+    </app-panel-toggle>
+
+    <div class="right-panel">
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" title="Skills" matTooltip="skills"
+                        (click)="openViewSkillsDialog()">
+                        <mat-icon>format_list_bulleted</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" title="Add Skill" matTooltip="Add skill"
+                        (click)="openAddSkillDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" title="Commands" matTooltip="commands"
+                        (click)="openViewCommandsDialog()">
+                        <mat-icon>terminal</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" title="Add Command" matTooltip="Add command"
+                        (click)="openAddCommandDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" title="Scripts" matTooltip="scripts"
+                        (click)="openViewScriptsDialog()">
+                        <mat-icon>code</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" title="Add Script" matTooltip="Add script"
+                        (click)="openAddScriptDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div *ngIf="showProjectInfo" class="info-section">
+                <div class="section-header">
+                    <mat-icon>dashboard</mat-icon>
+                    <h2>Project Information</h2>
+                    <div class="header-actions" *ngIf="project && !isEditingProject">
+                        <button class="icon-btn edit-btn" (click)="editProjectInfo()" title="Edit project">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                    </div>
+                    <div class="header-actions" *ngIf="isEditingProject">
+                        <button class="icon-btn cancel-btn" (click)="cancelEditProject()" title="Cancel"
+                            [disabled]="isSavingProject">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                        <button class="icon-btn save-btn" (click)="saveProjectInfo()" title="Save"
+                            [disabled]="isSavingProject">
+                            <mat-icon *ngIf="!isSavingProject">save</mat-icon>
+                            <mat-icon *ngIf="isSavingProject" class="spin">sync</mat-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <div *ngIf="project" class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>badge</mat-icon>
+                            Name
+                        </span>
+                        <ng-container *ngIf="!isEditingProject">
+                            <span class="info-value">{{ project.name }}</span>
+                        </ng-container>
+                        <ng-container *ngIf="isEditingProject">
+                            <input class="edit-input" type="text" [(ngModel)]="editProject.name" />
+                        </ng-container>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>description</mat-icon>
+                            Description
+                        </span>
+                        <ng-container *ngIf="!isEditingProject">
+                            <span class="info-value">{{ project.description || 'No description' }}</span>
+                        </ng-container>
+                        <ng-container *ngIf="isEditingProject">
+                            <input class="edit-input" type="text" [(ngModel)]="editProject.description" />
+                        </ng-container>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>folder</mat-icon>
+                            Path
+                        </span>
+                        <ng-container *ngIf="!isEditingProject">
+                            <span class="info-value">{{ project.path || 'No path' }}</span>
+                        </ng-container>
+                        <ng-container *ngIf="isEditingProject">
+                            <input class="edit-input" type="text" [(ngModel)]="editProject.path"
+                                placeholder="e.g., C:\Projects\MyProject" />
+                        </ng-container>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>gps_fixed</mat-icon>
+                            Target
+                        </span>
+                        <ng-container *ngIf="!isEditingProject">
+                            <span class="info-value">{{ project.target || 'No target' }}</span>
+                        </ng-container>
+                        <ng-container *ngIf="isEditingProject">
+                            <input class="edit-input" type="text" [(ngModel)]="editProject.target"
+                                placeholder="e.g., main, dev, production" />
+                        </ng-container>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>flag</mat-icon>
+                            Status
+                        </span>
+                        <span class="status-badge" [ngClass]="project.status || 'active'">
+                            {{ project.status || 'active' }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>schedule</mat-icon>
+                            Created
+                        </span>
+                        <span class="info-value">{{ project.createdAt | date:'medium' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>update</mat-icon>
+                            Updated
+                        </span>
+                        <span class="info-value">{{ project.updatedAt | date:'medium' }}</span>
+                    </div>
+                </div>
+
+                <div *ngIf="loading" class="loading-state">
+                    <mat-icon class="spin">sync</mat-icon>
+                    <span>Loading project information...</span>
+                </div>
+
+                <div *ngIf="!project && !loading" class="empty-state-card">
+                    <mat-icon>folder_open</mat-icon>
+                    <span>No project loaded</span>
+                    <small>Select a project from the menu</small>
+                </div>
+            </div>
+
+            <div *ngIf="selectedPipeline" class="pipeline-section">
+                <div class="section-header">
+                    <mat-icon>alt_route</mat-icon>
+                    <h2>Pipeline Details</h2>
+                    <div class="header-actions">
+                        <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
+                            [disabled]="pipelineSteps.length === 0 || isRunningPipeline" *ngIf="!isRunningPipeline">
+                            <mat-icon>play_arrow</mat-icon>
+                            <span class="btn-text">Run</span>
+                        </button>
+                        <button class="icon-btn stop-btn" (click)="stopPipeline()" title="Stop pipeline"
+                            *ngIf="isRunningPipeline">
+                            <mat-icon>stop</mat-icon>
+                            <span class="btn-text">Stop</span>
+                        </button>
+                        <button class="icon-btn view-running-btn" (click)="viewRunningPipeline()"
+                            title="View running pipeline" *ngIf="isRunningPipeline">
+                            <mat-icon>visibility</mat-icon>
+                        </button>
+                        <button class="icon-btn add-btn" (click)="openAddStepDialog()" title="Add step to pipeline">
+                            <mat-icon>add</mat-icon>
+                            <span class="btn-text">Add Step</span>
+                        </button>
+                        <button class="icon-btn history-btn" (click)="openRunHistory()" title="View run history">
+                            <mat-icon>history</mat-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-card pipeline-card">
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>badge</mat-icon>
+                            Name
+                        </span>
+                        <span class="info-value">{{ selectedPipeline.name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>description</mat-icon>
+                            Description
+                        </span>
+                        <span class="info-value">{{ selectedPipeline.description || 'No description' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>flag</mat-icon>
+                            Status
+                        </span>
+                        <span class="status-badge" [ngClass]="selectedPipeline.status || 'pending'">
+                            {{ selectedPipeline.status || 'pending' }}
+                        </span>
+                    </div>
+                    <div class="info-row" *ngIf="selectedPipeline.type">
+                        <span class="info-label">
+                            <mat-icon>linear_scale</mat-icon>
+                            Type
+                        </span>
+                        <span class="info-value type-value">
+                            {{ selectedPipeline.type === 'step_by_step' ? 'Step by Step' : selectedPipeline.type }}
+                        </span>
+                    </div>
+
+                    <!-- API Endpoints -->
+                    <div class="info-row endpoint-row">
+                        <span class="info-label">
+                            <mat-icon>api</mat-icon>
+                            Endpoints
+                        </span>
+                        <div class="endpoint-list">
+                            <div class="endpoint-item">
+                                <span class="endpoint-label">Start Runner:</span>
+                                <code class="endpoint-value">POST {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs</code>
+                                <button mat-icon-button
+                                    (click)="copyToClipboard(baseUrl + 'api/pipelines/' + selectedPipeline.id + '/runs')"
+                                    title="Copy to clipboard">
+                                    <mat-icon>content_copy</mat-icon>
+                                </button>
+                            </div>
+                            <div class="endpoint-item">
+                                <span class="endpoint-label">Get Status/Results:</span>
+                                <code class="endpoint-value">GET {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs?page=0&size=20</code>
+                                <button mat-icon-button
+                                    (click)="copyToClipboard(baseUrl + 'api/pipelines/' + selectedPipeline.id + '/runs?page=0&size=20')"
+                                    title="Copy to clipboard">
+                                    <mat-icon>content_copy</mat-icon>
+                                </button>
+                            </div>
+                            <div class="endpoint-item">
+                                <span class="endpoint-label">Stop Pipeline:</span>
+                                <code class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/stop</code>
+                                <button mat-icon-button
+                                    (click)="copyToClipboard(baseUrl + 'api/projects/' + project?.id + '/pipelines/' + selectedPipeline.id + '/stop')"
+                                    title="Copy to clipboard">
+                                    <mat-icon>content_copy</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pipeline Steps -->
+                <div class="steps-section">
+                    <div class="steps-header">
+                        <mat-icon>list</mat-icon>
+                        <h3>Pipeline Steps</h3>
+                        <span class="steps-count" *ngIf="pipelineSteps.length > 0">{{ pipelineSteps.length }}
+                            step(s)</span>
+                    </div>
+
+                    <div class="steps-container" *ngIf="pipelineSteps.length > 0" cdkDropList
+                        (cdkDropListDropped)="dropStep($event)" [class.reordering]="isReorderingSteps">
+                        <div class="step-item" *ngFor="let step of pipelineSteps; let i = index" cdkDrag
+                            [class.dragging]="isReorderingSteps">
+                            <div class="step-number">{{ i + 1 }}</div>
+                            <div class="step-content">
+                                <div class="step-agent">
+                                    <mat-icon class="agent-icon" *ngIf="step.agent">smart_toy</mat-icon>
+                                    <mat-icon class="agent-icon" *ngIf="step.script">code</mat-icon>
+                                    <span class="agent-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                                </div>
+                                <div class="step-info">
+                                    <span class="step-category" *ngIf="step.agent?.category">{{ step.agent?.category }}</span>
+                                    <span class="step-namespace" *ngIf="step.script?.namespace">{{ step.script?.namespace }}</span>
+                                    <span class="step-status" [ngClass]="step.status || 'pending'">{{ step.status || 'pending' }}</span>
+                                    <button class="icon-btn delete-step-btn" (click)="removeStep(step)"
+                                        title="Remove step">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="step-io-buttons">
+                                <button class="io-btn settings-btn" (click)="openSettings(step)" title="Settings">
+                                    <mat-icon>settings</mat-icon>
+                                </button>
+                                <button class="io-btn delete-step-btn-small" (click)="removeStep(step)"
+                                    title="Remove step">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                    </div>
+
+                    <div class="reorder-overlay" *ngIf="isReorderingSteps">
+                        <div class="reorder-spinner">
+                            <mat-icon>sync</mat-icon>
+                            <span>Saving order...</span>
+                        </div>
+                    </div>
+
+                    <div class="empty-steps" *ngIf="pipelineSteps.length === 0">
+                        <mat-icon>add_circle_outline</mat-icon>
+                        <span>No steps in this pipeline</span>
+                        <small>Click "Add Step" to add agents to the pipeline</small>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="showPipelineForm" class="form-section">
+                <div class="section-header">
+                    <mat-icon>add_circle</mat-icon>
+                    <h2>Create New Pipeline</h2>
+                </div>
+
+                <div *ngIf="message" class="message" [ngClass]="messageType">
+                    <mat-icon>{{ messageType === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+                    {{ message }}
+                </div>
+
+                <form (ngSubmit)="savePipeline()" class="pipeline-form">
+                    <div class="form-group">
+                        <label for="pipelineName">
+                            <mat-icon>badge</mat-icon>
+                            Pipeline Name
+                        </label>
+                        <input type="text" id="pipelineName" [(ngModel)]="newPipeline.name" name="pipelineName"
+                            placeholder="Enter pipeline name" required class="form-input" />
+                    </div>
+                    <div class="form-group">
+                        <label for="outputExtension">
+                            <mat-icon>description</mat-icon>
+                            Output Extension
+                        </label>
+                        <input type="text" id="outputExtension" [(ngModel)]="newPipeline.outputExtension"
+                            name="outputExtension" placeholder="e.g. json, yml, text" class="form-input" required />
+                    </div>
+                    <div class="form-actions">
+                        <button mat-raised-button color="primary" type="submit">Save Pipeline</button>
+                        <button mat-button type="button" (click)="showPipelineForm = false">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

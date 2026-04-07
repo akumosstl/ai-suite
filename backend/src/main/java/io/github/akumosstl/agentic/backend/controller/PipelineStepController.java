@@ -1,0 +1,107 @@
+package io.github.akumosstl.agentic.backend.controller;
+
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
+import io.github.akumosstl.agentic.backend.service.PipelineStepService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/pipelines/{pipelineId}/steps")
+@CrossOrigin(origins = "*")
+public class PipelineStepController {
+    
+    @Autowired
+    private PipelineStepService pipelineStepService;
+    
+    @GetMapping
+    public List<PipelineStep> getSteps(@PathVariable Long pipelineId) {
+        return pipelineStepService.getStepsByPipeline(pipelineId);
+    }
+    
+    @GetMapping("/{stepId}")
+    public PipelineStep getStep(@PathVariable Long pipelineId, @PathVariable Long stepId) {
+        return pipelineStepService.getStepById(stepId);
+    }
+    
+    @PostMapping
+    public PipelineStep addStep(@PathVariable Long pipelineId, 
+                                @RequestParam(required = false) Long agentId,
+                                @RequestParam(required = false) Long scriptId) {
+        return pipelineStepService.addStepToPipeline(pipelineId, agentId, scriptId);
+    }
+    
+    @PutMapping("/{stepId}")
+    public PipelineStep updateStep(@PathVariable Long pipelineId, 
+                                   @PathVariable Long stepId,
+                                   @RequestParam(required = false) Long agentId) {
+        return pipelineStepService.updateStep(stepId, agentId);
+    }
+    
+    @DeleteMapping("/{stepId}")
+    public ResponseEntity<Map<String, String>> removeStep(@PathVariable Long pipelineId,
+                                                          @PathVariable Long stepId) {
+        pipelineStepService.removeStep(stepId);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Pipeline step removed successfully");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @DeleteMapping
+    public ResponseEntity<Map<String, String>> removeAllSteps(@PathVariable Long pipelineId) {
+        pipelineStepService.removeStepsByPipeline(pipelineId);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "All pipeline steps removed successfully");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @PutMapping("/reorder")
+    public List<PipelineStep> reorderSteps(@PathVariable Long pipelineId,
+                                           @RequestBody List<Long> stepIdsInOrder) {
+        return pipelineStepService.reorderSteps(pipelineId, stepIdsInOrder);
+    }
+    
+    @GetMapping("/count")
+    public Map<String, Long> countSteps(@PathVariable Long pipelineId) {
+        long count = pipelineStepService.countSteps(pipelineId);
+        Map<String, Long> response = new HashMap<>();
+        response.put("count", count);
+        return response;
+    }
+    
+    @PutMapping("/{stepId}/input")
+    public PipelineStep saveInput(@PathVariable Long pipelineId,
+                                   @PathVariable Long stepId,
+                                   @RequestBody Map<String, String> inputData) {
+        String content = inputData.get("content");
+        String type = inputData.get("type");
+        return pipelineStepService.saveInput(stepId, content, type);
+    }
+    
+    @PutMapping("/{stepId}/output")
+    public PipelineStep saveOutput(@PathVariable Long pipelineId,
+                                    @PathVariable Long stepId,
+                                    @RequestBody Map<String, String> outputData) {
+        String content = outputData.get("content");
+        String type = outputData.get("type");
+        return pipelineStepService.saveOutput(stepId, content, type);
+    }
+    
+    @PutMapping("/{stepId}/cli")
+    public PipelineStep saveCli(@PathVariable Long pipelineId,
+                                 @PathVariable Long stepId,
+                                 @RequestBody Map<String, String> cliData) {
+        String cli = cliData.get("cli");
+        String parameters = cliData.get("parameters");
+        String arguments = cliData.get("arguments");
+        return pipelineStepService.saveCli(stepId, cli, parameters, arguments);
+    }
+}

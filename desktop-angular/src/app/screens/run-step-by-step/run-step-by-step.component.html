@@ -1,0 +1,209 @@
+<div class="run-stepbystep-screen">
+    <div class="top-menu">
+        <div class="pipeline-title">
+            <mat-icon>play_circle</mat-icon>
+            <span>{{ pipeline?.name || 'Step-by-Step Pipeline' }}</span>
+            <span class="step-progress"
+                *ngIf="pipelineSteps.length > 0 && !isPaused && currentStepIndex < pipelineSteps.length">
+                Step {{ currentStepIndex + 1 }} of {{ pipelineSteps.length }}
+            </span>
+            <span class="step-progress paused" *ngIf="pipelineSteps.length > 0 && isPaused">
+                Paused - Step {{ currentStepIndex + 1 }}
+            </span>
+            <span class="step-progress"
+                *ngIf="pipelineSteps.length > 0 && !isPaused && currentStepIndex >= pipelineSteps.length">
+                Completed
+            </span>
+        </div>
+        <div class="menu-actions">
+            @if (hasPendingSteps && !isRunning) {
+            <button class="action-btn run-all-btn" (click)="runAllRemaining()" title="Run all remaining steps">
+                <mat-icon>fast_forward</mat-icon>
+                <span>Run All</span>
+            </button>
+
+            }
+            <button class="action-btn continue-btn" (click)="continuePipeline()" title="Continue pipeline"
+                *ngIf="isPaused">
+                <mat-icon>play_arrow</mat-icon>
+                <span>Continue</span>
+            </button>
+            <button class="action-btn" (click)="stopPipeline()" title="Stop pipeline" *ngIf="hasPipelineStarted()">
+                <mat-icon>stop</mat-icon>
+                <span>Stop</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="panel-header">
+                <mat-icon>list</mat-icon>
+                <h3>Steps</h3>
+            </div>
+
+            <div class="steps-list">
+                <div class="step-list-item" *ngFor="let step of pipelineSteps; let i = index"
+                    [class.completed]="getStepStatus(step, i) === 'completed'"
+                    [class.running]="getStepStatus(step, i) === 'running'"
+                    [class.ready]="getStepStatus(step, i) === 'ready'"
+                    [class.pending]="getStepStatus(step, i) === 'pending'"
+                    [class.failed]="getStepStatus(step, i) === 'failed'" [class.stopped]="isStopped"
+                    [class.selected]="selectedStep?.id === step.id"
+                    (click)="selectStep(step)">
+                    <div class="step-indicator">
+                        <mat-icon *ngIf="getStepStatus(step, i) === 'completed'">check_circle</mat-icon>
+                        <mat-icon *ngIf="getStepStatus(step, i) === 'running'" class="spinning">refresh</mat-icon>
+                        <mat-icon *ngIf="getStepStatus(step, i) === 'failed'">error</mat-icon>
+                        <span *ngIf="getStepStatus(step, i) === 'pending' || getStepStatus(step, i) === 'ready'">{{ i +
+                            1 }}</span>
+                    </div>
+                    <div class="step-details">
+                        <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                        <span class="step-status-label">{{ getStepStatus(step, i) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="pipeline-visualization">
+                <div class="pipeline-header">
+                    <mat-icon>alt_route</mat-icon>
+                    <h3>Pipeline Flow</h3>
+                </div>
+
+                <div class="pipeline-steps" *ngIf="pipelineSteps.length > 0">
+                    <ng-container *ngFor="let step of pipelineSteps; let i = index">
+                        <div class="pipeline-step" [class.completed]="getStepStatus(step, i) === 'completed'"
+                            [class.running]="getStepStatus(step, i) === 'running'"
+                            [class.pending]="getStepStatus(step, i) === 'pending' || !getStepStatus(step, i)"
+                            [class.ready]="getStepStatus(step, i) === 'ready'"
+                            [class.failed]="getStepStatus(step, i) === 'failed'" [class.stopped]="isStopped"
+                            [class.selected]="selectedStep?.id === step.id"
+                            (click)="selectStep(step)">
+                            <div class="step-number">{{ i + 1 }}</div>
+                            <div class="step-icon">
+                                <mat-icon *ngIf="step.agent">smart_toy</mat-icon>
+                                <mat-icon *ngIf="step.script">code</mat-icon>
+                            </div>
+                            <div class="step-info">
+                                <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                                <span class="step-category" *ngIf="step.agent?.category">{{ step.agent?.category
+                                    }}</span>
+                                <span class="step-namespace" *ngIf="step.script?.namespace">{{ step.script?.namespace
+                                    }}</span>
+                            </div>
+                            <button class="step-run-btn" (click)="runSingleStep(step); $event.stopPropagation()"
+                                *ngIf="canRunStep(step, i)" [disabled]="isStopped" title="Run step">
+                                <mat-icon>play_arrow</mat-icon>
+                            </button>
+                        </div>
+                        <div class="step-connector" *ngIf="i < pipelineSteps.length - 1">
+                            <mat-icon>arrow_forward</mat-icon>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div class="empty-pipeline" *ngIf="pipelineSteps.length === 0">
+                    <mat-icon>info</mat-icon>
+                    <span>No steps in this pipeline</span>
+                </div>
+            </div>
+
+            <div class="step-details-panel" *ngIf="selectedStep">
+                <div class="details-header">
+                    <div class="step-info-header">
+                        <span class="step-badge" [class]="selectedStep.status || 'pending'">
+                            {{ selectedStep.status || 'pending' }}
+                        </span>
+                        <span class="step-number">Step {{ getStepIndex(selectedStep) + 1 }}</span>
+                    </div>
+                    <div class="step-actions">
+                        <button class="control-btn run-btn" (click)="runSingleStep(selectedStep)"
+                            [disabled]="isStepRunnable(selectedStep)"
+                            *ngIf="selectedStep.status === 'pending' || selectedStep.status === 'failed'">
+                            <mat-icon>play_arrow</mat-icon>
+                            Run Step
+                        </button>
+                    </div>
+                </div>
+
+                <div class="step-info">
+                    <div class="info-row">
+                        <mat-icon>smart_toy</mat-icon>
+                        <span>{{ selectedStep.agent?.name || 'N/A' }}</span>
+                    </div>
+                    <div class="info-row" *ngIf="selectedStep.agent?.category">
+                        <mat-icon>category</mat-icon>
+                        <span>{{ selectedStep.agent?.category }}</span>
+                    </div>
+                    <div class="info-row" *ngIf="selectedStep.script">
+                        <mat-icon>code</mat-icon>
+                        <span>{{ selectedStep.script?.name }} ({{ selectedStep.script?.namespace }})</span>
+                    </div>
+                </div>
+
+                <div class="step-prompt" *ngIf="selectedStep.agent?.prompt">
+                    <div class="section-header">
+                        <mat-icon>description</mat-icon>
+                        <span>Agent Prompt</span>
+                    </div>
+                    <div class="prompt-content">{{ selectedStep.agent?.prompt }}</div>
+                </div>
+
+                <div class="step-cli" *ngIf="selectedStep.cli">
+                    <div class="section-header">
+                        <mat-icon>terminal</mat-icon>
+                        <span>CLI Command</span>
+                    </div>
+                    <div class="cli-content">{{ selectedStep.cli }} {{ selectedStep.parameters }} {{
+                        selectedStep.arguments }}</div>
+                </div>
+
+                <div class="step-io-section">
+                    <div class="section-header">
+                        <mat-icon>swap_vert</mat-icon>
+                        <span>Input/Output</span>
+                    </div>
+                    <div class="io-actions">
+                        <button class="io-action-btn" [disabled]="selectedStep.status === 'running'"
+                            (click)="openInputDialog(selectedStep)" title="Edit Input">
+                            <mat-icon>input</mat-icon>
+                            <span>Input</span>
+                        </button>
+                        <button class="io-action-btn" [disabled]="selectedStep.status === 'running'"
+                            (click)="openOutputDialog(selectedStep)" title="Edit Output">
+                            <mat-icon>output</mat-icon>
+                            <span>Output</span>
+                        </button>
+                        <button class="io-action-btn" [disabled]="selectedStep.status === 'running'"
+                            (click)="openConsoleOutput(selectedStep)" title="View Console Output">
+                            <mat-icon>terminal</mat-icon>
+                            <span>Console</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-section" *ngIf="selectedStep.outputContent">
+                    <div class="section-header">
+                        <mat-icon>article</mat-icon>
+                        <span>Output Preview</span>
+                    </div>
+                    <pre
+                        class="output-content">{{ selectedStep.outputContent | slice:0:500 }}{{ selectedStep.outputContent.length > 500 ? '...' : '' }}</pre>
+                </div>
+            </div>
+
+            <div class="no-step-selected" *ngIf="!selectedStep && pipelineSteps.length > 0">
+                <mat-icon>touch_app</mat-icon>
+                <span>Click on a step to view details</span>
+            </div>
+
+            <div class="empty-pipeline" *ngIf="pipelineSteps.length === 0">
+                <mat-icon>info</mat-icon>
+                <span>No steps in this pipeline</span>
+            </div>
+        </div>
+    </div>
+</div>
