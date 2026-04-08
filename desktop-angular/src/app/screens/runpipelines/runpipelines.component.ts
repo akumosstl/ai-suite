@@ -275,28 +275,18 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
               this.cdr.markForCheck();
               this.loadPipelineSteps(true, true);
               this.startPolling();
-            } else if (this.pipeline?.status === 'running') {
-              this.isRunning = true;
-              this.showLoading = true;
+            } else if (run && run.status === 'completed') {
+              this.currentRunId = run.id || null;
+              this.isRunning = false;
+              this.showLoading = false;
               this.cdr.markForCheck();
-              
-              this.apiService.isPipelinePaused(projectId, pipelineId).subscribe({
-                next: (pausedResponse) => {
-                  this.isPaused = pausedResponse.paused;
-                  this.isRunning = !this.isPaused;
-                  if (pausedResponse.pendingStepOrder) {
-                    this.currentStepIndex = pausedResponse.pendingStepOrder - 1;
-                  }
-                  this.cdr.markForCheck();
-                  this.loadPipelineSteps(true, true);
-                  this.startPolling();
-                },
-                error: () => {
-                  this.cdr.markForCheck();
-                  this.loadPipelineSteps(true, true);
-                  this.startPolling();
-                }
-              });
+              this.loadPipelineSteps(true, false);
+            } else if (run && run.status === 'failed') {
+              this.currentRunId = run.id || null;
+              this.isRunning = false;
+              this.showLoading = false;
+              this.cdr.markForCheck();
+              this.loadPipelineSteps(true, false);
             } else {
               this.cdr.markForCheck();
               this.createPipelineRun();
@@ -616,7 +606,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
 
   openConsoleOutput(step: PipelineStep) {
     this.dialog.open(ConsoleOutputDialogComponent, {
-      data: { step },
+      data: { step, pipelineId: this.pipeline?.id },
       width: '95vw',
       height: '90vh',
       maxWidth: 'none',

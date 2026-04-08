@@ -85,10 +85,6 @@ public class AgentService {
             
             String fullPath = project.getPath() + File.separator + targetAgentsPath;
             
-            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
-                fullPath = fullPath + File.separator + agent.getPath();
-            }
-            
             Path agentPathObj = Paths.get(fullPath);
             Files.createDirectories(agentPathObj);
             
@@ -106,12 +102,7 @@ public class AgentService {
             
             Files.write(filePath, content.toString().getBytes());
             
-            String agentRelativePath;
-            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
-                agentRelativePath = agent.getPath() + File.separator + fileName;
-            } else {
-                agentRelativePath = targetAgentsPath + File.separator + fileName;
-            }
+            String agentRelativePath = fileName;
             agent.setPath(agentRelativePath);
             agentRepository.save(agent);
             

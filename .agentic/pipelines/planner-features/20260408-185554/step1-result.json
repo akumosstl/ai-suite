@@ -1,0 +1,10 @@
+[0m
+> build · big-pickle
+[0m
+Piada: Por que o desenvolvedor foi ao psychiatrist? Porque ele tinha muitos bugs na cabeça! 🤓
+
+Agora esperando 30 segundos...
+[0m$ [0mtimeout /t 30 /nobreak > nul 2>&1 & ping -n 31 127.0.0.1 > nul 2>&1
+2
+
+--- Step completed ---

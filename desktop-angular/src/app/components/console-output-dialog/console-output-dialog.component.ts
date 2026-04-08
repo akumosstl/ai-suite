@@ -1,12 +1,15 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { PipelineStep } from '../../services/api.service';
+import { ApiService, PipelineStep } from '../../services/api.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export interface ConsoleOutputDialogData {
   step: PipelineStep;
+  pipelineId?: number;
 }
 
 @Component({
@@ -24,15 +27,15 @@ export interface ConsoleOutputDialogData {
         <mat-icon class="header-icon">terminal</mat-icon>
         <h2 class="dialog-title">Console Output</h2>
         <span class="step-label">{{ data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
-        <span class="status-badge" [class]="data.step.status">{{ data.step.status || 'pending' }}</span>
+        <span class="status-badge" [class]="currentStatus">{{ currentStatus || 'pending' }}</span>
         <button class="close-btn" (click)="close()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
       
       <mat-dialog-content class="dialog-content">
-        <div class="console-wrapper">
-          <pre class="console-text">{{ data.step.outputContent || 'No output yet...' }}</pre>
+        <div class="console-wrapper" #consoleWrapper>
+          <pre class="console-text">{{ currentOutput || 'No output yet...' }}</pre>
         </div>
       </mat-dialog-content>
     </div>
@@ -141,28 +144,89 @@ export interface ConsoleOutputDialogData {
       overflow: auto;
     }
 
-    .console-output {
-      padding: 20px;
-      min-height: 100%;
-    }
-
-    .console-output pre {
+    .console-text {
       margin: 0;
-      font-family: 'Consolas', 'Monaco', monospace;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
       font-size: 0.9rem;
-      color: #b0b0b0;
+      color: #4caf50;
       white-space: pre-wrap;
       word-break: break-word;
-      line-height: 1.6;
+      line-height: 1.5;
+      padding: 16px;
     }
   `]
 })
-export class ConsoleOutputDialogComponent {
+export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, OnDestroy {
+  @ViewChild('consoleWrapper') consoleWrapper?: ElementRef;
+  
+  currentOutput: string = '';
+  currentStatus: string = 'pending';
+  
+  private destroy$ = new Subject<void>();
+  private pollingInterval?: any;
+  private lastOutputLength = 0;
+  private autoScroll = true;
+  
   constructor(
     public dialogRef: MatDialogRef<ConsoleOutputDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ConsoleOutputDialogData
-  ) {}
-
+    @Inject(MAT_DIALOG_DATA) public data: ConsoleOutputDialogData,
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.currentOutput = data.step.outputContent || '';
+    this.currentStatus = data.step.status || 'pending';
+  }
+  
+  ngOnInit() {
+    if (this.data.pipelineId && this.data.step.id) {
+      this.startPolling();
+    }
+  }
+  
+  ngAfterViewChecked() {
+    if (this.autoScroll && this.currentOutput.length > this.lastOutputLength) {
+      this.scrollToBottom();
+      this.lastOutputLength = this.currentOutput.length;
+    }
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+  }
+  
+  private startPolling() {
+    this.pollingInterval = setInterval(() => {
+      if (this.data.pipelineId && this.data.step.id) {
+        this.apiService.getPipelineSteps(this.data.pipelineId).subscribe({
+          next: (steps) => {
+            const step = steps.find((s: PipelineStep) => s.id === this.data.step.id);
+            if (step) {
+              if (step.outputContent && step.outputContent !== this.currentOutput) {
+                this.currentOutput = step.outputContent;
+              }
+              if (step.status && step.status !== this.currentStatus) {
+                this.currentStatus = step.status || 'pending';
+              }
+              this.cdr.detectChanges();
+            }
+          },
+          error: (err) => console.error('Error polling step output:', err)
+        });
+      }
+    }, 2000);
+  }
+  
+  private scrollToBottom() {
+    if (this.consoleWrapper) {
+      const element = this.consoleWrapper.nativeElement;
+      element.scrollTop = element.scrollHeight;
+    }
+  }
+  
   close() {
     this.dialogRef.close();
   }

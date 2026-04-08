@@ -50,6 +50,20 @@ export interface StepIODialogData {
         <div class="editor-header">
           <mat-icon>code</mat-icon>
           <span>Content Editor</span>
+          <span class="help-toggle" (click)="toggleHelp()">
+            <mat-icon>help_outline</mat-icon>
+            {{ showHelp ? 'Hide' : 'Show' }} syntax help
+          </span>
+        </div>
+        <div class="syntax-help" *ngIf="showHelp">
+          <div class="help-section">
+            <strong>Dynamic References:</strong>
+            <ul>
+              <li><code>{{'{{'}}step:N:output{{'}}'}}</code> - Reference step N's output</li>
+              <li><code>{{'{{'}}file:path/to/file.json{{'}}'}}</code> - Read content from file</li>
+              <li><code>{{'{{'}}env:VARIABLE_NAME{{'}}'}}</code> - Read environment variable</li>
+            </ul>
+          </div>
         </div>
         <textarea 
           #editorTextarea
@@ -164,6 +178,50 @@ export interface StepIODialogData {
       height: 18px;
     }
 
+    .help-toggle {
+      margin-left: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #4fc3f7;
+      font-size: 0.8rem;
+    }
+
+    .help-toggle:hover {
+      color: #81d4fa;
+    }
+
+    .help-toggle mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .syntax-help {
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #3a3a3a;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    .help-section ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .help-section li {
+      margin: 4px 0;
+    }
+
+    .help-section code {
+      background: #333;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #4fc3f7;
+    }
+
     .content-editor {
       width: 100%;
       min-height: 250px;
@@ -270,6 +328,7 @@ export interface StepIODialogData {
 export class StepIODialogComponent {
   selectedType = 'txt';
   content = '';
+  showHelp = false;
 
   constructor(
     public dialogRef: MatDialogRef<StepIODialogComponent>,
@@ -287,6 +346,11 @@ export class StepIODialogComponent {
   }
 
   onTypeChange(): void {
+    this.cdr.detectChanges();
+  }
+
+  toggleHelp(): void {
+    this.showHelp = !this.showHelp;
     this.cdr.detectChanges();
   }
 

@@ -1,0 +1,44 @@
+[0m
+> build · big-pickle
+[0m
+Vou explorar a estrutura do projeto Angular para entender como criar este novo menu Template.
+[0m✱ [0mGlob "desktop-angular/src/app/**/*menu*.component.ts"[90m 2 matches[0m
+[0m✱ [0mGlob "desktop-angular/src/app/**/*agent*.component.ts"[90m 3 matches[0m
+[0m→ [0mRead desktop-angular\src\app\screens\menu\menu.component.ts
+[0m✱ [0mGlob "desktop-angular/src/app/**/*.routes.ts"[90m 1 match[0m
+[0m→ [0mRead desktop-angular\src\app\app.routes.ts
+[0m✱ [0mGlob "backend/src/main/java/**/*Template*.java"[90m 0 matches[0m
+[0m✱ [0mGlob "desktop-angular/src/app/services/*.service.ts"[90m 2 matches[0m
+{
+  "feature_name": "Template Management Screen",
+  "technical_summary": "Criar nova tela Template com formulário para gerenciamento de templates (name, description, type, content) com formatação dinâmica baseada no tipo selecionado",
+  "implementation_steps": [
+    {
+      "step_id": 1,
+      "action": "create",
+      "file_path": "desktop-angular/src/app/screens/template/template.component.ts",
+      "description": "Criar novo componente TemplateComponent standalone com formulário contendo campos: name (input text), description (input text), type (select com opções json/txt/md/yml/outro), content (textarea com formatter dinâmico baseado no type)",
+      "logic_hint": "Usar ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule. O campo content deve usar textarea simples, pois a formatação syntax highlighting requereria libs adicionais (como ngx-highlightjs). O type controla o placeholder e behavior visual"
+    },
+    {
+      "step_id": 2,
+      "action": "modify",
+      "file_path": "desktop-angular/src/app/app.routes.ts",
+      "description": "Adicionar rota para /template pointing para TemplateComponent",
+      "logic_hint": "Importar TemplateComponent e adicionar { path: 'template', component: TemplateComponent } às rotas"
+    },
+    {
+      "step_id": 3,
+      "action": "modify",
+      "file_path": "desktop-angular/src/app/screens/menu/menu.component.ts",
+      "description": "Adicionar botão de navegação para Template no menu existente",
+      "logic_hint": "Adicionar novo button action-button com Router navigate para /template"
+    }
+  ],
+  "verification": {
+    "test_command": "cd desktop-angular && npm run build",
+    "expected_behavior": "Build completa com sucesso, sem erros de TypeScript"
+  }
+}
+
+--- Step completed ---

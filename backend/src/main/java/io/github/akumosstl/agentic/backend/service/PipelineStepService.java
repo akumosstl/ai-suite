@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,6 +28,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class PipelineStepService {
@@ -51,6 +56,120 @@ public class PipelineStepService {
     
     @Autowired
     private ScriptService scriptService;
+    
+    private static final Pattern STEP_OUTPUT_PATTERN = Pattern.compile("\\{\\{step:(\\d+):output\\}\\}");
+    private static final Pattern FILE_PATTERN = Pattern.compile("\\{\\{file:([^}]+)\\}\\}");
+    private static final Pattern ENV_PATTERN = Pattern.compile("\\{\\{env:([A-Za-z_][A-Za-z0-9_]*)\\}\\}");
+
+    private String escapeWindowsCommand(String input) {
+        if (input == null) return "";
+        return input
+            .replace("\"", "\"\"")
+            .replace("%", "%%")
+            .replace("^", "^^")
+            .replace("&", "^&")
+            .replace("|", "^|")
+            .replace("<", "^<")
+            .replace(">", "^>")
+            .replace("\r", "")
+            .replace("\n", " ");
+    }
+
+    private String resolveInputContent(String inputContent, Long pipelineId, int currentStepOrder, String runDir) {
+        if (inputContent == null || inputContent.isEmpty()) {
+            return inputContent;
+        }
+        
+        String resolved = inputContent;
+        
+        resolved = resolveStepOutputReferences(resolved, pipelineId, currentStepOrder, runDir);
+        
+        resolved = resolveFileReferences(resolved);
+        
+        resolved = resolveEnvironmentVariables(resolved);
+        
+        return resolved;
+    }
+    
+    private String resolveStepOutputReferences(String content, Long pipelineId, int currentStepOrder, String runDir) {
+        Matcher matcher = STEP_OUTPUT_PATTERN.matcher(content);
+        StringBuffer sb = new StringBuffer();
+        
+        while (matcher.find()) {
+            int referencedStepOrder = Integer.parseInt(matcher.group(1));
+            String replacement;
+            
+            if (referencedStepOrder >= currentStepOrder) {
+                replacement = "{{step:" + referencedStepOrder + ":output}} (future step - not available yet)";
+            } else {
+                List<PipelineStep> steps = getStepsByPipeline(pipelineId);
+                PipelineStep referencedStep = steps.stream()
+                    .filter(s -> s.getStepOrder() == referencedStepOrder)
+                    .findFirst()
+                    .orElse(null);
+                
+                if (referencedStep != null && referencedStep.getOutputContent() != null) {
+                    replacement = referencedStep.getOutputContent();
+                } else {
+                    String resultFilePath = runDir + File.separator + "step" + referencedStepOrder + "-result.txt";
+                    File resultFile = new File(resultFilePath);
+                    if (resultFile.exists()) {
+                        try {
+                            replacement = Files.readString(resultFile.toPath());
+                        } catch (Exception e) {
+                            replacement = "{{step:" + referencedStepOrder + ":output}} (file not readable: " + e.getMessage() + ")";
+                        }
+                    } else {
+                        replacement = "{{step:" + referencedStepOrder + ":output}} (no output found)";
+                    }
+                }
+            }
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+    
+    private String resolveFileReferences(String content) {
+        Matcher matcher = FILE_PATTERN.matcher(content);
+        StringBuffer sb = new StringBuffer();
+        
+        while (matcher.find()) {
+            String filePath = matcher.group(1);
+            String replacement;
+            
+            File file = new File(filePath);
+            if (file.exists() && file.isFile()) {
+                try {
+                    replacement = Files.readString(file.toPath());
+                } catch (Exception e) {
+                    replacement = "{{file:" + filePath + "}} (error reading: " + e.getMessage() + ")";
+                }
+            } else {
+                replacement = "{{file:" + filePath + "}} (file not found)";
+            }
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+    
+    private String resolveEnvironmentVariables(String content) {
+        Matcher matcher = ENV_PATTERN.matcher(content);
+        StringBuffer sb = new StringBuffer();
+        
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String replacement = System.getenv(varName);
+            
+            if (replacement == null) {
+                replacement = "{{env:" + varName + "}} (not set)";
+            }
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
     
     public List<PipelineStep> getStepsByPipeline(Long pipelineId) {
         return pipelineStepRepository.findByPipeline_IdOrderByStepOrderAsc(pipelineId);
@@ -436,9 +555,9 @@ public class PipelineStepService {
             System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
             
             if ("script".equals(stepType)) {
-                output = executeScriptStep(step, pipelineId, step.getId(), workingDir, previousOutputFile);
+                output = executeScriptStep(step, pipelineId, step.getId(), workingDir, runDir, previousOutputFile);
             } else if (step.getAgent() != null) {
-                output = executeAgentStep(step, pipelineId, step.getId(), workingDir, previousOutputFile);
+                output = executeAgentStep(step, pipelineId, step.getId(), workingDir, runDir, previousOutputFile);
             } else if (step.getScript() != null) {
                 output = "Script execution not implemented yet";
             } else {
@@ -491,7 +610,42 @@ public class PipelineStepService {
         }
     }
     
-    private String executeAgentStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String previousOutputFile) throws Exception {
+    private static final int PERSIST_INTERVAL = 10;
+    private int lineCount = 0;
+    
+    private void streamProcessOutput(BufferedReader reader, Long pipelineId, Long stepId, int stepOrder, StringBuilder outputBuilder) {
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                outputBuilder.append(line).append("\n");
+                sseService.sendStepOutput(pipelineId, stepId, stepOrder, line + "\n", "running");
+                lineCount++;
+                if (lineCount % PERSIST_INTERVAL == 0) {
+                    persistOutputIncrementally(stepId, outputBuilder.toString());
+                }
+            }
+            if (lineCount % PERSIST_INTERVAL != 0) {
+                persistOutputIncrementally(stepId, outputBuilder.toString());
+            }
+        } catch (Exception e) {
+            sseService.sendStepOutput(pipelineId, stepId, stepOrder, "Error reading output: " + e.getMessage() + "\n", "running");
+        }
+    }
+    
+    private void persistOutputIncrementally(Long stepId, String content) {
+        try {
+            PipelineStep step = pipelineStepRepository.findById(stepId).orElse(null);
+            if (step != null) {
+                step.setOutputContent(content);
+                step.setOutputType("text");
+                pipelineStepRepository.save(step);
+            }
+        } catch (Exception e) {
+            System.out.println("DEBUG: Error persisting output incrementally: " + e.getMessage());
+        }
+    }
+    
+    private String executeAgentStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
         Agent agent = step.getAgent();
         
         System.out.println("DEBUG: executeAgentStep - agent is null: " + (agent == null));
@@ -530,6 +684,7 @@ public class PipelineStepService {
         }
         
         String inputContent = step.getInputContent() != null ? step.getInputContent() : "";
+        inputContent = resolveInputContent(inputContent, pipelineId, step.getStepOrder(), runDir);
         String outputContent = step.getOutputContent() != null ? step.getOutputContent() : "";
         
         prompt = prompt.replace("{{agentic-input:file}}", inputContent);
@@ -542,12 +697,12 @@ public class PipelineStepService {
         String arguments = step.getArguments();
         
         StringBuilder fullCommand = new StringBuilder();
-        
+
         if (cli != null && !cli.isEmpty()) {
             if (cli.equals("copilot")) {
                 fullCommand.append("copilot --allow-all-paths --allow-all-tools -p ");
                 // Escape prompt for Windows cmd
-                String escapedPrompt = prompt.replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+                String escapedPrompt = escapeWindowsCommand(prompt);
                 fullCommand.append('"').append(escapedPrompt).append('"');
             } else if (!cli.equals("opencode")) {
                 fullCommand.append(cli);
@@ -557,7 +712,7 @@ public class PipelineStepService {
                 if (arguments != null && !arguments.isEmpty()) {
                     fullCommand.append(" ").append(arguments);
                 }
-                fullCommand.append(" \"").append(prompt.replace("\"", "\\\"").replace("\r", "").replace("\n", " ")).append("\"");
+                fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
             } else {
                 fullCommand.append("opencode run");
                 if (parameters != null && !parameters.isEmpty()) {
@@ -566,7 +721,7 @@ public class PipelineStepService {
                 if (arguments != null && !arguments.isEmpty()) {
                     fullCommand.append(" ").append(arguments);
                 }
-                fullCommand.append(" \"").append(prompt.replace("\"", "\\\"").replace("\r", "").replace("\n", " ")).append("\"");
+                fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
             }
         } else {
             fullCommand.append("opencode run");
@@ -601,8 +756,9 @@ public class PipelineStepService {
         env.put("OPENCODE_HOME", System.getenv("USERPROFILE") != null ? System.getenv("USERPROFILE") : System.getenv("HOME"));
         
         String path = env.get("PATH");
-        if (path != null) {
-            env.put("PATH", path + ";" + System.getenv("USERPROFILE") + "\\AppData\\Local\\Programs\\opencode");
+        String userProfile = System.getenv("USERPROFILE");
+        if (path != null && userProfile != null) {
+            env.put("PATH", path + ";" + userProfile + "\\AppData\\Roaming\\npm");
         }
         
         File outputFile = new File(System.getProperty("java.io.tmpdir"), "pipeline_output_" + System.currentTimeMillis() + ".txt");
@@ -610,16 +766,27 @@ public class PipelineStepService {
         outputFile.deleteOnExit();
         errorFile.deleteOnExit();
         
-        processBuilder.redirectErrorStream(false);
-        processBuilder.redirectOutput(Redirect.to(outputFile));
-        processBuilder.redirectError(Redirect.to(errorFile));
+        processBuilder.redirectErrorStream(true);
+        processBuilder.redirectOutput(Redirect.PIPE);
         processBuilder.redirectInput(Redirect.PIPE);
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting process with file redirection...\n", "running");
-        System.out.println("DEBUG: Starting process with file redirection...");
+        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting process with real-time output streaming...\n", "running");
+        System.out.println("DEBUG: Starting process with real-time streaming...");
         Process process = processBuilder.start();
-        // Register the running process for stop support
         registerRunningProcess(pipelineId, process);
+        
+        StringBuilder output = new StringBuilder();
+        
+        Thread outputThread = new Thread(() -> {
+            try {
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+                streamProcessOutput(reader, pipelineId, stepId, step.getStepOrder(), output);
+            } catch (Exception e) {
+                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
+            }
+        });
+        outputThread.start();
         
         try {
             java.io.OutputStream processOutputStream = process.getOutputStream();
@@ -634,15 +801,7 @@ public class PipelineStepService {
         System.out.println("DEBUG: Waiting for process to complete...");
         int exitCode = process.waitFor();
         
-        StringBuilder output = new StringBuilder();
-        try {
-            List<String> lines = Files.readAllLines(outputFile.toPath(), StandardCharsets.UTF_8);
-            for (String line : lines) {
-                output.append(line).append("\n");
-            }
-        } catch (Exception e) {
-            output.append("Error reading output file: ").append(e.getMessage()).append("\n");
-        }
+        outputThread.join(5000);
         
         System.out.println("Exit code: " + exitCode);
         System.out.println("Output: " + output.toString());
@@ -663,7 +822,7 @@ public class PipelineStepService {
         return output.toString();
     }
     
-    private String executeScriptStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String previousOutputFile) throws Exception {
+    private String executeScriptStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
         Script script = step.getScript();
         String scriptContent = script.getContent();
         
@@ -684,6 +843,12 @@ public class PipelineStepService {
             }
         } else {
             System.out.println("DEBUG: No {{previous-output-file}} placeholder found in script");
+        }
+        
+        String inputContent = step.getInputContent() != null ? step.getInputContent() : "";
+        inputContent = resolveInputContent(inputContent, pipelineId, step.getStepOrder(), runDir);
+        if (!inputContent.isEmpty()) {
+            scriptContent = scriptContent.replace("{{agentic-input:file}}", inputContent);
         }
         
         String os = System.getProperty("os.name").toLowerCase();
@@ -719,44 +884,40 @@ public class PipelineStepService {
         env.put("OPENCODE_HOME", System.getenv("USERPROFILE") != null ? System.getenv("USERPROFILE") : System.getenv("HOME"));
         
         String path = env.get("PATH");
-        if (path != null && System.getenv("USERPROFILE") != null) {
-            env.put("PATH", path + ";" + System.getenv("USERPROFILE") + "\\AppData\\Local\\Programs\\opencode");
+        String userProfile = System.getenv("USERPROFILE");
+        if (path != null && userProfile != null) {
+            env.put("PATH", path + ";" + userProfile + "\\AppData\\Roaming\\npm");
         }
         
         File outputFile = new File(System.getProperty("java.io.tmpdir"), "script_output_" + System.currentTimeMillis() + ".txt");
-        File errorFile = new File(System.getProperty("java.io.tmpdir"), "script_error_" + System.currentTimeMillis() + ".txt");
         outputFile.deleteOnExit();
-        errorFile.deleteOnExit();
         
-        processBuilder.redirectErrorStream(false);
-        processBuilder.redirectOutput(Redirect.to(outputFile));
-        processBuilder.redirectError(Redirect.to(errorFile));
+        processBuilder.redirectErrorStream(true);
+        processBuilder.redirectOutput(Redirect.PIPE);
         
+        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting script with real-time output streaming...\n", "running");
+        System.out.println("DEBUG: Starting script with real-time streaming...");
         Process process = processBuilder.start();
-        // Register the running process for stop support
         registerRunningProcess(pipelineId, process);
+        
+        StringBuilder output = new StringBuilder();
+        
+        Thread outputThread = new Thread(() -> {
+            try {
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+                streamProcessOutput(reader, pipelineId, stepId, step.getStepOrder(), output);
+            } catch (Exception e) {
+                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
+            }
+        });
+        outputThread.start();
         
         int exitCode = process.waitFor();
         
-        StringBuilder output = new StringBuilder();
-        try {
-            List<String> lines = Files.readAllLines(outputFile.toPath(), StandardCharsets.UTF_8);
-            for (String line : lines) {
-                output.append(line).append("\n");
-            }
-        } catch (Exception e) {
-            output.append("Error reading output file: ").append(e.getMessage()).append("\n");
-        }
+        outputThread.join(5000);
         
         if (exitCode != 0) {
-            try {
-                List<String> errorLines = Files.readAllLines(errorFile.toPath(), StandardCharsets.UTF_8);
-                for (String line : errorLines) {
-                    output.append(line).append("\n");
-                }
-            } catch (Exception e) {
-                // ignore
-            }
             String errorMsg = output.toString();
             if (errorMsg.isEmpty()) {
                 throw new RuntimeException("Script failed with exit code: " + exitCode);

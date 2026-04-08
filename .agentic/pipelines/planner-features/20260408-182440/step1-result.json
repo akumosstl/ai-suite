@@ -1,0 +1,45 @@
+[0m
+> build · big-pickle
+[0m
+[0m• [0mExplore codebase structure[90m Explore Agent[0m
+[0m✓ [0mExplore codebase structure[90m Explore Agent[0m
+{
+  "feature_name": "Template Page - Create Template Management",
+  "technical_summary": "Nova página para gerenciamento de templates com formulário containing name, description, type (dropdown) e content (textarea com formatter dinâmico baseado no tipo)",
+  "implementation_steps": [
+    {
+      "step_id": 1,
+      "action": "create",
+      "file_path": "desktop-angular/src/app/screens/template/template.component.ts",
+      "description": "Criar novo componente TemplateComponent com split-pane layout (lista de templates esquerda + formulário direita). O formulário deve ter campos: name (input text), description (input text), type (select: json, txt, md, yml, outro), content (textarea que altera o formatter display baseado no type selecionado)",
+      "logic_hint": "Usar padrão existente em AgentsComponent: Left panel com lista searchável + Right panel com form. Usar FormsModule para [(ngModel)]. Para o textarea com formatter, usar CodeMirror ou similar com mode alterávelbased on type (json→json mode, md→markdown, yml→yaml, etc.)"
+    },
+    {
+      "step_id": 2,
+      "action": "modify",
+      "file_path": "desktop-angular/src/app/app.routes.ts",
+      "description": "Adicionar rota para a página de Template: { path: 'template', component: TemplateComponent }",
+      "logic_hint": "Adicionar import do TemplateComponent e rota dentro do array de rotas, seguindo padrão existente"
+    },
+    {
+      "step_id": 3,
+      "action": "modify",
+      "file_path": "desktop-angular/src/app/components/menu-bar/menu-bar.component.ts",
+      "description": "Adicionar item de menu para Template no menu-bar, se não existir",
+      "logic_hint": "Verificar estrutura existente dos menu items e adicionar novo item 'Template' com routerLink '/template'"
+    },
+    {
+      "step_id": 4,
+      "action": "create",
+      "file_path": "desktop-angular/src/app/screens/template/template.component.spec.ts",
+      "description": "Criar arquivo de testes unitários para o TemplateComponent",
+      "logic_hint": "Seguir padrão de testes existente em outros componentes (AgentsComponent spec como referência)"
+    }
+  ],
+  "verification": {
+    "test_command": "cd desktop-angular && npm test -- --filter=\"Template\"",
+    "expected_behavior": "Testes passando e componente renderizando corretamente com formulário funcional"
+  }
+}
+
+--- Step completed ---

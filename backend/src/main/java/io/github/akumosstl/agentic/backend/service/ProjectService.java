@@ -519,10 +519,6 @@ public class ProjectService {
             
             String fullPath = project.getPath() + File.separator + targetAgentsPath;
             
-            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
-                fullPath = fullPath + File.separator + agent.getPath();
-            }
-            
             Path agentPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(agentPathObj);
@@ -541,12 +537,7 @@ public class ProjectService {
                 
                 Files.write(filePath, content.toString().getBytes());
                 
-                String agentRelativePath;
-                if (agent.getPath() != null && !agent.getPath().isEmpty()) {
-                    agentRelativePath = agent.getPath() + File.separator + fileName;
-                } else {
-                    agentRelativePath = targetAgentsPath + File.separator + fileName;
-                }
+                String agentRelativePath = fileName;
                 agent.setPath(agentRelativePath);
                 agentRepository.save(agent);
                 
@@ -563,7 +554,34 @@ public class ProjectService {
     @Transactional
     public Project removeAgentFromProject(Long projectId, Long agentId) {
         Project project = getProjectById(projectId);
-        project.getAgents().removeIf(agent -> agent.getId().equals(agentId));
+        
+        Agent agent = agentRepository.findById(agentId).orElse(null);
+        if (agent != null && agent.getPath() != null && !agent.getPath().isEmpty()) {
+            String targetAgentsPath = "agents";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getAgentsPath() != null && !target.getAgentsPath().isEmpty()) {
+                targetAgentsPath = target.getAgentsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetAgentsPath + File.separator + agent.getPath();
+            Path filePath = Paths.get(fullPath);
+            try {
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                // Log but don't fail - file might not exist
+            }
+        }
+        
+        project.getAgents().removeIf(a -> a.getId().equals(agentId));
         return projectRepository.save(project);
     }
 }
