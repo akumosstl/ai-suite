@@ -116,7 +116,18 @@ export interface StepSettingsDialogData {
             <span>CLI</span>
           </ng-template>
           <div class="tab-content cli-tab">
-            <mat-form-field appearance="outline" class="full-width">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="isScriptStep">
+              <mat-label>Runtime</mat-label>
+              <mat-select [(ngModel)]="selectedRuntime" (selectionChange)="onCliChange()">
+                <mat-option value="cmd">cmd</mat-option>
+                <mat-option value="node">node</mat-option>
+                <mat-option value="java">java</mat-option>
+                <mat-option value="py">py</mat-option>
+                <mat-option value="custom">Custom...</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width" *ngIf="!isScriptStep">
               <mat-label>CLI</mat-label>
               <mat-select [(ngModel)]="selectedCli" (selectionChange)="onCliChange()">
                 <mat-option value="opencode">opencode</mat-option>
@@ -125,7 +136,7 @@ export interface StepSettingsDialogData {
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width" *ngIf="selectedCli === 'custom'">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="showCustomCliInput">
               <mat-label>Custom CLI</mat-label>
               <input matInput [(ngModel)]="customCli" placeholder="Enter custom CLI name">
             </mat-form-field>
@@ -458,9 +469,22 @@ export class StepSettingsDialogComponent {
   parameters = '';
   arguments_ = '';
 
+  selectedRuntime = 'cmd';
+
   promptContent = '';
 
   step: PipelineStep;
+
+  get isScriptStep(): boolean {
+    return this.step.type === 'script';
+  }
+
+  get showCustomCliInput(): boolean {
+    if (this.isScriptStep) {
+      return this.selectedRuntime === 'custom';
+    }
+    return this.selectedCli === 'custom';
+  }
 
   constructor(
     public dialogRef: MatDialogRef<StepSettingsDialogComponent>,
@@ -476,12 +500,17 @@ export class StepSettingsDialogComponent {
     this.outputContent = data.step.outputContent || '';
     this.outputType = data.step.outputType || 'txt';
 
-    const cli = data.step.cli || '';
-    if (cli === 'opencode' || cli === 'copilot') {
-      this.selectedCli = cli;
-    } else if (cli) {
-      this.selectedCli = 'custom';
-      this.customCli = cli;
+    if (this.isScriptStep) {
+      this.selectedRuntime = data.step.runtime || 'cmd';
+      this.customCli = data.step.cli || '';
+    } else {
+      const cli = data.step.cli || '';
+      if (cli === 'opencode' || cli === 'copilot') {
+        this.selectedCli = cli;
+      } else if (cli) {
+        this.selectedCli = 'custom';
+        this.customCli = cli;
+      }
     }
     this.parameters = data.step.parameters || '';
     this.arguments_ = data.step.arguments || '';
@@ -530,10 +559,20 @@ export class StepSettingsDialogComponent {
   }
 
   getCliValue(): string {
+    if (this.isScriptStep) {
+      if (this.selectedRuntime === 'custom') {
+        return this.customCli.trim();
+      }
+      return this.selectedRuntime;
+    }
     if (this.selectedCli === 'custom') {
       return this.customCli.trim();
     }
     return this.selectedCli;
+  }
+
+  getRuntimeValue(): string | undefined {
+    return this.isScriptStep ? this.selectedRuntime : '';
   }
 
   onSave(): void {
@@ -544,7 +583,14 @@ export class StepSettingsDialogComponent {
       next: () => {
         this.apiService.saveStepOutput(pipelineId, stepId, this.outputContent, this.outputType).subscribe({
           next: () => {
-            this.apiService.saveStepCli(pipelineId, stepId, this.getCliValue(), this.parameters, this.arguments_).subscribe({
+            this.apiService.saveStepCli(
+              pipelineId, 
+              stepId, 
+              this.isScriptStep ? '' : this.getCliValue(), 
+              this.parameters, 
+              this.arguments_,
+              this.getRuntimeValue()
+            ).subscribe({
               next: (updatedStep) => {
                 this.dialogRef.close(updatedStep);
               },

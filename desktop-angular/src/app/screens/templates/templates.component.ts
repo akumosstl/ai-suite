@@ -1,67 +1,68 @@
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
+import { RouterModule } from '@angular/router';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatCardModule } from '@angular/material/card';
-import { MatListModule } from '@angular/material/list';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ApiService, Agent, Project } from '../../services/api.service';
-import { NewProjectDialogComponent } from '../../components/new-project-dialog/new-project-dialog.component';
-import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
-import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
-import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
-import { ProjectContextService } from '../../services/project-context.service';
+import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
+import { ApiService, Template } from '../../services/api.service';
 
 @Component({
-  selector: 'app-agents',
+  selector: 'app-templates',
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
     RouterModule,
-    MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
-    MatSelectModule,
-    MatAutocompleteModule,
-    MatCardModule,
-    MatListModule,
-    MatProgressSpinnerModule,
     MatDialogModule,
-    MatMenuModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     MenuBarComponent,
-    PipelineResultDialogComponent,
-    PromptEditorModalComponent,
     PanelToggleComponent
   ],
   template: `
-    <div class="agents-container">
+    <div class="templates-container">
       <app-menu-bar></app-menu-bar>
       
       <div class="content" [class.left-collapsed]="leftPanelCollapsed">
         <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
           <div class="panel-header">
             <div class="panel-title">
+              <mat-icon>description</mat-icon>
+              <span>Templates - {{ getTypeLabel() }}</span>
+            </div>
+            <button class="icon-btn add-btn" (click)="clearForm()" title="Add new template">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          
+          <div class="type-selector">
+            <button class="type-btn" [class.active]="selectedType === 'agents'" (click)="selectType('agents')">
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
-            </div>
-            <button class="icon-btn add-btn" (click)="clearForm()" title="Add new agent">
-              <mat-icon>person_add</mat-icon>
+            </button>
+            <button class="type-btn" [class.active]="selectedType === 'skills'" (click)="selectType('skills')">
+              <mat-icon>psychology</mat-icon>
+              <span>Skills</span>
+            </button>
+            <button class="type-btn" [class.active]="selectedType === 'commands'" (click)="selectType('commands')">
+              <mat-icon>terminal</mat-icon>
+              <span>Commands</span>
+            </button>
+            <button class="type-btn" [class.active]="selectedType === 'scripts'" (click)="selectType('scripts')">
+              <mat-icon>code</mat-icon>
+              <span>Scripts</span>
             </button>
           </div>
           
@@ -71,54 +72,40 @@ import { ProjectContextService } from '../../services/project-context.service';
               <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
               <mat-icon matPrefix>search</mat-icon>
             </mat-form-field>
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Namespace</mat-label>
-              <input matInput 
-                     [(ngModel)]="searchNamespace" 
-                     [matAutocomplete]="searchNamespaceAutoComplete"
-                     (input)="onSearchNamespaceChange($event.target.value)"
-                     (keyup.enter)="search()">
-              <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
-                <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
-                  {{ ns }}
-                </mat-option>
-              </mat-autocomplete>
-              <mat-icon matPrefix>category</mat-icon>
-            </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
               <mat-icon>search</mat-icon>
             </button>
-            <button class="icon-btn clear-btn" (click)="clearSearch()" title="Clear" *ngIf="searchTerm || searchNamespace">
+            <button class="icon-btn clear-btn" (click)="clearSearch()" title="Clear" *ngIf="searchTerm">
               <mat-icon>close</mat-icon>
             </button>
           </div>
           
           <div *ngIf="loading === true" class="loading-state">
             <mat-spinner diameter="32" color="primary"></mat-spinner>
-            <span>Loading agents...</span>
+            <span>Loading templates...</span>
           </div>
           
-          <div class="agent-list">
-            <div class="list-item" *ngFor="let agent of agents" 
-                 [class.selected]="agent === selectedAgent"
-                 (click)="selectAgent(agent)">
-              <div class="agent-avatar">
-                <mat-icon>person</mat-icon>
+          <div class="template-list">
+            <div class="list-item" *ngFor="let template of templates" 
+                 [class.selected]="template === selectedTemplate"
+                 (click)="selectTemplate(template)">
+              <div class="template-avatar">
+                <mat-icon>description</mat-icon>
               </div>
-              <div class="agent-info">
-                <span class="agent-name">{{ agent.name }}</span>
-                <span class="agent-category">{{ agent.category }}</span>
+              <div class="template-info">
+                <span class="template-name">{{ template.name }}</span>
+                <span class="template-description">{{ template.description || 'No description' }}</span>
               </div>
-              <button class="icon-btn delete-btn" (click)="deleteAgentInline(agent, $event)" title="Delete agent">
+              <button class="icon-btn delete-btn" (click)="deleteTemplateInline(template, $event)" title="Delete template">
                 <mat-icon>delete</mat-icon>
               </button>
               <mat-icon class="chevron">chevron_right</mat-icon>
             </div>
             
-            <div *ngIf="agents.length === 0 && !loading" class="empty-state">
-              <mat-icon>person_off</mat-icon>
-              <span>No agents found</span>
-              <small>Create your first agent</small>
+            <div *ngIf="templates.length === 0 && !loading" class="empty-state">
+              <mat-icon>description</mat-icon>
+              <span>No templates found</span>
+              <small>Create your first template</small>
             </div>
           </div>
           
@@ -140,90 +127,42 @@ import { ProjectContextService } from '../../services/project-context.service';
         <div class="right-panel">
           <div class="panel-header">
             <div class="panel-title">
-              <mat-icon>settings</mat-icon>
-              <span>Agent Details</span>
+              <mat-icon>edit</mat-icon>
+              <span>Template Details</span>
             </div>
-            <div class="header-actions" *ngIf="selectedAgent">
+            <div class="header-actions" *ngIf="selectedTemplate">
               <button class="icon-btn clear-btn" (click)="clearForm()" title="Clear form">
                 <mat-icon>refresh</mat-icon>
               </button>
-              <button class="icon-btn delete-btn" (click)="deleteAgent()" title="Delete agent">
+              <button class="icon-btn delete-btn" (click)="deleteTemplate()" title="Delete template">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
           </div>
           
           <div class="form-container">
-            <div class="form-row">
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="formAgent.name" placeholder="Enter agent name">
-                <mat-icon matPrefix>badge</mat-icon>
-              </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Namespace</mat-label>
-                <input matInput 
-                       [(ngModel)]="formAgent.category" 
-                       [matAutocomplete]="namespaceAutoComplete"
-                       (input)="onNamespaceChange($event.target.value)">
-                <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
-                  <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
-                    {{ ns }}
-                  </mat-option>
-                </mat-autocomplete>
-                <mat-icon matPrefix>category</mat-icon>
-              </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Path</mat-label>
-                <input matInput [(ngModel)]="formAgent.path" placeholder="Enter path">
-                <mat-icon matPrefix>link</mat-icon>
-              </mat-form-field>
-            </div>
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Name</mat-label>
+              <input matInput [(ngModel)]="formTemplate.name" placeholder="Enter template name">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
             
             <mat-form-field class="full-width" appearance="outline">
               <mat-label>Description</mat-label>
-              <textarea matInput [(ngModel)]="formAgent.description" rows="3" placeholder="Describe this agent's purpose"></textarea>
+              <textarea matInput [(ngModel)]="formTemplate.description" rows="3" placeholder="Describe this template"></textarea>
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <div class="prompt-field-container" (click)="openPromptEditor()">
-              <mat-form-field class="full-width prompt-field" appearance="outline">
-                <mat-label>Prompt</mat-label>
-                <input matInput 
-                       [value]="getPromptPreview(formAgent.prompt)" 
-                       disabled
-                       class="prompt-preview-input">
-                <mat-icon matPrefix>code</mat-icon>
-              </mat-form-field>
-              <button mat-icon-button 
-                      type="button"
-                      class="prompt-edit-btn" 
-                      title="Edit prompt">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
-            
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>Scope</mat-label>
-              <mat-select [(ngModel)]="formAgent.scope">
-                <mat-option value="global">
-                  <mat-icon>public</mat-icon>
-                  Global
-                </mat-option>
-                <mat-option value="project">
-                  <mat-icon>folder</mat-icon>
-                  Project
-                </mat-option>
-              </mat-select>
-              <mat-icon matPrefix>share</mat-icon>
+            <mat-form-field class="full-width template-field" appearance="outline">
+              <mat-label>Template</mat-label>
+              <textarea matInput [(ngModel)]="formTemplate.template" rows="15" placeholder="Enter the template content"></textarea>
+              <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
             
             <div class="button-row">
-              <button class="btn btn-primary" (click)="saveAgent()" [disabled]="!formAgent.name">
+              <button class="btn btn-primary" (click)="saveTemplate()" [disabled]="!formTemplate.name || !selectedType">
                 <mat-icon>save</mat-icon>
-                {{ formAgent.id ? 'Update Agent' : 'Create Agent' }}
+                {{ formTemplate.id ? 'Update Template' : 'Create Template' }}
               </button>
               <button class="btn btn-secondary" (click)="clearForm()">
                 <mat-icon>refresh</mat-icon>
@@ -241,7 +180,7 @@ import { ProjectContextService } from '../../services/project-context.service';
     </div>
   `,
   styles: [`
-    .agents-container {
+    .templates-container {
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -379,6 +318,46 @@ import { ProjectContextService } from '../../services/project-context.service';
       color: #ffffff;
     }
     
+    .type-selector {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      flex-wrap: wrap;
+    }
+    
+    .type-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #b0b0b0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .type-btn:hover {
+      background: #3a3a3a;
+      color: #ffffff;
+    }
+    
+    .type-btn.active {
+      background: #1565c0;
+      border-color: #1976d2;
+      color: #ffffff;
+    }
+    
+    .type-btn mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    
     .search-section {
       display: flex;
       gap: 8px;
@@ -417,7 +396,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       color: #888;
     }
     
-    .agent-list {
+    .template-list {
       flex: 1;
       overflow-y: auto;
       padding: 12px;
@@ -447,7 +426,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       border-color: #1976d2;
     }
     
-    .agent-avatar {
+    .template-avatar {
       width: 40px;
       height: 40px;
       border-radius: 10px;
@@ -458,22 +437,22 @@ import { ProjectContextService } from '../../services/project-context.service';
       flex-shrink: 0;
     }
     
-    .list-item.selected .agent-avatar {
+    .list-item.selected .template-avatar {
       background: rgba(255, 255, 255, 0.2);
     }
     
-    .agent-avatar mat-icon {
+    .template-avatar mat-icon {
       font-size: 22px;
       width: 22px;
       height: 22px;
       color: #4fc3f7;
     }
     
-    .list-item.selected .agent-avatar mat-icon {
+    .list-item.selected .template-avatar mat-icon {
       color: #ffffff;
     }
     
-    .agent-info {
+    .template-info {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -481,7 +460,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       min-width: 0;
     }
     
-    .agent-name {
+    .template-name {
       color: #e0e0e0;
       font-size: 0.95rem;
       font-weight: 500;
@@ -490,16 +469,19 @@ import { ProjectContextService } from '../../services/project-context.service';
       text-overflow: ellipsis;
     }
     
-    .list-item.selected .agent-name {
+    .list-item.selected .template-name {
       color: #ffffff;
     }
     
-    .agent-category {
+    .template-description {
       font-size: 0.8rem;
       color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
-    .list-item.selected .agent-category {
+    .list-item.selected .template-description {
       color: rgba(255, 255, 255, 0.7);
     }
     
@@ -580,12 +562,6 @@ import { ProjectContextService } from '../../services/project-context.service';
       overflow-y: auto;
     }
     
-    .form-row {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 8px;
-    }
-    
     .form-field {
       flex: 1;
     }
@@ -595,34 +571,8 @@ import { ProjectContextService } from '../../services/project-context.service';
       margin-bottom: 8px;
     }
     
-    .prompt-field {
+    .template-field {
       margin-bottom: 8px;
-    }
-    
-    .prompt-field-container {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      cursor: pointer;
-    }
-    
-    .prompt-field-container:hover {
-      opacity: 0.9;
-    }
-    
-    .prompt-field-container .prompt-field {
-      flex: 1;
-    }
-    
-    .prompt-edit-btn {
-      color: #4fc3f7;
-      flex-shrink: 0;
-      margin-top: 8px;
-      cursor: pointer;
-    }
-    
-    .prompt-edit-btn:hover {
-      background: rgba(79, 195, 247, 0.1);
     }
     
     ::ng-deep .mat-mdc-form-field-icon-prefix {
@@ -658,28 +608,6 @@ import { ProjectContextService } from '../../services/project-context.service';
     ::ng-deep input[matInput]::placeholder,
     ::ng-deep textarea[matInput]::placeholder {
       color: #666;
-    }
-    
-    ::ng-deep .mat-mdc-select-panel {
-      background: #2a2a2a !important;
-    }
-    
-    ::ng-deep .mat-mdc-option {
-      color: #e0e0e0 !important;
-    }
-    
-    ::ng-deep .mat-mdc-option:hover {
-      background: #3a3a3a !important;
-    }
-    
-    ::ng-deep .mat-mdc-option.mat-mdc-option-active {
-      background: #3a3a3a !important;
-    }
-    
-    ::ng-deep .mdc-list-item__content {
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     
     .button-row {
@@ -771,19 +699,12 @@ import { ProjectContextService } from '../../services/project-context.service';
       border: 1px solid rgba(33, 150, 243, 0.3);
     }
   `]
-
 })
-
-export class AgentsComponent implements OnInit {
-  fromHome = false;
-  agents: Agent[] = [];
-  selectedAgent: Agent | null = null;
-  namespaces: string[] = [];
-  filteredNamespaces: string[] = [];
-  filteredSearchNamespaces: string[] = [];
-  formAgent: Agent = this.getEmptyAgent();
+export class TemplatesComponent implements OnInit {
+  templates: Template[] = [];
+  selectedTemplate: Template | null = null;
+  formTemplate: Template = this.getEmptyTemplate();
   searchTerm = '';
-  searchNamespace = '';
   loading = false;
   currentPage = 0;
   pageSize = 10;
@@ -791,116 +712,76 @@ export class AgentsComponent implements OnInit {
   totalPages = 0;
   statusMessage = '';
   leftPanelCollapsed = false;
+  selectedType = 'agents';
 
   constructor(
-    private router: Router,
     private apiService: ApiService,
     private dialog: MatDialog,
     private ngZone: NgZone,
-    private cdr: ChangeDetectorRef,
-    private projectContext: ProjectContextService
-  ) {
-    const nav = this.router.getCurrentNavigation();
-    if (nav && nav.extras && nav.extras.state && nav.extras.state['fromHome']) {
-      this.fromHome = true;
-    } else if (window.history.state && window.history.state.fromHome) {
-      this.fromHome = true;
-    }
-  }
-
-  goHome() {
-    this.router.navigate(['/menu'])
-  }
+    private cdr: ChangeDetectorRef
+  ) {}
 
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
-  private getEmptyAgent(): Agent {
+  private getEmptyTemplate(): Template {
     return {
       name: '',
-      category: this.namespaces.length > 0 ? this.namespaces[0] : '',
       description: '',
-      prompt: '',
-      scope: 'global',
-      path: ''
+      template: '',
+      type: this.selectedType
     };
   }
 
-  loadNamespaces(): void {
-    this.apiService.getAgentNamespaces().subscribe({
-      next: (namespaces) => {
-        this.namespaces = namespaces;
-        this.filteredNamespaces = [...this.namespaces];
-        this.filteredSearchNamespaces = [...this.namespaces];
-        if (this.namespaces.length > 0 && !this.formAgent.category) {
-          this.formAgent.category = this.namespaces[0];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading namespaces:', err);
-      }
-    });
+  getTypeLabel(): string {
+    const labels: { [key: string]: string } = {
+      'agents': 'Agents',
+      'skills': 'Skills',
+      'commands': 'Commands',
+      'scripts': 'Scripts'
+    };
+    return labels[this.selectedType] || 'Unknown';
   }
 
-  onNamespaceChange(value: string): void {
-    const filterValue = value.toLowerCase();
-    this.filteredNamespaces = this.namespaces.filter(ns => 
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredNamespaces.includes(value)) {
-      this.filteredNamespaces = [value, ...this.filteredNamespaces];
-    }
-  }
-
-  onSearchNamespaceChange(value: string): void {
-    const filterValue = value.toLowerCase();
-    this.filteredSearchNamespaces = this.namespaces.filter(ns => 
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
-      this.filteredSearchNamespaces = [value, ...this.filteredSearchNamespaces];
-    }
+  selectType(type: string): void {
+    this.selectedType = type;
+    this.formTemplate.type = type;
+    this.selectedTemplate = null;
+    this.currentPage = 0;
+    this.loadTemplates();
   }
 
   ngOnInit(): void {
-    console.log('AgentsComponent ngOnInit');
-    this.loadNamespaces();
-    this.loadAgents();
+    console.log('TemplatesComponent ngOnInit');
+    this.loadTemplates();
   }
 
-  loadAgents(): void {
-    console.log('Loading agents...');
+  loadTemplates(): void {
+    console.log('Loading templates...');
     this.loading = true;
-    console.log('Calling API...');
-    this.apiService.getAgents(this.currentPage, this.pageSize).subscribe({
+    this.apiService.getTemplates(this.selectedType, this.currentPage, this.pageSize).subscribe({
       next: (response) => {
         this.ngZone.run(() => {
           console.log('API response:', response);
-          // Backend returns { agents: [], currentPage, totalElements, totalPages }
-          if (response && Array.isArray(response.agents)) {
-            this.agents = response.agents;
+          if (response && Array.isArray(response.templates)) {
+            this.templates = response.templates;
           } else if (Array.isArray(response)) {
-            this.agents = response;
+            this.templates = response;
           } else {
-            this.agents = [];
+            this.templates = [];
           }
-          console.log('Agents set:', this.agents);
-          this.totalElements = response?.totalElements ?? this.agents.length;
+          this.totalElements = response?.totalElements ?? this.templates.length;
           this.totalPages = response?.totalPages ?? 1;
           this.loading = false;
           this.cdr.detectChanges();
-          console.log('Loading set to false');
-          if (this.agents.length > 0 && !this.selectedAgent) {
-            this.selectAgent(this.agents[0]);
-          }
+          console.log('Templates set:', this.templates);
         });
       },
       error: (err) => {
         this.ngZone.run(() => {
           console.error('API error:', err);
-          this.statusMessage = 'Error loading agents: ' + err.message;
+          this.statusMessage = 'Error loading templates: ' + err.message;
           this.loading = false;
           this.cdr.detectChanges();
         });
@@ -909,20 +790,20 @@ export class AgentsComponent implements OnInit {
   }
 
   search(): void {
-    if (this.searchTerm.trim() || this.searchNamespace.trim()) {
+    if (this.searchTerm.trim()) {
       this.currentPage = 0;
       this.loading = true;
-      this.apiService.searchAgents(this.searchTerm, this.searchNamespace, this.currentPage, this.pageSize).subscribe({
+      this.apiService.searchTemplates(this.selectedType, this.searchTerm, this.currentPage, this.pageSize).subscribe({
         next: (response) => {
           this.ngZone.run(() => {
-            if (response && Array.isArray(response.agents)) {
-              this.agents = response.agents;
+            if (response && Array.isArray(response.templates)) {
+              this.templates = response.templates;
             } else if (Array.isArray(response)) {
-              this.agents = response;
+              this.templates = response;
             } else {
-              this.agents = [];
+              this.templates = [];
             }
-            this.totalElements = response?.totalElements ?? this.agents.length;
+            this.totalElements = response?.totalElements ?? this.templates.length;
             this.totalPages = response?.totalPages ?? 1;
             this.loading = false;
             this.cdr.detectChanges();
@@ -930,7 +811,7 @@ export class AgentsComponent implements OnInit {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.statusMessage = 'Error searching agents: ' + err.message;
+            this.statusMessage = 'Error searching templates: ' + err.message;
             this.loading = false;
             this.cdr.detectChanges();
           });
@@ -943,43 +824,41 @@ export class AgentsComponent implements OnInit {
 
   clearSearch(): void {
     this.searchTerm = '';
-    this.searchNamespace = '';
     this.currentPage = 0;
-    this.loadAgents();
+    this.loadTemplates();
   }
 
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
-    if (this.searchTerm.trim() || this.searchNamespace.trim()) {
+    if (this.searchTerm.trim()) {
       this.search();
     } else {
-      this.loadAgents();
+      this.loadTemplates();
     }
   }
 
-  selectAgent(agent: Agent): void {
+  selectTemplate(template: Template): void {
     this.cdr.markForCheck();
-    this.selectedAgent = { ...agent };
-    this.formAgent = { ...agent };
-    this.statusMessage = `Agent selected: ${agent.name}`;
+    this.selectedTemplate = { ...template };
+    this.formTemplate = { ...template };
+    this.statusMessage = `Template selected: ${template.name}`;
   }
 
-  saveAgent(): void {
-    if (!this.formAgent.name) {
+  saveTemplate(): void {
+    if (!this.formTemplate.name) {
       this.statusMessage = 'Error: Name is required';
       return;
     }
 
-    if (this.formAgent.id) {
-      // Update existing agent
-      this.apiService.updateAgent(this.formAgent.id, this.formAgent).subscribe({
+    if (this.formTemplate.id) {
+      this.apiService.updateTemplate(this.formTemplate.id, this.formTemplate).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
-            this.statusMessage = `Agent '${updated.name}' updated successfully`;
-            this.selectedAgent = { ...updated };
+            this.statusMessage = `Template '${updated.name}' updated successfully`;
+            this.selectedTemplate = { ...updated };
             this.cdr.detectChanges();
-            setTimeout(() => this.loadAgents(), 0);
+            setTimeout(() => this.loadTemplates(), 0);
           });
         },
         error: (err) => {
@@ -990,16 +869,14 @@ export class AgentsComponent implements OnInit {
         }
       });
     } else {
-      // Create new agent
-      const projectId = this.projectContext.getProjectId();
-      this.apiService.createAgent(this.formAgent, projectId || undefined).subscribe({
+      this.apiService.createTemplate(this.formTemplate).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
-            this.statusMessage = `Agent '${created.name}' created successfully`;
-            this.selectedAgent = { ...created };
-            this.formAgent = { ...created };
+            this.statusMessage = `Template '${created.name}' created successfully`;
+            this.selectedTemplate = { ...created };
+            this.formTemplate = { ...created };
             this.cdr.detectChanges();
-            setTimeout(() => this.loadAgents(), 0);
+            setTimeout(() => this.loadTemplates(), 0);
           });
         },
         error: (err) => {
@@ -1012,20 +889,20 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  deleteAgent(): void {
-    if (!this.selectedAgent?.id) {
-      this.statusMessage = 'No agent selected to delete';
+  deleteTemplate(): void {
+    if (!this.selectedTemplate?.id) {
+      this.statusMessage = 'No template selected to delete';
       return;
     }
-    const id = this.selectedAgent.id;
-    const name = this.selectedAgent.name;
-    this.apiService.deleteAgent(id).subscribe({
+    const id = this.selectedTemplate.id;
+    const name = this.selectedTemplate.name;
+    this.apiService.deleteTemplate(id).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.statusMessage = `Agent '${name}' deleted successfully`;
-          this.selectedAgent = null;
+          this.statusMessage = `Template '${name}' deleted successfully`;
+          this.selectedTemplate = null;
           this.cdr.detectChanges();
-          setTimeout(() => this.loadAgents(), 0);
+          setTimeout(() => this.loadTemplates(), 0);
         });
       },
       error: (err) => {
@@ -1037,40 +914,40 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  deleteAgentInline(agent: Agent, event: Event): void {
+  deleteTemplateInline(template: Template, event: Event): void {
     event.stopPropagation();
     
-    if (!agent.id) {
+    if (!template.id) {
       return;
     }
 
-    const agentName = agent.name;
-    const agentId = agent.id;
+    const templateName = template.name;
+    const templateId = template.id;
     
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir o agente "${agentName}"?`,
+        message: `Deseja realmente excluir o template "${templateName}"?`,
         showConfirm: true,
         confirmText: 'Excluir',
         cancelText: 'Cancelar'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.apiService.deleteAgent(agentId).subscribe({
+        this.apiService.deleteTemplate(templateId).subscribe({
           next: () => {
             this.ngZone.run(() => {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: true,
-                  message: `Agente "${agentName}" excluído com sucesso!`
+                  message: `Template "${templateName}" excluído com sucesso!`
                 }
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {
-                  if (this.selectedAgent?.id === agentId) {
-                    this.selectedAgent = null;
+                  if (this.selectedTemplate?.id === templateId) {
+                    this.selectedTemplate = null;
                   }
-                  this.loadAgents();
+                  this.loadTemplates();
                 }, 0);
               });
             });
@@ -1080,7 +957,7 @@ export class AgentsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir agente. Tente novamente.'
+                  message: 'Falha ao excluir template. Tente novamente.'
                 }
               });
             });
@@ -1091,9 +968,9 @@ export class AgentsComponent implements OnInit {
   }
 
   clearForm(): void {
-    this.selectedAgent = null;
-    this.formAgent = this.getEmptyAgent();
-    this.statusMessage = 'Form cleared - ready for new agent';
+    this.selectedTemplate = null;
+    this.formTemplate = this.getEmptyTemplate();
+    this.statusMessage = 'Form cleared - ready for new template';
   }
 
   getStatusClass(): string {
@@ -1101,95 +978,5 @@ export class AgentsComponent implements OnInit {
     if (this.statusMessage.includes('Error')) return 'error';
     if (this.statusMessage.includes('success') || this.statusMessage.includes('updated') || this.statusMessage.includes('created') || this.statusMessage.includes('deleted')) return 'success';
     return 'info';
-  }
-
-  getPromptPreview(prompt: string | undefined): string {
-    if (!prompt) return '';
-    const words = prompt.trim().split(/\s+/);
-    const preview = words.slice(0, 15).join(' ');
-    return words.length > 15 ? preview + '...' : preview;
-  }
-
-  openPromptEditor(): void {
-    const dialogRef = this.dialog.open(PromptEditorModalComponent, {
-      width: '800px',
-      maxWidth: '90vw',
-      maxHeight: '85vh',
-      data: {
-        prompt: this.formAgent.prompt,
-        type: 'agents',
-        title: 'Edit Agent Prompt'
-      },
-      panelClass: 'custom-dialog'
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formAgent.prompt = result.prompt;
-      }
-    });
-  }
-
-  newProject(): void {
-    const dialogRef = this.dialog.open(NewProjectDialogComponent, {
-      width: '500px',
-      disableClose: true
-    });
-
-    dialogRef.afterClosed().subscribe((result: Partial<Project> | undefined) => {
-      if (result && result.name) {
-        this.ngZone.run(() => {
-          this.statusMessage = 'Creating project...';
-          this.cdr.detectChanges();
-        });
-        this.apiService.createProject(result as Project).subscribe({
-          next: (created) => {
-            this.ngZone.run(() => {
-              this.statusMessage = `Project '${created.name}' created successfully`;
-              this.cdr.detectChanges();
-              this.router.navigate(['/project']);
-            });
-          },
-          error: (err) => {
-            this.ngZone.run(() => {
-              this.statusMessage = 'Error creating project: ' + err.message;
-              this.cdr.detectChanges();
-            });
-          }
-        });
-      }
-    });
-  }
-
-  openProject(): void {
-    const dialogRef = this.dialog.open(OpenProjectDialogComponent, {
-      width: '900px',
-      height: '700px',
-      disableClose: true
-    });
-
-    dialogRef.afterClosed().subscribe((selectedProject: Project | undefined) => {
-      if (selectedProject) {
-        this.ngZone.run(() => {
-          this.statusMessage = `Project '${selectedProject.name}' opened successfully`;
-          this.cdr.detectChanges();
-          // Here you would typically load the project data or switch to project view
-          // For now, just show a message
-        });
-      }
-    });
-  }
-
-  exit(): void {
-    window.close();
-  }
-
-  voltarProjeto(): void {
-    const lastProjectId = localStorage.getItem('lastProjectId')
-    if (lastProjectId) {
-      this.router.navigate(['/project', lastProjectId])
-    } else {
-      this.router.navigate(['/project'])
-    }
   }
 }

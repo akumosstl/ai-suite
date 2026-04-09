@@ -67,8 +67,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
   editProject: { name: string; description: string; path: string; target: string } = { name: '', description: '', path: '', target: '' };
   isRunningPipeline = false;
   runningPipelineId: number | null = null;
+  pipelineStatus: string | null = null;
   isReorderingSteps = false;
   isSavingProject = false;
+  endpointsExpanded = false;
   
   private runningCheckInterval: any;
 
@@ -105,6 +107,26 @@ export class ProjectComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error stopping pipeline:', err);
         this.showMessage('Error stopping pipeline', 'error');
+      }
+    });
+  }
+
+  pausePipeline() {
+    if (!this.selectedPipeline?.id || !this.project?.id) {
+      return;
+    }
+
+    this.apiService.pausePipeline(this.project.id, this.selectedPipeline.id).subscribe({
+      next: () => {
+        this.showMessage('Pipeline paused successfully', 'success');
+        this.isRunningPipeline = false;
+        this.runningPipelineId = null;
+        this.pipelineStatus = 'paused';
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error pausing pipeline:', err);
+        this.showMessage('Error pausing pipeline', 'error');
       }
     });
   }
@@ -675,13 +697,21 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.apiService.getLatestPipelineRun(this.selectedPipeline.id).subscribe({
       next: (run) => {
         const isRunning = run && run.status === 'running';
+        const isPaused = run && run.status === 'paused';
         const isPipelineRunning = this.selectedPipeline && this.selectedPipeline.status === 'running';
+        const isPipelinePaused = this.selectedPipeline && this.selectedPipeline.status === 'paused';
         if (isRunning || isPipelineRunning) {
           this.isRunningPipeline = true;
           this.runningPipelineId = this.selectedPipeline!.id ?? null;
+          this.pipelineStatus = 'running';
+        } else if (isPaused || isPipelinePaused) {
+          this.isRunningPipeline = false;
+          this.runningPipelineId = this.selectedPipeline!.id ?? null;
+          this.pipelineStatus = 'paused';
         } else {
           this.isRunningPipeline = false;
           this.runningPipelineId = null;
+          this.pipelineStatus = run?.status ?? null;
         }
         this.cdr.detectChanges();
       },

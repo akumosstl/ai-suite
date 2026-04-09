@@ -9,10 +9,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScriptRepository extends JpaRepository<Script, Long> {
     List<Script> findByNamespace(String namespace);
+    Optional<Script> findByNameAndNamespace(String name, String namespace);
     
     @Query("SELECT s FROM Script s WHERE " +
            "(:searchTerm IS NULL OR :searchTerm = '' OR LOWER(s.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +

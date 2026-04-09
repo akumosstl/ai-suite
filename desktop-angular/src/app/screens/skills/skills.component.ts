@@ -18,6 +18,7 @@ import { NewProjectDialogComponent } from '../../components/new-project-dialog/n
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddSkillFileDialogComponent, SkillFileData } from '../../components/add-skill-file-dialog/add-skill-file-dialog.component';
+import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -46,6 +47,7 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatIconModule,
     MenuBarComponent,
     PipelineResultDialogComponent,
+    PromptEditorModalComponent,
     PanelToggleComponent
   ],
   template: `
@@ -187,11 +189,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <mat-form-field class="full-width instructions-field" appearance="outline">
-              <mat-label>Instructions</mat-label>
-              <textarea matInput [(ngModel)]="formSkill.instructions" rows="10" placeholder="Enter detailed instructions for this skill"></textarea>
-              <mat-icon matPrefix>code</mat-icon>
-            </mat-form-field>
+            <div class="prompt-field-container" (click)="openInstructionsEditor()">
+              <mat-form-field class="full-width instructions-field" appearance="outline">
+                <mat-label>Instructions</mat-label>
+                <input matInput 
+                       [value]="getPromptPreview(formSkill.instructions)" 
+                       disabled
+                       class="prompt-preview-input">
+                <mat-icon matPrefix>code</mat-icon>
+              </mat-form-field>
+              <button mat-icon-button 
+                      type="button"
+                      class="prompt-edit-btn" 
+                      title="Edit instructions">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
             
             <div class="files-section">
               <div class="section-header">
@@ -601,6 +614,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .instructions-field {
       margin-bottom: 8px;
+    }
+    
+    .prompt-field-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-field-container:hover {
+      opacity: 0.9;
+    }
+    
+    .prompt-field-container .instructions-field {
+      flex: 1;
+    }
+    
+    .prompt-edit-btn {
+      color: #ffb74d;
+      flex-shrink: 0;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-edit-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
     }
     
     .files-section {
@@ -1223,6 +1262,33 @@ export class SkillsComponent implements OnInit {
     if (this.statusMessage.includes('Error')) return 'error';
     if (this.statusMessage.includes('success') || this.statusMessage.includes('updated') || this.statusMessage.includes('created') || this.statusMessage.includes('deleted')) return 'success';
     return 'info';
+  }
+
+  getPromptPreview(prompt: string | undefined): string {
+    if (!prompt) return '';
+    const words = prompt.trim().split(/\s+/);
+    const preview = words.slice(0, 15).join(' ');
+    return words.length > 15 ? preview + '...' : preview;
+  }
+
+  openInstructionsEditor(): void {
+    const dialogRef = this.dialog.open(PromptEditorModalComponent, {
+      width: '800px',
+      maxWidth: '90vw',
+      maxHeight: '85vh',
+      data: {
+        prompt: this.formSkill.instructions,
+        type: 'skills',
+        title: 'Edit Skill Instructions'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.prompt !== undefined) {
+        this.formSkill.instructions = result.prompt;
+      }
+    });
   }
 
   newProject(): void {

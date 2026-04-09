@@ -193,12 +193,22 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
           let updated = false;
           run.steps.forEach((stepData: any) => {
             const step = this.pipelineSteps.find(s => s.id === stepData.id);
-            if (step && step.status !== stepData.status) {
-              step.status = stepData.status;
-              if (stepData.outputContent) {
-                step.outputContent = stepData.outputContent;
+            if (step) {
+              if (step.status !== stepData.status) {
+                step.status = stepData.status;
+                updated = true;
               }
-              updated = true;
+              if (stepData.outputContent) {
+                if (step.loadedFromServer) {
+                  step.outputContent = stepData.outputContent;
+                  step.loadedFromServer = false;
+                } else if (stepData.outputContent.length > (step.outputContent?.length || 0) * 1.5) {
+                  step.outputContent = stepData.outputContent;
+                } else if (stepData.outputContent !== step.outputContent) {
+                  step.outputContent = (step.outputContent || '') + stepData.outputContent;
+                }
+                updated = true;
+              }
             }
           });
           if (updated) {
@@ -214,7 +224,13 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
     const step = this.pipelineSteps.find(s => s.id === data.stepId || s.stepOrder === data.stepOrder);
     if (step) {
       step.status = data.status;
-      step.outputContent = (step.outputContent || '') + data.output;
+      
+      if (step.loadedFromServer) {
+        step.outputContent = data.output;
+        step.loadedFromServer = false;
+      } else {
+        step.outputContent = (step.outputContent || '') + data.output;
+      }
       
       if (data.status === 'completed' || data.status === 'failed') {
         this.showLoading = false;
@@ -396,8 +412,9 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
               agent: step.agentName ? { name: step.agentName, category: step.agentCategory, scope: 'pipeline' } : undefined,
               script: step.scriptName ? { name: step.scriptName, category: step.scriptCategory, namespace: '', scope: 'pipeline' } : undefined,
               status: isActivePipeline && index === 0 && run.status === 'running' ? 'running' : getStatusClass(step.status, run.status === 'running'),
-              outputContent: clearOutput ? '' : (step.outputContent || ''),
-              outputType: step.outputType
+              outputContent: (step.outputContent || ''),
+              outputType: step.outputType,
+              loadedFromServer: true
             }));
             this.isRunning = run.status === 'running';
             if (clearOutput) {

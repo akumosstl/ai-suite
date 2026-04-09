@@ -289,11 +289,12 @@ public class PipelineStepService {
         return pipelineStepRepository.save(step);
     }
     
-    public PipelineStep saveCli(Long stepId, String cli, String parameters, String arguments) {
+    public PipelineStep saveCli(Long stepId, String cli, String parameters, String arguments, String runtime) {
         PipelineStep step = getStepById(stepId);
         step.setCli(cli);
         step.setParameters(parameters);
         step.setArguments(arguments);
+        step.setRuntime(runtime);
         return pipelineStepRepository.save(step);
     }
     
@@ -342,6 +343,36 @@ public class PipelineStepService {
         if (process != null && process.isAlive()) {
             process.destroyForcibly();
             System.out.println("Stopped running process for pipeline " + pipelineId);
+        }
+    }
+    
+    public void pausePipelineExecution(Long pipelineId) {
+        stoppedPipelines.add(pipelineId);
+        pausedPipelines.putIfAbsent(pipelineId, new AtomicBoolean(true));
+        
+        List<PipelineStep> steps = getStepsByPipeline(pipelineId);
+        for (PipelineStep step : steps) {
+            if ("running".equals(step.getStatus())) {
+                step.setStatus("paused");
+                pipelineStepRepository.save(step);
+                setPendingStepOrder(pipelineId, step.getStepOrder() + 1);
+                break;
+            }
+        }
+        
+        Optional<PipelineRun> runningRun = pipelineRunRepository.findAll().stream()
+            .filter(r -> r.getPipeline() != null && r.getPipeline().getId().equals(pipelineId))
+            .filter(r -> "running".equals(r.getStatus()))
+            .findFirst();
+        runningRun.ifPresent(run -> {
+            run.setStatus("paused");
+            pipelineRunRepository.save(run);
+        });
+        
+        Process process = runningProcesses.remove(pipelineId);
+        if (process != null && process.isAlive()) {
+            process.destroyForcibly();
+            System.out.println("Paused and stopped running process for pipeline " + pipelineId);
         }
     }
     
@@ -851,19 +882,67 @@ public class PipelineStepService {
             scriptContent = scriptContent.replace("{{agentic-input:file}}", inputContent);
         }
         
+        String runtime = step.getRuntime();
+        String customCli = step.getCli();
+        String parameters = step.getParameters();
+        String arguments = step.getArguments();
+        
         String os = System.getProperty("os.name").toLowerCase();
         String scriptExtension;
         List<String> command;
         
-        if (os.contains("win")) {
-            scriptExtension = ".bat";
-            command = List.of("cmd.exe", "/c");
-        } else {
-            scriptExtension = ".sh";
-            command = List.of("bash");
+        if (runtime == null) {
+            runtime = "cmd";
         }
         
-        File tempScript = new File(System.getProperty("java.io.tmpdir"), "pipeline_script_" + System.currentTimeMillis() + scriptExtension);
+        switch (runtime) {
+            case "node":
+                command = List.of("node");
+                break;
+            case "java":
+                command = List.of("java");
+                break;
+            case "py":
+                command = List.of("py");
+                break;
+            case "custom":
+                if (customCli != null && !customCli.isEmpty()) {
+                    command = List.of(customCli);
+                } else {
+                    throw new RuntimeException("Custom CLI is not specified");
+                }
+                break;
+            case "cmd":
+            default:
+                if (os.contains("win")) {
+                    command = List.of("cmd.exe", "/c");
+                } else {
+                    command = List.of("bash");
+                }
+                break;
+        }
+        
+        if ("cmd".equals(runtime)) {
+            if (os.contains("win")) {
+                scriptExtension = ".bat";
+            } else {
+                scriptExtension = ".sh";
+            }
+            if (arguments != null && !arguments.isEmpty()) {
+                scriptContent = scriptContent.replace("%0", arguments);
+            }
+        } else {
+            String scriptName = script.getName();
+            if (scriptName != null && scriptName.contains(".")) {
+                int lastDot = scriptName.lastIndexOf('.');
+                scriptExtension = scriptName.substring(lastDot + 1);
+            } else {
+                scriptExtension = "";
+            }
+        }
+        
+        String extWithDot = scriptExtension.isEmpty() ? "" : "." + scriptExtension;
+        File tempScript = new File(System.getProperty("java.io.tmpdir"), "pipeline_script_" + System.currentTimeMillis() + extWithDot);
         tempScript.deleteOnExit();
         
         Files.writeString(tempScript.toPath(), scriptContent, StandardCharsets.UTF_8);
@@ -872,10 +951,18 @@ public class PipelineStepService {
             tempScript.setExecutable(true);
         }
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Executing script: " + script.getName() + "\n", "running");
+        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Executing script: " + script.getName() + " (runtime: " + runtime + ")\n", "running");
         
         List<String> fullCommand = new ArrayList<>(command);
         fullCommand.add(tempScript.getAbsolutePath());
+        
+        if (parameters != null && !parameters.isEmpty()) {
+            fullCommand.add(parameters);
+        }
+        
+        if (arguments != null && !arguments.isEmpty() && !"cmd".equals(runtime)) {
+            fullCommand.add(arguments);
+        }
         
         ProcessBuilder processBuilder = new ProcessBuilder(fullCommand);
         processBuilder.directory(new java.io.File(workingDir));
@@ -896,6 +983,7 @@ public class PipelineStepService {
         processBuilder.redirectOutput(Redirect.PIPE);
         
         sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting script with real-time output streaming...\n", "running");
+        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Command: " + String.join(" ", fullCommand) + "\n", "running");
         System.out.println("DEBUG: Starting script with real-time streaming...");
         Process process = processBuilder.start();
         registerRunningProcess(pipelineId, process);

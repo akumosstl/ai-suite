@@ -63,6 +63,9 @@ public class PipelineStep {
     @Column(name = "type")
     private String type; // "agent" or "script"
     
+    @Column(name = "runtime")
+    private String runtime; // "cmd", "node", "java", "py", "custom" - only for script type
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -148,4 +151,7 @@ public class PipelineStep {
     
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    
+    public String getRuntime() { return runtime; }
+    public void setRuntime(String runtime) { this.runtime = runtime; }
 }

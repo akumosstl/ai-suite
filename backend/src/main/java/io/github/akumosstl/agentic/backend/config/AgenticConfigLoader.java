@@ -1,0 +1,76 @@
+package io.github.akumosstl.agentic.backend.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.stereotype.Component;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Map;
+
+@Component
+public class AgenticConfigLoader implements BeanFactoryPostProcessor {
+
+    private static final String AGENTIC_DIR = System.getProperty("user.home") + File.separator + ".agentic";
+    private static final String AGENTIC_JSON_PATH = AGENTIC_DIR + File.separator + "agentic.json";
+
+    private static String databasePath;
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        try {
+            init();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize Agentic config", e);
+        }
+    }
+
+    private void init() throws IOException {
+        File agenticDir = new File(AGENTIC_DIR);
+        if (!agenticDir.exists()) {
+            Files.createDirectories(agenticDir.toPath());
+        }
+
+        File agenticFile = new File(AGENTIC_JSON_PATH);
+        if (!agenticFile.exists()) {
+            createDefaultConfig(agenticFile);
+        }
+
+        loadConfig(agenticFile);
+        setDataSourceUrl();
+    }
+
+    private void createDefaultConfig(File file) throws IOException {
+        String defaultConfig = """
+            {
+              "version": "1.0.0",
+              "database": {
+                "path": "db/agentic_db"
+              }
+            }
+            """;
+        Files.writeString(file.toPath(), defaultConfig);
+    }
+
+    private void loadConfig(File file) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> config = mapper.readValue(file, Map.class);
+        
+        @SuppressWarnings("unchecked")
+        Map<String, Object> database = (Map<String, Object>) config.get("database");
+        if (database != null && database.get("path") != null) {
+            databasePath = (String) database.get("path");
+        } else {
+            databasePath = "db/agentic_db";
+        }
+    }
+
+    private void setDataSourceUrl() {
+        String normalizedPath = databasePath.replace("/", File.separator).replace("\\", File.separator);
+        String dbPath = AGENTIC_DIR + File.separator + normalizedPath;
+        System.setProperty("spring.datasource.url", "jdbc:h2:file:" + dbPath + ";AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000;WRITE_DELAY=0");
+    }
+}

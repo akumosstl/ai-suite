@@ -48,6 +48,9 @@ export interface PipelineStep {
   cli?: string;
   parameters?: string;
   arguments?: string;
+  type?: string;
+  runtime?: string;
+  loadedFromServer?: boolean;
 }
 
 export interface PipelineRun {
@@ -114,6 +117,16 @@ export interface Skill {
   description?: string;
   instructions?: string;
   path?: string;
+}
+
+export interface Template {
+  id?: number;
+  name: string;
+  description?: string;
+  template?: string;
+  type: string; // "agents", "skills", "commands", "scripts"
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SkillFile {
@@ -382,6 +395,15 @@ export class ApiService {
     );
   }
 
+  pausePipeline(projectId: number, pipelineId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/pause`, {}).pipe(
+      catchError((error) => {
+        console.error('pausePipeline error:', error);
+        throw error;
+      })
+    );
+  }
+
   // Pipeline Steps
   getPipelineSteps(pipelineId: number): Observable<PipelineStep[]> {
     return this.http.get<PipelineStep[]>(`${this.baseUrl}/pipelines/${pipelineId}/steps`).pipe(
@@ -442,11 +464,12 @@ export class ApiService {
     );
   }
 
-  saveStepCli(pipelineId: number, stepId: number, cli: string, parameters: string, arguments_: string): Observable<PipelineStep> {
+  saveStepCli(pipelineId: number, stepId: number, cli: string, parameters: string, arguments_: string, runtime?: string): Observable<PipelineStep> {
     return this.http.put<PipelineStep>(`${this.baseUrl}/pipelines/${pipelineId}/steps/${stepId}/cli`, {
       cli,
       parameters,
-      arguments: arguments_
+      arguments: arguments_,
+      runtime
     }).pipe(
       catchError(this.handleError('saveStepCli', {} as PipelineStep))
     );
@@ -800,11 +823,81 @@ export class ApiService {
     );
   }
 
+  // Templates
+  getTemplates(type?: string, page = 0, size = 10): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (type) {
+      params = params.set('type', type);
+    }
+    return this.http.get(`${this.baseUrl}/templates`, { params }).pipe(
+      catchError(this.handleError('getTemplates', []))
+    );
+  }
+
+  getTemplatesByType(type: string): Observable<Template[]> {
+    return this.http.get<Template[]>(`${this.baseUrl}/templates/type/${type}`).pipe(
+      catchError(this.handleError('getTemplatesByType', []))
+    );
+  }
+
+  createTemplate(template: Template): Observable<Template> {
+    return this.http.post<Template>(`${this.baseUrl}/templates`, template).pipe(
+      catchError(this.handleError('createTemplate', template))
+    );
+  }
+
+  updateTemplate(id: number, template: Template): Observable<Template> {
+    return this.http.put<Template>(`${this.baseUrl}/templates/${id}`, template).pipe(
+      catchError(this.handleError('updateTemplate', template))
+    );
+  }
+
+  deleteTemplate(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/templates/${id}`).pipe(
+      catchError(this.handleError('deleteTemplate', null))
+    );
+  }
+
+  searchTemplates(type: string, term: string = '', page = 0, size = 10): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('type', type);
+    if (term) {
+      params = params.set('term', term);
+    }
+    return this.http.get(`${this.baseUrl}/templates/search`, { params }).pipe(
+      catchError(this.handleError('searchTemplates', []))
+    );
+  }
+
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed: ${error.message}`);
-      // Let the app keep running by returning an empty result.
       return of(result as T);
     };
+  }
+
+  exportData(types: string[]): Observable<Blob> {
+    const params = types.map(t => `types=${t}`).join('&');
+    return this.http.get(`${this.baseUrl}/export-import/export?${params}`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(this.handleError('exportData', new Blob()))
+    );
+  }
+
+  importData(formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/export-import/import`, formData).pipe(
+      catchError(this.handleError('importData', { success: false, message: 'Import failed' }))
+    );
+  }
+
+  backupDatabase(directory: string, fileName: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
+      catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
+    );
   }
 }

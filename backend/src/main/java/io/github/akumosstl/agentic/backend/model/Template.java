@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Agent {
+public class Template {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,21 +14,14 @@ public class Agent {
     @Column(nullable = false)
     private String name;
     
-    @Column(nullable = false)
-    private String category;
-    
-    private String namespace;
-    
     @Column(length = 1000)
     private String description;
     
-    @Column(length = 5000)
-    private String prompt;
+    @Column(columnDefinition = "TEXT")
+    private String template;
     
     @Column(nullable = false)
-    private String scope; // "global" or "project"
-    
-    private String path;
+    private String type; // "agents", "skills", "commands", "scripts"
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -47,14 +40,13 @@ public class Agent {
         updatedAt = LocalDateTime.now();
     }
     
-    public Agent() {}
+    public Template() {}
     
-    public Agent(String name, String category, String description, String prompt, String scope) {
+    public Template(String name, String description, String template, String type) {
         this.name = name;
-        this.category = category;
         this.description = description;
-        this.prompt = prompt;
-        this.scope = scope;
+        this.template = template;
+        this.type = type;
     }
     
     // Getters and setters
@@ -64,23 +56,14 @@ public class Agent {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    
-    public String getNamespace() { return namespace; }
-    public void setNamespace(String namespace) { this.namespace = namespace; }
-    
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     
-    public String getPrompt() { return prompt; }
-    public void setPrompt(String prompt) { this.prompt = prompt; }
+    public String getTemplate() { return template; }
+    public void setTemplate(String template) { this.template = template; }
     
-    public String getScope() { return scope; }
-    public void setScope(String scope) { this.scope = scope; }
-    
-    public String getPath() { return path; }
-    public void setPath(String path) { this.path = path; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

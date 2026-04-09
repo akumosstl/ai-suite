@@ -226,9 +226,21 @@
                     <h2>Pipeline Details</h2>
                     <div class="header-actions">
                         <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
-                            [disabled]="pipelineSteps.length === 0 || isRunningPipeline" *ngIf="!isRunningPipeline">
+                            [disabled]="pipelineSteps.length === 0 || isRunningPipeline" 
+                            *ngIf="!isRunningPipeline && pipelineStatus !== 'paused'">
                             <mat-icon>play_arrow</mat-icon>
                             <span class="btn-text">Run</span>
+                        </button>
+                        <button class="icon-btn run-btn" (click)="runPipeline()" title="Resume pipeline"
+                            [disabled]="pipelineSteps.length === 0" 
+                            *ngIf="pipelineStatus === 'paused'">
+                            <mat-icon>play_arrow</mat-icon>
+                            <span class="btn-text">Resume</span>
+                        </button>
+                        <button class="icon-btn pause-btn" (click)="pausePipeline()" title="Pause pipeline"
+                            *ngIf="isRunningPipeline">
+                            <mat-icon>pause</mat-icon>
+                            <span class="btn-text">Pause</span>
                         </button>
                         <button class="icon-btn stop-btn" (click)="stopPipeline()" title="Stop pipeline"
                             *ngIf="isRunningPipeline">
@@ -285,11 +297,11 @@
 
                     <!-- API Endpoints -->
                     <div class="info-row endpoint-row">
-                        <span class="info-label">
-                            <mat-icon>api</mat-icon>
+                        <span class="info-label" (click)="endpointsExpanded = !endpointsExpanded" style="cursor: pointer;">
+                            <mat-icon>{{ endpointsExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
                             Endpoints
                         </span>
-                        <div class="endpoint-list">
+                        <div class="endpoint-list" *ngIf="endpointsExpanded">
                             <div class="endpoint-item">
                                 <span class="endpoint-label">Start Runner:</span>
                                 <code class="endpoint-value">POST {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs</code>
@@ -313,6 +325,15 @@
                                 <code class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/stop</code>
                                 <button mat-icon-button
                                     (click)="copyToClipboard(baseUrl + 'api/projects/' + project?.id + '/pipelines/' + selectedPipeline.id + '/stop')"
+                                    title="Copy to clipboard">
+                                    <mat-icon>content_copy</mat-icon>
+                                </button>
+                            </div>
+                            <div class="endpoint-item">
+                                <span class="endpoint-label">Pause Pipeline:</span>
+                                <code class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/pause</code>
+                                <button mat-icon-button
+                                    (click)="copyToClipboard(baseUrl + 'api/projects/' + project?.id + '/pipelines/' + selectedPipeline.id + '/pause')"
                                     title="Copy to clipboard">
                                     <mat-icon>content_copy</mat-icon>
                                 </button>

@@ -155,4 +155,18 @@ public class AgentService {
     public List<String> getDistinctCategories() {
         return agentRepository.findDistinctCategories();
     }
+    
+    public List<String> getDistinctNamespaces() {
+        return agentRepository.findDistinctNamespaces();
+    }
+    
+    public List<Agent> getAgentsByNamespace(String namespace) {
+        return agentRepository.findByNamespace(namespace);
+    }
+    
+    public List<Agent> searchByNamespace(String searchTerm, String namespace, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Agent> agentPage = agentRepository.searchByNamespace(searchTerm, namespace, pageable);
+        return agentPage.getContent();
+    }
 }

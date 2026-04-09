@@ -47,7 +47,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
         </button>
         
         <button class="action-button config-button" (click)="goToConfig()">
-          <mat-icon>settings</mat-icon>
+          <mat-icon>build</mat-icon>
           <span>Config</span>
         </button>
         
@@ -317,7 +317,6 @@ export class MenuComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe((selectedProject: any) => {
       if (selectedProject && selectedProject.id) {
-        // Optionally store selected project in a shared service
         this.router.navigate(['/project', selectedProject.id]);
       }
     });

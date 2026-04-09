@@ -147,4 +147,28 @@ public class PipelineController {
         
         return response;
     }
+    
+    @PostMapping("/{id}/pause")
+    public Map<String, Object> pausePipeline(@PathVariable Long projectId, @PathVariable Long id) {
+        pipelineStepService.pausePipelineExecution(id);
+        
+        Pipeline pipeline = pipelineService.getPipelineById(id);
+        pipeline.setStatus("paused");
+        pipelineService.getPipelineRepository().save(pipeline);
+        
+        List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(id);
+        if (runs != null && !runs.isEmpty()) {
+            PipelineRun run = runs.get(0);
+            run.setStatus("paused");
+            run.setCompletedAt(java.time.LocalDateTime.now());
+            pipelineRunRepository.save(run);
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Pipeline paused successfully");
+        response.put("pipelineId", id);
+        
+        return response;
+    }
 }

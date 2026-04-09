@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { ApiService, Script } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
+import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
@@ -37,6 +38,7 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatMenuModule,
     MenuBarComponent,
     PipelineResultDialogComponent,
+    PromptEditorModalComponent,
     PanelToggleComponent
   ],
   template: `
@@ -178,11 +180,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <mat-form-field class="full-width script-content-field" appearance="outline">
-              <mat-label>Script Content</mat-label>
-              <textarea matInput [(ngModel)]="formScript.content" rows="15" placeholder="Enter the script content"></textarea>
-              <mat-icon matPrefix>code</mat-icon>
-            </mat-form-field>
+            <div class="prompt-field-container" (click)="openContentEditor()">
+              <mat-form-field class="full-width script-content-field" appearance="outline">
+                <mat-label>Script Content</mat-label>
+                <input matInput 
+                       [value]="getPromptPreview(formScript.content)" 
+                       disabled
+                       class="prompt-preview-input">
+                <mat-icon matPrefix>code</mat-icon>
+              </mat-form-field>
+              <button mat-icon-button 
+                      type="button"
+                      class="prompt-edit-btn" 
+                      title="Edit script content">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
             
             <mat-form-field class="form-field" appearance="outline">
               <mat-label>Scope</mat-label>
@@ -576,6 +589,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .script-content-field {
       margin-bottom: 8px;
+    }
+    
+    .prompt-field-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-field-container:hover {
+      opacity: 0.9;
+    }
+    
+    .prompt-field-container .script-content-field {
+      flex: 1;
+    }
+    
+    .prompt-edit-btn {
+      color: #4fc3f7;
+      flex-shrink: 0;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-edit-btn:hover {
+      background: rgba(79, 195, 247, 0.1);
     }
     
     ::ng-deep .mat-mdc-form-field-icon-prefix {
@@ -1037,5 +1076,32 @@ export class ScriptsComponent implements OnInit {
     if (this.statusMessage.includes('Error')) return 'error';
     if (this.statusMessage.includes('success') || this.statusMessage.includes('updated') || this.statusMessage.includes('created') || this.statusMessage.includes('deleted')) return 'success';
     return 'info';
+  }
+
+  getPromptPreview(prompt: string | undefined): string {
+    if (!prompt) return '';
+    const words = prompt.trim().split(/\s+/);
+    const preview = words.slice(0, 15).join(' ');
+    return words.length > 15 ? preview + '...' : preview;
+  }
+
+  openContentEditor(): void {
+    const dialogRef = this.dialog.open(PromptEditorModalComponent, {
+      width: '800px',
+      maxWidth: '90vw',
+      maxHeight: '85vh',
+      data: {
+        prompt: this.formScript.content,
+        type: 'scripts',
+        title: 'Edit Script Content'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.prompt !== undefined) {
+        this.formScript.content = result.prompt;
+      }
+    });
   }
 }

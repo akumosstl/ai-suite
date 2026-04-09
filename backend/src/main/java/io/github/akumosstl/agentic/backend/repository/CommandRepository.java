@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CommandRepository extends JpaRepository<Command, Long> {
@@ -16,6 +17,7 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
     List<Command> findByNamespace(String namespace);
     List<Command> findByCategory(String category);
     List<Command> findByScope(String scope);
+    Optional<Command> findByNameAndNamespace(String name, String namespace);
     
     @Query("SELECT c FROM Command c WHERE " +
            "(:searchTerm IS NULL OR :searchTerm = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +

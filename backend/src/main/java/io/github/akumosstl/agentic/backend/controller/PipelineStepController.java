@@ -102,6 +102,7 @@ public class PipelineStepController {
         String cli = cliData.get("cli");
         String parameters = cliData.get("parameters");
         String arguments = cliData.get("arguments");
-        return pipelineStepService.saveCli(stepId, cli, parameters, arguments);
+        String runtime = cliData.get("runtime");
+        return pipelineStepService.saveCli(stepId, cli, parameters, arguments, runtime);
     }
 }

@@ -17,6 +17,7 @@ import { ApiService, Command, Project } from '../../services/api.service';
 import { NewProjectDialogComponent } from '../../components/new-project-dialog/new-project-dialog.component';
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
+import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -45,6 +46,7 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatIconModule,
     MenuBarComponent,
     PipelineResultDialogComponent,
+    PromptEditorModalComponent,
     PanelToggleComponent
   ],
   template: `
@@ -186,11 +188,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <mat-form-field class="full-width command-field" appearance="outline">
-              <mat-label>Command</mat-label>
-              <textarea matInput [(ngModel)]="formCommand.command" rows="6" placeholder="Enter the command to execute"></textarea>
-              <mat-icon matPrefix>code</mat-icon>
-            </mat-form-field>
+            <div class="prompt-field-container" (click)="openCommandEditor()">
+              <mat-form-field class="full-width command-field" appearance="outline">
+                <mat-label>Command</mat-label>
+                <input matInput 
+                       [value]="getPromptPreview(formCommand.command)" 
+                       disabled
+                       class="prompt-preview-input">
+                <mat-icon matPrefix>code</mat-icon>
+              </mat-form-field>
+              <button mat-icon-button 
+                      type="button"
+                      class="prompt-edit-btn" 
+                      title="Edit command">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
             
             <mat-form-field class="form-field" appearance="outline">
               <mat-label>Scope</mat-label>
@@ -584,6 +597,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .command-field {
       margin-bottom: 8px;
+    }
+    
+    .prompt-field-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-field-container:hover {
+      opacity: 0.9;
+    }
+    
+    .prompt-field-container .command-field {
+      flex: 1;
+    }
+    
+    .prompt-edit-btn {
+      color: #4fc3f7;
+      flex-shrink: 0;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    
+    .prompt-edit-btn:hover {
+      background: rgba(79, 195, 247, 0.1);
     }
     
     ::ng-deep .mat-mdc-form-field-icon-prefix {
@@ -1059,6 +1098,33 @@ export class CommandsComponent implements OnInit {
     if (this.statusMessage.includes('Error')) return 'error';
     if (this.statusMessage.includes('success') || this.statusMessage.includes('updated') || this.statusMessage.includes('created') || this.statusMessage.includes('deleted')) return 'success';
     return 'info';
+  }
+
+  getPromptPreview(prompt: string | undefined): string {
+    if (!prompt) return '';
+    const words = prompt.trim().split(/\s+/);
+    const preview = words.slice(0, 15).join(' ');
+    return words.length > 15 ? preview + '...' : preview;
+  }
+
+  openCommandEditor(): void {
+    const dialogRef = this.dialog.open(PromptEditorModalComponent, {
+      width: '800px',
+      maxWidth: '90vw',
+      maxHeight: '85vh',
+      data: {
+        prompt: this.formCommand.command,
+        type: 'commands',
+        title: 'Edit Command'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.prompt !== undefined) {
+        this.formCommand.command = result.prompt;
+      }
+    });
   }
 
   newProject(): void {
