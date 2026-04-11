@@ -102,12 +102,12 @@ public class PipelineStepService {
         return resolved;
     }
     
-    private String getProjectTargetCli(Long pipelineId) {
+    private String getProjectTargetCli(Long projectId) {
         try {
             String cli = entityManager.createQuery(
-                "SELECT t.cli FROM Pipeline p JOIN p.project pr JOIN Target t WHERE p.id = :pipelineId AND t.id = pr.targetId",
+                "SELECT t.cli FROM Project p JOIN Target t WHERE p.id = :projectId AND t.id = p.targetId",
                 String.class)
-                .setParameter("pipelineId", pipelineId)
+                .setParameter("projectId", projectId)
                 .getSingleResult();
             System.out.println("DEBUG: Found project target CLI via JPQL: " + cli);
             return cli;
