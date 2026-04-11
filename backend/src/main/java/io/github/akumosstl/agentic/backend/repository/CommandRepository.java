@@ -29,4 +29,7 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
 
     @Query("SELECT DISTINCT c.namespace FROM Command c WHERE c.namespace IS NOT NULL AND c.namespace <> '' ORDER BY c.namespace")
     List<String> findDistinctNamespaces();
+    
+    @Query("SELECT DISTINCT c.category FROM Command c WHERE c.category IS NOT NULL AND c.category <> '' ORDER BY c.category")
+    List<String> findDistinctCategories();
 }

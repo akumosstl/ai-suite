@@ -76,6 +76,10 @@ public class PipelineService {
         return pipelineRepository.findByProject_IdOrderByCreatedAtDesc(projectId, pageable).getTotalElements();
     }
     
+    public List<Pipeline> getAllPipelines() {
+        return pipelineRepository.findAll();
+    }
+    
     @Autowired
     private PipelineStepService pipelineStepService;
     

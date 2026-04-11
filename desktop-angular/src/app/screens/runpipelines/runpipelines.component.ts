@@ -48,6 +48,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   private eventSource?: EventSource;
   private pollingInterval: any;
   private lastSseUpdate: number = 0;
+  private processedStepOutputs = new Set<string>();
   
   constructor(
     private router: Router,
@@ -100,6 +101,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
       try {
         const data = JSON.parse(event.data);
         console.log('Pipeline complete:', data);
+        this.processedStepOutputs.clear();
         this.isRunning = false;
         this.isPaused = false;
         this.stopPolling();
@@ -221,6 +223,12 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   }
   
   handleStepOutput(data: { stepId: number; stepOrder: number; output: string; status: string }) {
+    const messageKey = `${data.stepId}-${data.stepOrder}-${data.status}`;
+    if (this.processedStepOutputs.has(messageKey)) {
+      return;
+    }
+    this.processedStepOutputs.add(messageKey);
+
     const step = this.pipelineSteps.find(s => s.id === data.stepId || s.stepOrder === data.stepOrder);
     if (step) {
       step.status = data.status;
@@ -544,6 +552,13 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   
   selectStep(step: PipelineStep) {
     this.selectedStep = step;
+  }
+
+  isPipelineFinished(): boolean {
+    if (this.pipelineSteps.length === 0) return false;
+    const hasRunning = this.pipelineSteps.some(s => s.status === 'running');
+    const hasPending = this.pipelineSteps.some(s => s.status === 'pending' || s.status === 'ready');
+    return !hasRunning && !hasPending && (this.isPaused || this.pipelineSteps.every(s => s.status === 'completed' || s.status === 'failed'));
   }
   
   goBack() {

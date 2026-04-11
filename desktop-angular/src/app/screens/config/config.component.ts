@@ -33,8 +33,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     <div class="config-container">
       <div class="top-bar">
         <div class="logo-section">
-          <mat-icon class="logo-icon">code</mat-icon>
-          <h1>Agentic Code</h1>
+          <div class="logo-icon">
+            <svg width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logoGradConfig" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#3b82f6"/>
+                  <stop offset="50%" stop-color="#06b6d4"/>
+                  <stop offset="100%" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <rect width="36" height="36" rx="6" fill="url(#logoGradConfig)"/>
+              <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="12">&lt;/&gt;</text>
+            </svg>
+          </div>
+          <h1>Agentic</h1>
         </div>
         <button class="home-button" (click)="goHome()">
           <mat-icon>home</mat-icon>
@@ -74,7 +86,6 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <th>Commands Path</th>
                     <th>Scripts Path</th>
                     <th>Agents Path</th>
-                    <th>Global Path</th>
                     <th class="actions-col">Actions</th>
                   </tr>
                 </thead>
@@ -93,7 +104,6 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <td>{{ target.commandsPath }}</td>
                     <td>{{ target.scriptsPath }}</td>
                     <td>{{ target.agentsPath }}</td>
-                    <td>{{ target.globalPath }}</td>
                     <td class="actions-col" (click)="$event.stopPropagation()">
                       <button mat-icon-button (click)="deleteTarget(target, $event)" class="delete-btn" title="Delete Target">
                         <mat-icon>delete</mat-icon>
@@ -140,12 +150,6 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <mat-form-field class="full-width" appearance="outline">
                   <mat-label>Scripts Path</mat-label>
                   <input matInput [(ngModel)]="targetForm.scriptsPath" placeholder="e.g., .opencode/scripts">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Global Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.globalPath" placeholder="e.g., .config/opencode">
                   <mat-icon matPrefix>folder</mat-icon>
                 </mat-form-field>
 
@@ -201,10 +205,13 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     }
 
     .logo-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      color: #4fc3f7;
+      display: flex;
+      align-items: center;
+      filter: drop-shadow(0 2px 6px rgba(34, 211, 238, 0.3));
+    }
+
+    .logo-icon svg {
+      display: block;
     }
 
     .top-bar h1 {
@@ -575,14 +582,12 @@ export class ConfigComponent implements OnInit {
     skillsPath: string;
     commandsPath: string;
     scriptsPath: string;
-    globalPath: string;
     agentsPath: string;
   } = {
     name: '',
     skillsPath: '',
     commandsPath: '',
     scriptsPath: '',
-    globalPath: '',
     agentsPath: ''
   };
 
@@ -622,8 +627,7 @@ export class ConfigComponent implements OnInit {
       skillsPath: '.opencode\\skills',
       commandsPath: '.opencode\\commands',
       scriptsPath: '.opencode\\scripts',
-      agentsPath: '.opencode\\agents',
-      globalPath: '.config\\opencode'
+      agentsPath: '.opencode\\agents'
     };
     this.apiService.createTarget(defaultTarget).subscribe({
       next: (created) => {
@@ -652,7 +656,6 @@ export class ConfigComponent implements OnInit {
       skillsPath: target.skillsPath || '',
       commandsPath: target.commandsPath || '',
       scriptsPath: target.scriptsPath || '',
-      globalPath: target.globalPath || '',
       agentsPath: target.agentsPath || ''
     };
   }
@@ -666,7 +669,6 @@ export class ConfigComponent implements OnInit {
       skillsPath: '',
       commandsPath: '',
       scriptsPath: '',
-      globalPath: '',
       agentsPath: ''
     };
   }
@@ -679,7 +681,6 @@ export class ConfigComponent implements OnInit {
       skillsPath: '',
       commandsPath: '',
       scriptsPath: '',
-      globalPath: '',
       agentsPath: ''
     };
   }
@@ -728,7 +729,6 @@ export class ConfigComponent implements OnInit {
       skillsPath: this.targetForm.skillsPath,
       commandsPath: this.targetForm.commandsPath,
       scriptsPath: this.targetForm.scriptsPath,
-      globalPath: this.targetForm.globalPath,
       agentsPath: this.targetForm.agentsPath
     };
 

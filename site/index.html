@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic - AI Infrastructure for Enterprise</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #080809;
+            --bg-secondary: #0f0f12;
+            --bg-tertiary: #16161a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #22d3ee;
+            --accent-hover: #06b6d4;
+            --accent-subtle: rgba(34, 211, 238, 0.08);
+            --border: #27272a;
+            --success: #22c55e;
+            --gold: #f5a623;
+            --brand-purple: #8b5cf6;
+            --brand-pink: #ec4899;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(8, 8, 9, 0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 72px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-mark {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #22d3ee 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-primary);
+            font-weight: 900;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+        }
+
+        .logo-brand {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .logo-brand span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .lang-btn {
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            line-height: 1;
+        }
+        
+        .lang-btn svg {
+            width: 20px;
+            height: 15px;
+            display: block;
+        }
+        
+        .lang-btn .flag {
+            font-size: 1.4rem;
+            line-height: 1;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .lang-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .hero {
+            padding: 180px 0 120px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: #a78bfa;
+            margin-bottom: 28px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5.5vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, #3b82f6 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-tagline {
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            max-width: 760px;
+            margin: 0 auto 24px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto 44px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(34, 211, 238, 0.4);
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--text-muted);
+        }
+
+        .features {
+            padding: 100px 0;
+            background: var(--bg-secondary);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.03em;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+            font-size: 1.05rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent-subtle) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            white-space: nowrap;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.65;
+        }
+
+        .targets {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .target-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .target-card:hover {
+            border-color: var(--brand-purple);
+            transform: scale(1.02);
+        }
+
+        .target-logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .target-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .target-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .value-prop {
+            padding: 100px 0;
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 48px;
+        }
+
+        .value-item {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .value-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, var(--accent-subtle) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .value-item h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .value-item p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .enterprise {
+            padding: 100px 0;
+            background: var(--bg-secondary);
+        }
+
+        .enterprise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .enterprise-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .enterprise-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .enterprise-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .pricing {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+            position: relative;
+            background: linear-gradient(180deg, var(--bg-tertiary) 0%, rgba(34, 211, 238, 0.05) 100%);
+        }
+
+        .pricing-card.featured::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .price {
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 20px 0 8px 0;
+        }
+
+        .pricing-card .price-detail {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            margin: 28px 0;
+        }
+
+        .pricing-card li {
+            color: var(--text-secondary);
+            padding: 10px 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pricing-card li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .cta {
+            padding: 120px 0;
+            background: var(--bg-secondary);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta::before {
+            content: '';
+            position: absolute;
+            bottom: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.03em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta p {
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .contact-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .contact-item a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .contact-item a:hover {
+            color: var(--text-primary);
+        }
+
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            background: var(--bg-primary);
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            width: 100%;
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 140px 0 80px;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero-tagline {
+                font-size: 1.15rem;
+            }
+
+            .features, .targets, .value-prop, .enterprise, .pricing, .cta {
+                padding: 80px 0;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .contact-bar {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container nav-inner">
+            <div class="logo-section">
+                <a href="#" class="logo">
+                    <span class="logo-mark">&lt;/&gt;</span>
+                    <div>
+                        Agentic
+                        <div class="logo-brand">by <span>akumosstl</span></div>
+                    </div>
+                </a>
+            </div>
+            <div class="nav-right">
+                <ul class="nav-links">
+                    <li><a href="#value" data-i18n="nav.value">Valor</a></li>
+                    <li><a href="#features" data-i18n="nav.features">Recursos</a></li>
+                    <li><a href="#targets" data-i18n="nav.targets">Integrações</a></li>
+                    <li><a href="#enterprise" data-i18n="nav.enterprise">Empresas</a></li>
+                    <li><a href="#pricing" data-i18n="nav.pricing">Planos</a></li>
+                </ul>
+                <div class="lang-switch">
+                    <button class="lang-btn" onclick="setLang('pt')" id="lang-pt">🇧🇷</button>
+                    <button class="lang-btn" onclick="setLang('en')" id="lang-en">🇺🇸</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge" data-i18n="hero.badge">v1.0 - Enterprise Edition</div>
+            <h1><span class="highlight" data-i18n="hero.highlight1">Code Smarter, Ship Faster</span></h1>
+            <p class="hero-tagline" data-i18n="hero.tagline">Transforme seu desenvolvimento de IA com Harness Engineering e guardrails inteligentes.</p>
+            <p class="hero-description" data-i18n="hero.description">
+                Agentic é a camada de infraestrutura que transforma o código caótico assistido por IA em uma prática de engenharia disciplinada e escalável. Defina specs, estableça guardrails e deixe a IA executar com precisão — enquanto você mantém o controle total.
+            </p>
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span data-i18n="hero.download">Baixar .exe</span>
+                </a>
+                <a href="https://wa.me/5535997731413" target="_blank" class="btn btn-whatsapp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <span data-i18n="hero.whatsapp">Falar no WhatsApp</span>
+                </a>
+                <a href="docs/usuario.md" class="btn btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span data-i18n="hero.docs">Documentação</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="value-prop" id="value">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="value.title">O Novo Paradigma de Engenharia</h2>
+                <p data-i18n="value.subtitle">Transforme o desenvolvimento caótico em engenharia disciplinada com Fluxos de Trabalho de IA.</p>
+            </div>
+            <div class="value-grid">
+                <div class="value-item">
+                    <div class="value-icon">📋</div>
+                    <h3 data-i18n="value.1.title">Desenvolvimento Orientado por Specs</h3>
+                    <p data-i18n="value.1.desc">Defina especificações claras desde o início. A IA executa contra requisitos documentados — não alucinações.</p>
+                </div>
+                <div class="value-item">
+                    <div class="value-icon">🛡️</div>
+                    <h3 data-i18n="value.2.title">Guardrails Inteligentes</h3>
+                    <p data-i18n="value.2.desc">Verificações automatizadas previnem desvio das specs. Capture problemas antes que cheguem à produção.</p>
+                </div>
+                <div class="value-item">
+                    <div class="value-icon">📈</div>
+                    <h3 data-i18n="value.3.title">Escalabilidade Enterprise</h3>
+                    <p data-i18n="value.3.desc">De startup para enterprise. Adicione equipes, aplique políticas e escale sua infraestrutura de IA com confiança.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="features.title">Construído para Líderes de Engenharia</h2>
+                <p data-i18n="features.subtitle">Tudo o que você precisa para operacionalizar o desenvolvimento de IA em escala.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 data-i18n="features.1.title">Orquestração de Pipelines</h3>
+                    <p data-i18n="features.1.desc">Execute fluxos de trabalho multi-step complexos com monitoramento em tempo real. Controle sequencial ou step-by-step para máxima visibilidade.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 data-i18n="features.2.title">Coordenação Multi-Agente</h3>
+                    <p data-i18n="features.2.desc">Orquestre OpenCode, Copilot e Claude Code em pipelines unificados. Defina papéis, contextos e transferências.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3 data-i18n="features.3.title">Base de Conhecimento Persistente</h3>
+                    <p data-i18n="features.3.desc">Armazene e reutilize agentes, scripts, prompts e templates. Construa a biblioteca de ativos de IA da sua organização.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 data-i18n="features.4.title">Economia de Tokens</h3>
+                    <p data-i18n="features.4.desc">Reduza custos de IA reutilizando scripts otimizados nos pipelines. Execute automacoes sem precisar de prompts repetitivos.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3 data-i18n="features.5.title">Analytics de Execucao</h3>
+                    <p data-i18n="features.5.desc">Acompanhe performance de pipelines, taxas de sucesso e metricas de custo. Tome decisoes baseadas em dados sobre investimento em IA.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3 data-i18n="features.6.title">Integracao REST API</h3>
+                    <p data-i18n="features.6.desc">API REST completa com documentacao Swagger. Integre com CI/CD, monitoramento e sistemas enterprise.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h3 data-i18n="features.7.title">Colaboracao em Equipe</h3>
+                    <p data-i18n="features.7.desc">Pipelines compartilhados, acesso baseado em funcoes e trilhas de auditoria. Enable multiplas equipes para trabalhar com IA com seguranca.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="targets" id="targets">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="targets.title">Integrações com Principais AI Targets</h2>
+                <p data-i18n="targets.subtitle">Conecte seus agentes favoritos e unifique seu fluxo de trabalho.</p>
+            </div>
+            <div class="targets-grid">
+                <div class="target-card">
+                    <div class="target-logo">⚡</div>
+                    <h3>OpenCode</h3>
+                    <p data-i18n="targets.opencode">O agente de código mais avançado para desenvolvimento autônomo</p>
+                </div>
+                <div class="target-card">
+                    <div class="target-logo">🔷</div>
+                    <h3>GitHub Copilot</h3>
+                    <p data-i18n="targets.copilot">Assistência de IA líder em código da GitHub</p>
+                </div>
+                <div class="target-card">
+                    <div class="target-logo">🧠</div>
+                    <h3>Claude Code</h3>
+                    <p data-i18n="targets.claude">Agente de IA da Anthropic para desenvolvimento</p>
+                </div>
+                <div class="target-card">
+                    <div class="target-logo">+</div>
+                    <h3 data-i18n="targets.custom">Custom Targets</h3>
+                    <p data-i18n="targets.custom.desc">Adicione seus próprios agentes e ferramentas</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="enterprise" id="enterprise">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="enterprise.title">Por Que CTOs Escolhem Agentic</h2>
+                <p data-i18n="enterprise.subtitle">Construído para organizações que levam IA a sério.</p>
+            </div>
+            <div class="enterprise-grid">
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.1.title">Controle Sem Restrição</h3>
+                    <p data-i18n="enterprise.1.desc">Dê às equipes o poder da IA enquanto mantém governança. Specs se tornam a fonte da verdade.</p>
+                </div>
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.2.title">Resultados Previsíveis</h3>
+                    <p data-i18n="enterprise.2.desc">Passe do experimental para o previsível. Meça, otimize e escale iniciativas de IA com confiança.</p>
+                </div>
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.3.title">Otimização de Custos</h3>
+                    <p data-i18n="enterprise.3.desc">Pare de pagar por retries e alucinações. Execução driven por specs reduz compute desperdiçado e revisão humana.</p>
+                </div>
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.4.title">Pronto para Compliance</h3>
+                    <p data-i18n="enterprise.4.desc">Trilhas de auditoria, controle de versão e aplicação de políticas built-in. Meets requisitos regulatórios out of the box.</p>
+                </div>
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.5.title">Investimento em Infraestrutura</h3>
+                    <p data-i18n="enterprise.5.desc">Sua camada de infraestrutura de IA. Build once, deploy everywhere. Pipelines reutilizáveis entre projetos.</p>
+                </div>
+                <div class="enterprise-card">
+                    <h3 data-i18n="enterprise.6.title">Independência de Fornecedor</h3>
+                    <p data-i18n="enterprise.6.desc">Sem lock-in. Use qualquer modelo ou agente de IA. Seus workflows, seus dados, seu controle.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="pricing.title">Preços Simples e Transparentes</h2>
+                <p data-i18n="pricing.subtitle">Escolha o plano que se adequa à sua organização.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 data-i18n="pricing.starter.title">Starter</h3>
+                    <div class="price" data-i18n="pricing.starter.price">Gratuito</div>
+                    <ul>
+                        <li data-i18n="pricing.starter.1">Usuarios Ilimitados</li>
+                        <li data-i18n="pricing.starter.2">5 Pipelines</li>
+                        <li data-i18n="pricing.starter.3">Suporte Comunitario</li>
+                    </ul>
+                    <a href="#" class="btn btn-secondary" data-i18n="pricing.download">Baixar Gratis</a>
+                </div>
+                <div class="pricing-card featured" data-label="MAIS POPULAR">
+                    <h3 data-i18n="pricing.pro.title">Professional</h3>
+                    <div class="price" data-i18n="pricing.pro.price">R$ 494</div>
+                    <div class="price-detail" data-i18n="pricing.pro.payment">Pagamento Unico</div>
+                    <ul>
+                        <li data-i18n="pricing.pro.1">Usuarios Ilimitados</li>
+                        <li data-i18n="pricing.pro.2">Pipelines Ilimitados</li>
+                        <li data-i18n="pricing.pro.3">Acesso API</li>
+                        <li data-i18n="pricing.pro.4">Treinamento Online</li>
+                    </ul>
+                    <a href="https://wa.me/5535997731413" target="_blank" class="btn btn-primary" data-i18n="pricing.buy">Comprar Agora</a>
+                </div>
+                <div class="pricing-card">
+                    <h3 data-i18n="pricing.enterprise.title">Enterprise</h3>
+                    <div class="price" data-i18n="pricing.enterprise.price">Customizado</div>
+                    <ul>
+                        <li data-i18n="pricing.enterprise.1">Usuarios Ilimitados</li>
+                        <li data-i18n="pricing.enterprise.2">Integracoes Custom</li>
+                        <li data-i18n="pricing.enterprise.3">Treinamento e Mentoria de Equipes</li>
+                        <li data-i18n="pricing.enterprise.4">Suporte Dedicado</li>
+                    </ul>
+                    <a href="https://wa.me/5535997731413" target="_blank" class="btn btn-secondary" data-i18n="pricing.contact">Falar com Vendas</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2 data-i18n="cta.title">Pronto para Profissionalizar Seu Desenvolvimento de IA?</h2>
+            <p data-i18n="cta.desc">Baixe o executável e transforme sua equipe em Harness Engineers.</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span data-i18n="cta.download">Baixar .exe</span>
+                </a>
+                <a href="https://wa.me/5535997731413" target="_blank" class="btn btn-whatsapp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <span data-i18n="cta.whatsapp">Falar no WhatsApp</span>
+                </a>
+                <a href="docs/usuario.md" class="btn btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span data-i18n="cta.docs">Documentação</span>
+                </a>
+            </div>
+            <div class="contact-bar">
+                <div class="contact-item">
+                    <a href="mailto:aliss.pedrina@gmail.com" data-i18n="contact.email">Contato por Email</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <span class="logo-mark">&lt;/&gt;</span>
+                    <div>
+                        Agentic
+                        <div class="logo-brand">by <span>akumosstl</span></div>
+                    </div>
+                </a>
+            </div>
+            <ul class="footer-links">
+                <li><a href="docs/usuario.md" data-i18n="footer.docs">Documentação</a></li>
+                <li><a href="#pricing" data-i18n="footer.pricing">Planos</a></li>
+                <li><a href="#enterprise" data-i18n="footer.enterprise">Enterprise</a></li>
+                <li><a href="https://wa.me/5535997731413" target="_blank" data-i18n="footer.contact">Contato</a></li>
+            </ul>
+            <p class="footer-copy">© 2025 Agentic by akumosstl. Enterprise AI Infrastructure.</p>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            pt: {
+                'nav.value': 'Valor',
+                'nav.features': 'Recursos',
+                'nav.targets': 'Integrações',
+                'nav.enterprise': 'Empresas',
+                'nav.pricing': 'Planos',
+                'hero.badge': 'v1.0 - Enterprise Edition',
+                'hero.highlight1': 'Codifique de Forma Inteligente, Entregue Mais Rápido',
+                'hero.highlight2': 'Harness Engineer',
+                'hero.to': 'para',
+                'hero.tagline': 'Transforme seu desenvolvimento de IA com Harness Engineering e guardrails inteligentes.',
+                'hero.description': 'Agentic é a camada de infraestrutura que transforma o código caótico assistido por IA em uma prática de engenharia disciplinada e escalável. Defina specs, estabeleça guardrails e deixe a IA executar com precisão — enquanto você mantém o controle total.',
+                'hero.download': 'Baixar .exe',
+                'hero.whatsapp': 'Falar no WhatsApp',
+                'hero.docs': 'Documentação',
+                'value.title': 'O Novo Paradigma de Engenharia',
+                'value.subtitle': 'Transforme o desenvolvimento caótico em engenharia disciplinada com Fluxos de Trabalho de IA.',
+                'value.1.title': 'Desenvolvimento Orientado por Specs',
+                'value.1.desc': 'Defina especificações claras desde o início. A IA executa contra requisitos documentados — não alucinações.',
+                'value.2.title': 'Guardrails Inteligentes',
+                'value.2.desc': 'Verificações automatizadas previnem desvio das specs. Capture problemas antes que cheguem à produção.',
+                'value.3.title': 'Escalabilidade Enterprise',
+                'value.3.desc': 'De startup para enterprise. Adicione equipes, aplique políticas e escale sua infraestrutura de IA com confiança.',
+                'features.title': 'Construído para Líderes de Engenharia',
+                'features.subtitle': 'Tudo o que você precisa para operacionalizar o desenvolvimento de IA em escala.',
+                'features.1.title': 'Orquestração de Pipelines',
+                'features.1.desc': 'Execute fluxos de trabalho multi-step complexos com monitoramento em tempo real. Controle sequencial ou step-by-step para máxima visibilidade.',
+                'features.2.title': 'Coordenação Multi-Agente',
+                'features.2.desc': 'Orquestre OpenCode, Copilot e Claude Code em pipelines unificados. Defina papéis, contextos e transferências.',
+                'features.3.title': 'Base de Conhecimento Persistente',
+                'features.3.desc': 'Armazene e reutilize agentes, scripts, prompts e templates. Construa a biblioteca de ativos de IA da sua organização.',
+                'features.4.title': 'Economia de Tokens',
+                'features.4.desc': 'Reduza custos de IA reutilizando scripts otimizados nos pipelines. Execute automações sem precisar de prompts repetitivos.',
+                'features.5.title': 'Analytics de Execução',
+                'features.5.desc': 'Acompanhe performance de pipelines, taxas de sucesso e métricas de custo. Tome decisões baseadas em dados sobre investimento em IA.',
+                'features.6.title': 'Integração REST API',
+                'features.6.desc': 'API REST completa com documentação Swagger. Integre com CI/CD, monitoramento e sistemas enterprise.',
+                'features.7.title': 'Colaboração em Equipe',
+                'features.7.desc': 'Pipelines compartilhados, acesso baseado em funções e trilhas de auditoria. Enable múltiplas equipes para trabalhar com IA com segurança.',
+                'targets.title': 'Integrações com Principais AI Targets',
+                'targets.subtitle': 'Conecte seus agentes favoritos e unifique seu fluxo de trabalho.',
+                'targets.opencode': 'O agente de código mais avançado para desenvolvimento autônomo',
+                'targets.copilot': 'Assistência de IA líder em código da GitHub',
+                'targets.claude': 'Agente de IA da Anthropic para desenvolvimento',
+                'targets.custom': 'Custom Targets',
+                'targets.custom.desc': 'Adicione seus próprios agentes e ferramentas',
+                'enterprise.title': 'Por Que CTOs Escolhem Agentic',
+                'enterprise.subtitle': 'Construído para organizações que levam IA a sério.',
+                'enterprise.1.title': 'Controle Sem Restrição',
+                'enterprise.1.desc': 'Dê às equipes o poder da IA enquanto mantém governança. Specs se tornam a fonte da verdade.',
+                'enterprise.2.title': 'Resultados Previsíveis',
+                'enterprise.2.desc': 'Passe do experimental para o previsível. Meça, otimize e escale iniciativas de IA com confiança.',
+                'enterprise.3.title': 'Otimização de Custos',
+                'enterprise.3.desc': 'Pare de pagar por retries e alucinações. Execução driven por specs reduz compute desperdiçado e revisão humana.',
+                'enterprise.4.title': 'Pronto para Compliance',
+                'enterprise.4.desc': 'Trilhas de auditoria, controle de versão e aplicação de políticas built-in. Meets requisitos regulatórios out of the box.',
+                'enterprise.5.title': 'Investimento em Infraestrutura',
+                'enterprise.5.desc': 'Sua camada de infraestrutura de IA. Build once, deploy everywhere. Pipelines reutilizáveis entre projetos.',
+                'enterprise.6.title': 'Independência de Fornecedor',
+                'enterprise.6.desc': 'Sem lock-in. Use qualquer modelo ou agente de IA. Seus workflows, seus dados, seu controle.',
+                'pricing.title': 'Preços Simples e Transparentes',
+                'pricing.subtitle': 'Escolha o plano que se adequa à sua organização.',
+                'pricing.starter.title': 'Starter',
+                'pricing.starter.price': 'Gratuito',
+                'pricing.starter.1': 'Usuarios Ilimitados',
+                'pricing.starter.2': '5 Pipelines',
+                'pricing.starter.3': 'Suporte Comunitario',
+                'pricing.pro.title': 'Professional',
+                'pricing.pro.price': 'R$ 494',
+                'pricing.pro.payment': 'Pagamento Unico',
+                'pricing.pro.1': 'Usuarios Ilimitados',
+                'pricing.pro.2': 'Pipelines Ilimitados',
+                'pricing.pro.3': 'Acesso API',
+                'pricing.pro.4': 'Treinamento Online',
+                'pricing.enterprise.title': 'Enterprise',
+                'pricing.enterprise.price': 'Customizado',
+                'pricing.enterprise.1': 'Usuarios Ilimitados',
+                'pricing.enterprise.2': 'Integracoes Custom',
+                'pricing.enterprise.3': 'Treinamento e Mentoria de Equipes',
+                'pricing.enterprise.4': 'Suporte Dedicado',
+                'pricing.download': 'Baixar Gratis',
+                'pricing.buy': 'Comprar Agora',
+                'pricing.contact': 'Falar com Vendas',
+                'cta.title': 'Pronto para Profissionalizar Seu Desenvolvimento de IA?',
+                'cta.desc': 'Baixe o executável e transforme sua equipe em Harness Engineers.',
+                'cta.download': 'Baixar .exe',
+                'cta.whatsapp': 'Falar no WhatsApp',
+                'cta.docs': 'Documentação',
+                'footer.docs': 'Documentação',
+                'footer.pricing': 'Planos',
+                'footer.enterprise': 'Enterprise',
+                'footer.contact': 'Contato',
+                'contact.email': 'Contato por Email'
+            },
+            en: {
+                'nav.value': 'Value',
+                'nav.features': 'Features',
+                'nav.targets': 'Integrations',
+                'nav.enterprise': 'Enterprise',
+                'nav.pricing': 'Pricing',
+                'hero.badge': 'v1.0 - Enterprise Edition',
+                'hero.highlight1': 'Code Smarter, Ship Faster',
+                'hero.to': 'to',
+                'hero.highlight2': 'Harness Engineer',
+                'hero.tagline': 'Transform your AI development with Harness Engineering and intelligent guardrails.',
+                'hero.description': 'Agentic is the infrastructure layer that turns chaotic AI-assisted coding into a disciplined, scalable engineering practice. Define specs, set guardrails, and let AI execute with precision—while you maintain full control.',
+                'hero.download': 'Download .exe',
+                'hero.whatsapp': 'Talk on WhatsApp',
+                'hero.docs': 'Documentation',
+                'value.title': 'The New Engineering Paradigm',
+                'value.subtitle': 'Move beyond chaos. Become a Harness Engineer with structured AI workflows.',
+                'value.1.title': 'Spec-Driven Development',
+                'value.1.desc': 'Define clear specifications upfront. AI executes against documented requirements—not hallucinations.',
+                'value.2.title': 'Intelligent Guardrails',
+                'value.2.desc': 'Automated checks prevent drift from specs. Catch issues before they reach production.',
+                'value.3.title': 'Enterprise Scalability',
+                'value.3.desc': 'From startup to enterprise. Add teams, enforce policies, and scale AI infrastructure confidently.',
+                'features.title': 'Built for Engineering Leaders',
+                'features.subtitle': 'Everything you need to operationalize AI development at scale.',
+                'features.1.title': 'Pipeline Orchestration',
+                'features.1.desc': 'Execute complex multi-step workflows with real-time monitoring. Sequential or step-by-step control for maximum visibility.',
+                'features.2.title': 'Multi-Agent Coordination',
+                'features.2.desc': 'Orchestrate OpenCode, Copilot, and Claude Code in unified pipelines. Define roles, contexts, and handoffs.',
+                'features.3.title': 'Persistent Knowledge Base',
+                'features.3.desc': 'Store and reuse agents, scripts, prompts, and templates. Build your organization\'s AI assets library.',
+                'features.4.title': 'Token Savings',
+                'features.4.desc': 'Reduce AI costs by reusing optimized scripts in pipelines. Run automations without repetitive prompts.',
+                'features.5.title': 'Execution Analytics',
+                'features.5.desc': 'Track pipeline performance, success rates, and cost metrics. Make data-driven decisions about AI investment.',
+                'features.6.title': 'REST API Integration',
+                'features.6.desc': 'Full REST API with Swagger documentation. Integrate with CI/CD, monitoring, and enterprise systems.',
+                'features.7.title': 'Team Collaboration',
+                'features.7.desc': 'Shared pipelines, role-based access, and audit trails. Enable multiple teams to work with AI safely.',
+                'targets.title': 'Integration with Top AI Targets',
+                'targets.subtitle': 'Connect your favorite agents and unify your workflow.',
+                'targets.opencode': 'The most advanced code agent for autonomous development',
+                'targets.copilot': 'GitHub\'s leading AI code assistant',
+                'targets.claude': 'Anthropic\'s AI agent for development',
+                'targets.custom': 'Custom Targets',
+                'targets.custom.desc': 'Add your own agents and tools',
+                'enterprise.title': 'Why CTOs Choose Agentic',
+                'enterprise.subtitle': 'Built for organizations that take AI engineering seriously.',
+                'enterprise.1.title': 'Control Without Constraint',
+                'enterprise.1.desc': 'Give teams the power of AI while maintaining governance. Specs become the source of truth.',
+                'enterprise.2.title': 'Predictable Outcomes',
+                'enterprise.2.desc': 'Move from experimental to predictable. Measure, optimize, and scale AI initiatives with confidence.',
+                'enterprise.3.title': 'Cost Optimization',
+                'enterprise.3.desc': 'Stop paying for retries and hallucinations. Spec-driven execution reduces wasted compute and human review.',
+                'enterprise.4.title': 'Compliance Ready',
+                'enterprise.4.desc': 'Audit trails, version control, and policy enforcement built in. Meet regulatory requirements out of the box.',
+                'enterprise.5.title': 'Infrastructure Investment',
+                'enterprise.5.desc': 'Your AI infrastructure layer. Build once, deploy everywhere. Reusable pipelines across projects.',
+                'enterprise.6.title': 'Vendor Independence',
+                'enterprise.6.desc': 'No lock-in. Use any AI model or agent. Your workflows, your data, your control.',
+                'pricing.title': 'Simple, Transparent Pricing',
+                'pricing.subtitle': 'Choose the plan that fits your organization.',
+                'pricing.starter.title': 'Starter',
+                'pricing.starter.price': 'Free',
+                'pricing.starter.1': 'Unlimited Users',
+                'pricing.starter.2': '5 Pipelines',
+                'pricing.starter.3': 'Community Support',
+                'pricing.pro.title': 'Professional',
+                'pricing.pro.price': '$99',
+                'pricing.pro.payment': 'One-time Payment',
+                'pricing.pro.1': 'Unlimited Users',
+                'pricing.pro.2': 'Unlimited Pipelines',
+                'pricing.pro.3': 'API Access',
+                'pricing.pro.4': 'Online Training',
+                'pricing.enterprise.title': 'Enterprise',
+                'pricing.enterprise.price': 'Custom',
+                'pricing.enterprise.1': 'Unlimited Users',
+                'pricing.enterprise.2': 'Custom Integrations',
+                'pricing.enterprise.3': 'Team Training & Mentoring',
+                'pricing.enterprise.4': 'Dedicated Support',
+                'pricing.download': 'Download Free',
+                'pricing.buy': 'Buy Now',
+                'pricing.contact': 'Contact Sales',
+                'cta.title': 'Ready to Professionalize Your AI Development?',
+                'cta.desc': 'Download the executable and transform your team into Harness Engineers.',
+                'cta.download': 'Download .exe',
+                'cta.whatsapp': 'Talk on WhatsApp',
+                'cta.docs': 'Documentation',
+                'footer.docs': 'Documentation',
+                'footer.pricing': 'Pricing',
+                'footer.enterprise': 'Enterprise',
+                'footer.contact': 'Contact',
+                'contact.email': 'Contact by Email'
+            }
+        };
+
+        function setLang(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('lang-' + lang).classList.add('active');
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            document.documentElement.lang = lang;
+            localStorage.setItem('preferredLanguage', lang);
+        }
+        
+        function getBrowserLanguage() {
+            const lang = navigator.language || navigator.userLanguage;
+            return lang.startsWith('pt') ? 'pt' : 'en';
+        }
+        
+        function initLanguage() {
+            const savedLang = localStorage.getItem('preferredLanguage');
+            if (savedLang) {
+                setLang(savedLang);
+            } else {
+                const browserLang = getBrowserLanguage();
+                setLang(browserLang);
+            }
+        }
+        
+        // Initialize language on page load
+        document.addEventListener('DOMContentLoaded', initLanguage);
+
+        setLang('pt');
+    </script>
+</body>
+</html>

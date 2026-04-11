@@ -197,21 +197,6 @@ import { ProjectContextService } from '../../services/project-context.service';
               </button>
             </div>
             
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>Scope</mat-label>
-              <mat-select [(ngModel)]="formScript.scope">
-                <mat-option value="global">
-                  <mat-icon>public</mat-icon>
-                  Global
-                </mat-option>
-                <mat-option value="project">
-                  <mat-icon>folder</mat-icon>
-                  Project
-                </mat-option>
-              </mat-select>
-              <mat-icon matPrefix>share</mat-icon>
-            </mat-form-field>
-            
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveScript()" [disabled]="!formScript.name">
                 <mat-icon>save</mat-icon>
@@ -597,7 +582,16 @@ import { ProjectContextService } from '../../services/project-context.service';
       gap: 8px;
       cursor: pointer;
     }
-    
+
+    ::ng-deep .prompt-field-container .mat-form-field {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field:hover {
+      opacity: 0.9;
+    }
+
     .prompt-field-container:hover {
       opacity: 0.9;
     }
@@ -611,8 +605,9 @@ import { ProjectContextService } from '../../services/project-context.service';
       flex-shrink: 0;
       margin-top: 8px;
       cursor: pointer;
+      pointer-events: auto;
     }
-    
+
     .prompt-edit-btn:hover {
       background: rgba(79, 195, 247, 0.1);
     }
@@ -1043,7 +1038,7 @@ export class ScriptsComponent implements OnInit {
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {
                   if (this.selectedScript?.id === scriptId) {
-                    this.selectedScript = null;
+                    this.clearForm();
                   }
                   this.loadScripts();
                 }, 0);

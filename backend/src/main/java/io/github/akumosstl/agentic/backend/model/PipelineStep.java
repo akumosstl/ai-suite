@@ -30,8 +30,8 @@ public class PipelineStep {
     @Column(name = "step_order", nullable = false)
     private Integer stepOrder;
     
-    @Column(name = "status")
-    private String status; // "pending", "running", "completed", "failed"
+    @Column(name = "status", nullable = false)
+    private String status = "pending"; // "pending", "running", "completed", "failed"
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;

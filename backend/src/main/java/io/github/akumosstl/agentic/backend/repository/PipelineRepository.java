@@ -18,4 +18,6 @@ public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
     List<Pipeline> findByProject_IdAndStatus(Long projectId, String status);
     
     List<Pipeline> findByStatus(String status);
+    
+    List<Pipeline> findAll();
 }

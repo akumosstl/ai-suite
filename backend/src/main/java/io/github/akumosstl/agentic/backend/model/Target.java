@@ -25,19 +25,19 @@ public class Target {
     @Column(name = "agents_path")
     private String agentsPath;
 
-    @Column(name = "global_path")
-    private String globalPath;
+    @Column(name = "cli")
+    private String cli;
 
     public Target() {
     }
 
-    public Target(String name, String skillsPath, String commandsPath, String scriptsPath, String agentsPath, String globalPath) {
+    public Target(String name, String skillsPath, String commandsPath, String scriptsPath, String agentsPath, String cli) {
         this.name = name;
         this.skillsPath = skillsPath;
         this.commandsPath = commandsPath;
         this.scriptsPath = scriptsPath;
         this.agentsPath = agentsPath;
-        this.globalPath = globalPath;
+        this.cli = cli;
     }
 
     public Long getId() {
@@ -88,11 +88,11 @@ public class Target {
         this.agentsPath = agentsPath;
     }
 
-    public String getGlobalPath() {
-        return globalPath;
+    public String getCli() {
+        return cli;
     }
 
-    public void setGlobalPath(String globalPath) {
-        this.globalPath = globalPath;
+    public void setCli(String cli) {
+        this.cli = cli;
     }
 }

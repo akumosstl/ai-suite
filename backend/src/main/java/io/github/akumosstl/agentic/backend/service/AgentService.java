@@ -123,6 +123,14 @@ public class AgentService {
     }
     
     public void deleteAgent(Long id) {
+        Agent agent = getAgentById(id);
+        List<Project> projects = projectRepository.findAll();
+        for (Project project : projects) {
+            if (project.getAgents().contains(agent)) {
+                project.getAgents().remove(agent);
+                projectRepository.save(project);
+            }
+        }
         agentRepository.deleteById(id);
     }
     
@@ -161,7 +169,7 @@ public class AgentService {
     }
     
     public List<Agent> getAgentsByNamespace(String namespace) {
-        return agentRepository.findByNamespace(namespace);
+        return agentRepository.findByNamespaceOrCategory(namespace);
     }
     
     public List<Agent> searchByNamespace(String searchTerm, String namespace, int page, int size) {

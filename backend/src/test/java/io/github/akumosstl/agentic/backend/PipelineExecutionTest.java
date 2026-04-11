@@ -162,7 +162,7 @@ class PipelineExecutionTest {
         step.setType("agent");
         step.setStepOrder(1);
 
-        assertEquals("ready", step.getStatus());
+        assertEquals("pending", step.getStatus());
 
         step.setStatus("running");
         assertEquals("running", step.getStatus());

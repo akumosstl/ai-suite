@@ -28,4 +28,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     @Query("SELECT DISTINCT s.namespace FROM Skill s WHERE s.namespace IS NOT NULL AND s.namespace <> '' ORDER BY s.namespace")
     List<String> findDistinctNamespaces();
+    
+    @Query("SELECT DISTINCT s.category FROM Skill s WHERE s.category IS NOT NULL AND s.category <> '' ORDER BY s.category")
+    List<String> findDistinctCategories();
 }

@@ -13,6 +13,7 @@ import { ApiService, PipelineStep } from '../../services/api.service';
 export interface StepSettingsDialogData {
   step: PipelineStep;
   pipelineId: number;
+  projectTarget?: string;
 }
 
 @Component({
@@ -130,9 +131,8 @@ export interface StepSettingsDialogData {
             <mat-form-field appearance="outline" class="full-width" *ngIf="!isScriptStep">
               <mat-label>CLI</mat-label>
               <mat-select [(ngModel)]="selectedCli" (selectionChange)="onCliChange()">
-                <mat-option value="opencode">opencode</mat-option>
-                <mat-option value="copilot">copilot</mat-option>
-                <mat-option value="custom">Custom...</mat-option>
+                <mat-option *ngFor="let target of targets" [value]="target.name">{{ target.name }}</mat-option>
+                <mat-option *ngIf="selectedCli === 'custom'" value="custom">Custom...</mat-option>
               </mat-select>
             </mat-form-field>
 
@@ -474,6 +474,7 @@ export class StepSettingsDialogComponent {
   promptContent = '';
 
   step: PipelineStep;
+  targets: { name: string }[] = [];
 
   get isScriptStep(): boolean {
     return this.step.type === 'script';
@@ -500,22 +501,51 @@ export class StepSettingsDialogComponent {
     this.outputContent = data.step.outputContent || '';
     this.outputType = data.step.outputType || 'txt';
 
+    this.apiService.getTargets().subscribe({
+      next: (targets) => {
+        this.targets = targets;
+        this.initializeCliFromProjectTarget(data.projectTarget);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.initializeCliFromProjectTarget(data.projectTarget);
+        this.cdr.detectChanges();
+      }
+    });
+
     if (this.isScriptStep) {
       this.selectedRuntime = data.step.runtime || 'cmd';
       this.customCli = data.step.cli || '';
-    } else {
-      const cli = data.step.cli || '';
-      if (cli === 'opencode' || cli === 'copilot') {
-        this.selectedCli = cli;
-      } else if (cli) {
-        this.selectedCli = 'custom';
-        this.customCli = cli;
-      }
     }
     this.parameters = data.step.parameters || '';
     this.arguments_ = data.step.arguments || '';
 
     this.promptContent = data.step.agent?.prompt || data.step.script?.content || '';
+  }
+
+  private initializeCliFromProjectTarget(projectTarget?: string): void {
+    if (!this.isScriptStep) {
+      const cli = this.step.cli || '';
+      if (cli === 'opencode' || cli === 'copilot') {
+        this.selectedCli = cli;
+        return;
+      }
+      if (cli) {
+        const targetMatch = this.targets.find(t => t.name.toLowerCase() === cli.toLowerCase());
+        if (targetMatch) {
+          this.selectedCli = cli;
+          return;
+        }
+      }
+      if (projectTarget) {
+        const targetMatch = this.targets.find(t => t.name.toLowerCase() === projectTarget.toLowerCase());
+        if (targetMatch) {
+          this.selectedCli = projectTarget;
+        } else if (projectTarget === 'opencode' || projectTarget === 'copilot') {
+          this.selectedCli = projectTarget;
+        }
+      }
+    }
   }
 
   onInputTypeChange(): void {

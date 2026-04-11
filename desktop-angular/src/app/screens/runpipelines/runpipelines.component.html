@@ -20,7 +20,8 @@
                 *ngIf="isPaused">
                 <mat-icon>play_arrow</mat-icon>
             </button>
-            <button class="action-btn" (click)="stopPipeline()" title="Stop pipeline">
+            <button class="action-btn" (click)="stopPipeline()" title="Stop pipeline"
+                [disabled]="isStopping || isPipelineFinished()">
                 <mat-icon>stop</mat-icon>
             </button>
         </div>

@@ -622,7 +622,16 @@ import { ProjectContextService } from '../../services/project-context.service';
       gap: 8px;
       cursor: pointer;
     }
-    
+
+    ::ng-deep .prompt-field-container .mat-form-field {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field:hover {
+      opacity: 0.9;
+    }
+
     .prompt-field-container:hover {
       opacity: 0.9;
     }
@@ -636,8 +645,9 @@ import { ProjectContextService } from '../../services/project-context.service';
       flex-shrink: 0;
       margin-top: 8px;
       cursor: pointer;
+      pointer-events: auto;
     }
-    
+
     .prompt-edit-btn:hover {
       background: rgba(255, 183, 77, 0.1);
     }
@@ -1228,7 +1238,7 @@ export class SkillsComponent implements OnInit {
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {
                   if (this.selectedSkill?.id === skillId) {
-                    this.selectedSkill = null;
+                    this.clearForm();
                   }
                   this.loadSkills();
                 }, 0);

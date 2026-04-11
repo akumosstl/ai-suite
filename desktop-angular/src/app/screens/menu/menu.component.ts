@@ -17,8 +17,20 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
   template: `
     <div class="menu-container">
       <div class="logo-section">
-        <mat-icon class="logo-icon">code</mat-icon>
-        <h1>Agentic Code</h1>
+        <div class="logo-icon">
+          <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="50%" stop-color="#06b6d4"/>
+                <stop offset="100%" stop-color="#22d3ee"/>
+              </linearGradient>
+            </defs>
+            <rect width="36" height="36" rx="8" fill="url(#logoGrad)"/>
+            <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="14">&lt;/&gt;</text>
+          </svg>
+        </div>
+        <h1>Agentic</h1>
       </div>
       <p class="subtitle">Build and manage AI agents for code flow</p>
       
@@ -94,19 +106,19 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
     .logo-section {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       margin-bottom: 12px;
     }
     
     .logo-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #4fc3f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 4px 12px rgba(34, 211, 238, 0.3));
     }
     
     h1 {
-      font-size: 3rem;
+      font-size: 2.8rem;
       font-weight: 600;
       margin: 0;
       letter-spacing: 1px;
@@ -322,7 +334,17 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  exit(): void {
-    this.router.navigate(['/menu']);
-  }
+   exit(): void {
+     this.apiService.exitApplication().subscribe({
+       next: () => {
+         // Close the browser window after API call
+         window.close();
+       },
+       error: (err) => {
+         console.error('Exit error:', err);
+         // Still try to close window even if API call fails
+         window.close();
+       }
+     });
+   }
 }

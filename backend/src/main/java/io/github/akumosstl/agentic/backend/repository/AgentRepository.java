@@ -34,6 +34,9 @@ public interface AgentRepository extends JpaRepository<Agent, Long> {
     
     List<Agent> findByNamespace(String namespace);
     
+    @Query("SELECT a FROM Agent a WHERE LOWER(a.namespace) = LOWER(:value) OR LOWER(a.category) = LOWER(:value)")
+    List<Agent> findByNamespaceOrCategory(@Param("value") String value);
+    
     @Query("SELECT a FROM Agent a WHERE " +
            "(:searchTerm IS NULL OR :searchTerm = '' OR LOWER(a.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "OR LOWER(a.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -23,6 +23,7 @@ export interface PromptEditorResult {
 @Component({
   selector: 'app-prompt-editor-modal',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     CommonModule,
     FormsModule,
@@ -35,52 +36,66 @@ export interface PromptEditorResult {
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="dialog-header">
-      <mat-icon class="header-icon">edit_note</mat-icon>
-      <h2 class="dialog-title">{{ data.title || 'Edit Prompt' }}</h2>
-    </div>
-    
-    <mat-dialog-content class="dialog-content">
-      <div class="template-section">
-        <mat-form-field class="template-select" appearance="outline">
-          <mat-label>Template</mat-label>
-          <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="onTemplateSelect()">
-            <mat-option [value]="null">-- Select a template --</mat-option>
-            <mat-option *ngFor="let template of templates" [value]="template.id">
-              {{ template.name }}
-            </mat-option>
-          </mat-select>
-          <mat-icon matPrefix>description</mat-icon>
-        </mat-form-field>
-        
-        <div *ngIf="loadingTemplates" class="loading-spinner">
-          <mat-spinner diameter="24"></mat-spinner>
-        </div>
+    <div class="modal-container">
+      <div class="dialog-header">
+        <mat-icon class="header-icon">edit_note</mat-icon>
+        <h2 class="dialog-title">{{ data.title || 'Edit Prompt' }}</h2>
       </div>
       
-      <mat-form-field class="full-width prompt-field" appearance="outline">
-        <mat-label>Prompt</mat-label>
-        <textarea matInput 
-                  [(ngModel)]="editedPrompt" 
-                  rows="20" 
-                  placeholder="Enter the prompt content"
-                  (ngModelChange)="onPromptChange()"></textarea>
-        <mat-icon matPrefix>code</mat-icon>
-      </mat-form-field>
-    </mat-dialog-content>
+      <div class="dialog-content">
+        <div class="template-section">
+          <mat-form-field class="template-select" appearance="outline">
+            <mat-label>Template</mat-label>
+            <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="onTemplateSelect()">
+              <mat-option [value]="null">-- Select a template --</mat-option>
+              <mat-option *ngFor="let template of templates" [value]="template.id">
+                {{ template.name }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+          
+          <div *ngIf="loadingTemplates" class="loading-spinner">
+            <mat-spinner diameter="24"></mat-spinner>
+          </div>
+        </div>
+        
+        <mat-form-field class="full-width prompt-field" appearance="outline">
+          <mat-label>Prompt</mat-label>
+          <textarea matInput 
+                    [(ngModel)]="editedPrompt" 
+                    rows="15" 
+                    placeholder="Enter the prompt content"
+                    (ngModelChange)="onPromptChange()"></textarea>
+          <mat-icon matPrefix>code</mat-icon>
+        </mat-form-field>
+      </div>
 
-    <mat-dialog-actions class="dialog-actions">
-      <button mat-stroked-button (click)="onCancel()" class="cancel-btn">
-        <mat-icon>close</mat-icon>
-        Cancel
-      </button>
-      <button mat-raised-button color="primary" (click)="onSave()" class="save-btn">
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
-    </mat-dialog-actions>
+      <div class="dialog-actions">
+        <button mat-stroked-button (click)="onCancel()" class="cancel-btn">
+          <mat-icon>close</mat-icon>
+          Cancel
+        </button>
+        <button mat-raised-button color="primary" (click)="onSave()" class="save-btn">
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+      </div>
+    </div>
   `,
   styles: [`
+    .modal-container {
+      display: flex;
+      flex-direction: column;
+      min-width: 700px;
+      max-width: 900px;
+      min-height: 500px;
+      max-height: 80vh;
+      background: #1e1e1e;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
     .dialog-header {
       display: flex;
       align-items: center;
@@ -88,7 +103,7 @@ export interface PromptEditorResult {
       padding: 20px 24px;
       background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
       border-bottom: 1px solid #3a3a3a;
-      border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
     
     .header-icon {
@@ -107,14 +122,15 @@ export interface PromptEditorResult {
     }
     
     .dialog-content {
-      padding: 24px !important;
-      min-width: 600px;
-      max-width: 800px;
-      max-height: 70vh;
-      background: #1e1e1e !important;
+      flex: 1;
+      padding: 24px;
+      min-height: 300px;
+      max-height: 60vh;
+      background: #1e1e1e;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      overflow-y: auto;
     }
     
     .template-section {
@@ -139,7 +155,15 @@ export interface PromptEditorResult {
     
     .prompt-field {
       flex: 1;
-      min-height: 300px;
+      min-height: 350px;
+    }
+
+    ::ng-deep .prompt-field .mat-mdc-text-field-wrapper {
+      height: 100%;
+    }
+
+    ::ng-deep .prompt-field textarea {
+      height: 300px !important;
     }
     
     mat-form-field {
@@ -206,11 +230,12 @@ export interface PromptEditorResult {
       display: flex;
       justify-content: flex-end;
       gap: 12px;
-      padding: 16px 24px !important;
+      padding: 16px 24px;
       background: #1e1e1e;
       border-top: 1px solid #3a3a3a;
       border-radius: 0 0 12px 12px;
-      margin: 0 !important;
+      margin: 0;
+      flex-shrink: 0;
     }
     
     .cancel-btn {

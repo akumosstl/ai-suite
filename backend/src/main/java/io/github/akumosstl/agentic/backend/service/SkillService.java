@@ -1,6 +1,8 @@
 package io.github.akumosstl.agentic.backend.service;
 
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Skill;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,9 @@ public class SkillService {
     
     @Autowired
     private SkillRepository skillRepository;
+    
+    @Autowired
+    private ProjectRepository projectRepository;
     
     public List<Skill> getRecentSkills(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -47,6 +52,14 @@ public class SkillService {
     }
     
     public void deleteSkill(Long id) {
+        Skill skill = getSkillById(id);
+        List<Project> projects = projectRepository.findAll();
+        for (Project project : projects) {
+            if (project.getSkills().contains(skill)) {
+                project.getSkills().remove(skill);
+                projectRepository.save(project);
+            }
+        }
         skillRepository.deleteById(id);
     }
     
@@ -78,5 +91,9 @@ public class SkillService {
 
     public List<String> getDistinctNamespaces() {
         return skillRepository.findDistinctNamespaces();
+    }
+    
+    public List<String> getDistinctCategories() {
+        return skillRepository.findDistinctCategories();
     }
 }

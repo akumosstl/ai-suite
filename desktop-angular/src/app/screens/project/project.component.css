@@ -1013,6 +1013,21 @@
       border-color: #4fc3f7;
     }
     
+    .edit-select {
+      flex: 1;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+    }
+    
+    .edit-select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+    }
+    
     .icon-btn.edit-btn,
     .icon-btn.cancel-btn,
     .icon-btn.save-btn {

@@ -84,4 +84,8 @@ public class CommandService {
     public List<String> getDistinctNamespaces() {
         return commandRepository.findDistinctNamespaces();
     }
+    
+    public List<String> getDistinctCategories() {
+        return commandRepository.findDistinctCategories();
+    }
 }

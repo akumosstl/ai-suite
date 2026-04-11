@@ -65,4 +65,12 @@ public class ScriptService {
     public List<String> getDistinctNamespaces() {
         return scriptRepository.findDistinctNamespaces();
     }
+    
+    public List<String> getDistinctCategories() {
+        return scriptRepository.findDistinctCategories();
+    }
+    
+    public List<Script> getScriptsByNamespace(String namespace) {
+        return scriptRepository.findByNamespace(namespace);
+    }
 }

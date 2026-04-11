@@ -43,7 +43,6 @@ public class TargetService {
         target.setCommandsPath(targetDetails.getCommandsPath());
         target.setScriptsPath(targetDetails.getScriptsPath());
         target.setAgentsPath(targetDetails.getAgentsPath());
-        target.setGlobalPath(targetDetails.getGlobalPath());
         return targetRepository.save(target);
     }
 

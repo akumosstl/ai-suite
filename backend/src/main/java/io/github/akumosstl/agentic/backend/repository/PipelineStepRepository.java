@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface PipelineStepRepository extends JpaRepository<PipelineStep, Long> {
     
+    List<PipelineStep> findByPipeline_Id(Long pipelineId);
+    
     List<PipelineStep> findByPipeline_IdOrderByStepOrderAsc(Long pipelineId);
     
     Optional<PipelineStep> findByPipeline_IdAndStepOrder(Long pipelineId, Integer stepOrder);

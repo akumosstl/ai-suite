@@ -14,7 +14,11 @@ export class ProjectContextService {
   private fromProjectSource = new BehaviorSubject<boolean>(false);
   fromProject$ = this.fromProjectSource.asObservable();
 
+  private selectedPipelineIdSource = new BehaviorSubject<number | null>(null);
+  selectedPipelineId$ = this.selectedPipelineIdSource.asObservable();
+
   private readonly PROJECT_ID_KEY = 'lastProjectId';
+  private readonly SELECTED_PIPELINE_KEY = 'selectedPipelineId';
 
   constructor() {}
 
@@ -52,8 +56,24 @@ export class ProjectContextService {
     return this.fromProjectSource.getValue();
   }
 
+  setSelectedPipelineId(id: number | null): void {
+    this.selectedPipelineIdSource.next(id);
+    if (id) {
+      localStorage.setItem(this.SELECTED_PIPELINE_KEY, id.toString());
+    } else {
+      localStorage.removeItem(this.SELECTED_PIPELINE_KEY);
+    }
+  }
+
+  getSelectedPipelineId(): number | null {
+    const stored = localStorage.getItem(this.SELECTED_PIPELINE_KEY);
+    return stored ? parseInt(stored, 10) : null;
+  }
+
   clearContext(): void {
     this.previousUrlSource.next(null);
     this.fromProjectSource.next(false);
+    this.selectedPipelineIdSource.next(null);
+    localStorage.removeItem(this.SELECTED_PIPELINE_KEY);
   }
 }

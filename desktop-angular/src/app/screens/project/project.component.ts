@@ -16,7 +16,7 @@ import { PipelineResultDialogComponent } from '../../components/pipeline-result-
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ApiService, Project, Pipeline, PipelineStep, Agent } from '../../services/api.service';
+import { ApiService, Project, Pipeline, PipelineStep, Agent, Target } from '../../services/api.service';
 import { SelectAgentDialogComponent, SelectedStep } from '../../components/select-agent-dialog/select-agent-dialog.component';
 import { SelectSkillDialogComponent } from '../../components/select-skill-dialog/select-skill-dialog.component';
 import { SelectCommandDialogComponent } from '../../components/select-command-dialog/select-command-dialog.component';
@@ -65,6 +65,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   
   isEditingProject = false;
   editProject: { name: string; description: string; path: string; target: string } = { name: '', description: '', path: '', target: '' };
+  targets: Target[] = [];
   isRunningPipeline = false;
   runningPipelineId: number | null = null;
   pipelineStatus: string | null = null;
@@ -143,6 +144,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.projectContext.setProjectId(stateProject.id)
         this.projectContext.setFromProject(true)
       }
+      this.restoreSelectedPipeline()
       this.cdr.detectChanges()
       return
     }
@@ -187,9 +189,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  loadTargets(): void {
+    this.apiService.getTargets().subscribe({
+      next: (targets) => {
+        this.targets = targets;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.targets = [];
+      }
+    });
+  }
   
   editProjectInfo() {
     if (!this.project) return;
+    this.loadTargets();
     this.editProject = {
       name: this.project.name || '',
       description: this.project.description || '',
@@ -262,6 +277,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
           }
         });
         
+        this.restoreSelectedPipeline();
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -273,12 +289,23 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
   selectPipeline(pipeline: Pipeline) {
     this.selectedPipeline = pipeline;
+    this.projectContext.setSelectedPipelineId(pipeline.id ?? null);
     this.showProjectInfo = false;
     this.showPipelineForm = false;
     this.message = '';
     this.loadPipelineSteps(pipeline.id!);
     this.checkRunningPipeline();
     this.startRunningCheckInterval();
+  }
+
+  private restoreSelectedPipeline(): void {
+    const storedPipelineId = this.projectContext.getSelectedPipelineId();
+    if (storedPipelineId && this.pipelines.length > 0) {
+      const pipeline = this.pipelines.find(p => p.id === storedPipelineId);
+      if (pipeline) {
+        this.selectPipeline(pipeline);
+      }
+    }
   }
 
   togglePipelines() {
@@ -943,7 +970,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.dialog.open(StepSettingsDialogComponent, {
           data: {
             step: updatedStep,
-            pipelineId: pipelineId
+            pipelineId: pipelineId,
+            projectTarget: this.project?.target
           },
           width: '650px',
           maxHeight: '80vh',
@@ -963,7 +991,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.dialog.open(StepSettingsDialogComponent, {
           data: {
             step: step,
-            pipelineId: pipelineId
+            pipelineId: pipelineId,
+            projectTarget: this.project?.target
           },
           width: '650px',
           maxHeight: '80vh',

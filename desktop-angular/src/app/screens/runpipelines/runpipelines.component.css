@@ -88,6 +88,19 @@
     background: #f44336;
 }
 
+.action-btn:disabled,
+.action-btn[disabled] {
+    background: #444 !important;
+    color: #888 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+.action-btn:disabled:hover,
+.action-btn[disabled]:hover {
+    background: #444 !important;
+}
+
 .action-btn.continue-btn {
     background: #2e7d32;
 }

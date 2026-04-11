@@ -36,13 +36,16 @@ public class SseService {
         List<SseEmitter> list = emitters.get(pipelineId);
         if (list == null) return;
         
+        long timestamp = System.currentTimeMillis();
+        
         StringBuilder data = new StringBuilder();
         data.append("{\"stepId\":").append(stepId);
         if (stepOrder != null) {
             data.append(",\"stepOrder\":").append(stepOrder);
         }
         data.append(",\"output\":\"").append(escapeJson(output)).append("\"");
-        data.append(",\"status\":\"").append(status).append("\"}");
+        data.append(",\"status\":\"").append(status).append("\"");
+        data.append(",\"timestamp\":").append(timestamp).append("}");
         
         for (SseEmitter emitter : list) {
             try {

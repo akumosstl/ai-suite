@@ -5,8 +5,11 @@ import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Target;
+import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
+import io.github.akumosstl.agentic.backend.repository.TargetRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +23,8 @@ import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +62,12 @@ public class PipelineStepService {
     @Autowired
     private ScriptService scriptService;
     
+    @Autowired
+    private TargetRepository targetRepository;
+    
+    @Autowired
+    private PipelineRepository pipelineRepository;
+    
     private static final Pattern STEP_OUTPUT_PATTERN = Pattern.compile("\\{\\{step:(\\d+):output\\}\\}");
     private static final Pattern FILE_PATTERN = Pattern.compile("\\{\\{file:([^}]+)\\}\\}");
     private static final Pattern ENV_PATTERN = Pattern.compile("\\{\\{env:([A-Za-z_][A-Za-z0-9_]*)\\}\\}");
@@ -89,6 +100,21 @@ public class PipelineStepService {
         resolved = resolveEnvironmentVariables(resolved);
         
         return resolved;
+    }
+    
+    private String getProjectTargetCli(Long pipelineId) {
+        try {
+            String cli = entityManager.createQuery(
+                "SELECT t.cli FROM Pipeline p JOIN p.project pr JOIN Target t WHERE p.id = :pipelineId AND t.id = pr.targetId",
+                String.class)
+                .setParameter("pipelineId", pipelineId)
+                .getSingleResult();
+            System.out.println("DEBUG: Found project target CLI via JPQL: " + cli);
+            return cli;
+        } catch (Exception e) {
+            System.out.println("DEBUG: Error getting project target CLI via JPQL: " + e.getMessage());
+        }
+        return "opencode";
     }
     
     private String resolveStepOutputReferences(String content, Long pipelineId, int currentStepOrder, String runDir) {
@@ -411,6 +437,14 @@ public class PipelineStepService {
             
             List<PipelineStep> steps = getStepsByPipeline(pipelineId);
             
+            for (PipelineStep step : steps) {
+                step.setOutputContent(null);
+                step.setOutputType(null);
+                step.setStatus("ready");
+                pipelineStepRepository.save(step);
+            }
+            pipelineStepRepository.flush();
+            
             Integer pendingStepOrder = pendingStepOrders.get(pipelineId);
             int startIndex = 0;
             if (pendingStepOrder != null && pendingStepOrder > 1) {
@@ -723,38 +757,23 @@ public class PipelineStepService {
         
         System.out.println("DEBUG: Agent prompt after replacement: " + prompt);
         
+        String projectTargetCli = getProjectTargetCli(pipelineId);
         String cli = step.getCli();
+        
+        if (cli == null || cli.isEmpty()) {
+            cli = projectTargetCli;
+        }
+        
         String parameters = step.getParameters();
         String arguments = step.getArguments();
         
         StringBuilder fullCommand = new StringBuilder();
 
-        if (cli != null && !cli.isEmpty()) {
-            if (cli.equals("copilot")) {
-                fullCommand.append("copilot --allow-all-paths --allow-all-tools -p ");
-                // Escape prompt for Windows cmd
-                String escapedPrompt = escapeWindowsCommand(prompt);
-                fullCommand.append('"').append(escapedPrompt).append('"');
-            } else if (!cli.equals("opencode")) {
-                fullCommand.append(cli);
-                if (parameters != null && !parameters.isEmpty()) {
-                    fullCommand.append(" ").append(parameters);
-                }
-                if (arguments != null && !arguments.isEmpty()) {
-                    fullCommand.append(" ").append(arguments);
-                }
-                fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
-            } else {
-                fullCommand.append("opencode run");
-                if (parameters != null && !parameters.isEmpty()) {
-                    fullCommand.append(" ").append(parameters);
-                }
-                if (arguments != null && !arguments.isEmpty()) {
-                    fullCommand.append(" ").append(arguments);
-                }
-                fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
-            }
-        } else {
+        if (cli.equals("copilot")) {
+            fullCommand.append("copilot --allow-all-paths --allow-all-tools -p ");
+            String escapedPrompt = escapeWindowsCommand(prompt);
+            fullCommand.append('"').append(escapedPrompt).append('"');
+        } else if (cli.equals("opencode")) {
             fullCommand.append("opencode run");
             if (parameters != null && !parameters.isEmpty()) {
                 fullCommand.append(" ").append(parameters);
@@ -762,7 +781,20 @@ public class PipelineStepService {
             if (arguments != null && !arguments.isEmpty()) {
                 fullCommand.append(" ").append(arguments);
             }
-            fullCommand.append(" \"").append(prompt.replace("\"", "\\\"").replace("\r", "").replace("\n", " ")).append("\"");
+            fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
+        } else if (cli.equals("claude")) {
+            fullCommand.append("claude -p ");
+            String escapedPrompt = escapeWindowsCommand(prompt);
+            fullCommand.append('"').append(escapedPrompt).append('"');
+        } else {
+            fullCommand.append(cli);
+            if (parameters != null && !parameters.isEmpty()) {
+                fullCommand.append(" ").append(parameters);
+            }
+            if (arguments != null && !arguments.isEmpty()) {
+                fullCommand.append(" ").append(arguments);
+            }
+            fullCommand.append(" \"").append(escapeWindowsCommand(prompt)).append("\"");
         }
         
         System.out.println("DEBUG: Full command: " + fullCommand.toString());
@@ -784,13 +816,7 @@ public class PipelineStepService {
         processBuilder.directory(new java.io.File(workingDir));
         
         Map<String, String> env = processBuilder.environment();
-        env.put("OPENCODE_HOME", System.getenv("USERPROFILE") != null ? System.getenv("USERPROFILE") : System.getenv("HOME"));
-        
-        String path = env.get("PATH");
-        String userProfile = System.getenv("USERPROFILE");
-        if (path != null && userProfile != null) {
-            env.put("PATH", path + ";" + userProfile + "\\AppData\\Roaming\\npm");
-        }
+        configureProcessEnvironment(env);
         
         File outputFile = new File(System.getProperty("java.io.tmpdir"), "pipeline_output_" + System.currentTimeMillis() + ".txt");
         File errorFile = new File(System.getProperty("java.io.tmpdir"), "pipeline_error_" + System.currentTimeMillis() + ".txt");
@@ -968,13 +994,7 @@ public class PipelineStepService {
         processBuilder.directory(new java.io.File(workingDir));
         
         Map<String, String> env = processBuilder.environment();
-        env.put("OPENCODE_HOME", System.getenv("USERPROFILE") != null ? System.getenv("USERPROFILE") : System.getenv("HOME"));
-        
-        String path = env.get("PATH");
-        String userProfile = System.getenv("USERPROFILE");
-        if (path != null && userProfile != null) {
-            env.put("PATH", path + ";" + userProfile + "\\AppData\\Roaming\\npm");
-        }
+        configureProcessEnvironment(env);
         
         File outputFile = new File(System.getProperty("java.io.tmpdir"), "script_output_" + System.currentTimeMillis() + ".txt");
         outputFile.deleteOnExit();
@@ -1028,6 +1048,30 @@ public class PipelineStepService {
             }
         } catch (Exception e) {
             System.out.println("DEBUG: Error syncing run step status: " + e.getMessage());
+        }
+    }
+
+    private void configureProcessEnvironment(Map<String, String> env) {
+        String userHome = System.getenv("USERPROFILE");
+        if (userHome == null) {
+            userHome = System.getenv("HOME");
+        }
+        
+        env.put("OPENCODE_HOME", userHome != null ? userHome : System.getProperty("user.home"));
+        
+        String path = env.get("PATH");
+        String pathSeparator = System.getProperty("os.name").toLowerCase().contains("win") ? ";" : ":";
+        
+        if (path != null && userHome != null) {
+            StringBuilder newPath = new StringBuilder();
+            
+            Path toolsPath = Paths.get(userHome, ".agentic", "tools");
+            if (Files.exists(toolsPath)) {
+                newPath.append(toolsPath.toAbsolutePath()).append(pathSeparator);
+            }
+            
+            newPath.append(userHome).append("\\AppData\\Roaming\\npm");
+            env.put("PATH", newPath.toString() + pathSeparator + path);
         }
     }
 }

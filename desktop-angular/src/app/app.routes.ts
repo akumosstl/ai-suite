@@ -6,6 +6,7 @@ import { SkillsComponent } from './screens/skills/skills.component';
 import { CommandsComponent } from './screens/commands/commands.component';
 import { ConfigComponent } from './screens/config/config.component';
 import { TemplatesComponent } from './screens/templates/templates.component';
+import { NamespacesComponent } from './screens/namespaces/namespaces.component';
 
 import { ProjectComponent } from './screens/project/project.component';
 import { RunpipelinesComponent } from './screens/runpipelines/runpipelines.component';
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'commands', component: CommandsComponent },
   { path: 'config', component: ConfigComponent },
   { path: 'templates', component: TemplatesComponent },
+  { path: 'namespaces', component: NamespacesComponent },
 
   { path: 'project', component: ProjectComponent },
   { path: 'project/:id', component: ProjectComponent },

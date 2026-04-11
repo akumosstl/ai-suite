@@ -179,8 +179,10 @@
                             <span class="info-value">{{ project.target || 'No target' }}</span>
                         </ng-container>
                         <ng-container *ngIf="isEditingProject">
-                            <input class="edit-input" type="text" [(ngModel)]="editProject.target"
-                                placeholder="e.g., main, dev, production" />
+                            <select class="edit-select" [(ngModel)]="editProject.target">
+                                <option value="">Select a target</option>
+                                <option *ngFor="let target of targets" [value]="target.name">{{ target.name }}</option>
+                            </select>
                         </ng-container>
                     </div>
                     <div class="info-row">

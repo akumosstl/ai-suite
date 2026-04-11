@@ -47,15 +47,27 @@ public class NamespaceController {
         switch (type) {
             case "agents":
                 namespaces = agentService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = agentService.getDistinctCategories();
+                }
                 break;
             case "skills":
                 namespaces = skillService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = skillService.getDistinctCategories();
+                }
                 break;
             case "commands":
                 namespaces = commandService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = commandService.getDistinctCategories();
+                }
                 break;
             case "scripts":
                 namespaces = scriptService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = scriptService.getDistinctCategories();
+                }
                 break;
             default:
                 return ResponseEntity.badRequest().build();
@@ -119,7 +131,7 @@ public class NamespaceController {
         List<Pipeline> referencedPipelines = new ArrayList<>();
 
         for (Pipeline pipeline : allPipelines) {
-            List<PipelineStep> steps = pipelineStepRepository.findByPipelineId(pipeline.getId());
+            List<PipelineStep> steps = pipelineStepRepository.findByPipeline_Id(pipeline.getId());
             boolean referencesNamespace = steps.stream().anyMatch(step -> {
                 if ("agents".equals(type) && step.getAgent() != null) {
                     return itemIds.contains(step.getAgent().getId());
@@ -277,7 +289,7 @@ public class NamespaceController {
         int count = 0;
 
         for (Pipeline pipeline : allPipelines) {
-            List<PipelineStep> steps = pipelineStepRepository.findByPipelineId(pipeline.getId());
+            List<PipelineStep> steps = pipelineStepRepository.findByPipeline_Id(pipeline.getId());
             boolean referencesNamespace = steps.stream().anyMatch(step -> {
                 if ("agents".equals(type) && step.getAgent() != null) {
                     return itemIds.contains(step.getAgent().getId());

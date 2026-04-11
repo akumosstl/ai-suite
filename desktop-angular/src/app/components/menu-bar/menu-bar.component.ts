@@ -23,7 +23,20 @@ import { ApiService } from '../../services/api.service'
   template: `
     <div class="menu-bar">
       <div class="logo">
-        <span class="logo-text">Agentic Code</span>
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGradMenu" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="50%" stop-color="#06b6d4"/>
+                <stop offset="100%" stop-color="#22d3ee"/>
+              </linearGradient>
+            </defs>
+            <rect width="36" height="36" rx="6" fill="url(#logoGradMenu)"/>
+            <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="12">&lt;/&gt;</text>
+          </svg>
+        </div>
+        <span class="logo-text">Agentic</span>
       </div>
       
       <div class="menu-items">
@@ -89,6 +102,10 @@ import { ApiService } from '../../services/api.service'
               <mat-icon>description</mat-icon>
               <span>Templates</span>
             </button>
+            <button mat-menu-item routerLink="/namespaces" class="menu-item">
+              <mat-icon>dns</mat-icon>
+              <span>Namespace</span>
+            </button>
             <div class="menu-separator"></div>
             <button mat-menu-item (click)="openExport()" class="menu-item">
               <mat-icon>file_download</mat-icon>
@@ -150,6 +167,16 @@ import { ApiService } from '../../services/api.service'
       font-weight: 600;
       color: #ffffff;
       letter-spacing: 0.5px;
+    }
+    
+    .logo-icon {
+      display: flex;
+      align-items: center;
+      filter: drop-shadow(0 2px 6px rgba(34, 211, 238, 0.3));
+    }
+    
+    .logo-icon svg {
+      display: block;
     }
     
     .menu-items {
@@ -295,7 +322,7 @@ export class MenuBarComponent implements OnInit, OnDestroy {
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/skills', '/scripts', '/commands', '/templates'];
+    const internalPages = ['/agents', '/skills', '/scripts', '/commands', '/templates', '/namespaces'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;

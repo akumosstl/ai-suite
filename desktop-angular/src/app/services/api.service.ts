@@ -144,7 +144,6 @@ export interface Target {
   commandsPath?: string;
   scriptsPath?: string;
   agentsPath?: string;
-  globalPath?: string;
 }
 
 export interface TeamMember {
@@ -895,9 +894,46 @@ export class ApiService {
     );
   }
 
-  backupDatabase(directory: string, fileName: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
-      catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
-    );
-  }
+   backupDatabase(directory: string, fileName: string): Observable<any> {
+     return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
+       catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
+     );
+   }
+
+   exitApplication(): Observable<any> {
+     return this.http.post(`${this.baseUrl}/exit`, {}).pipe(
+       catchError(this.handleError('exitApplication', {}))
+     );
+   }
+
+   // Namespaces
+getNamespacesByType(type: string): Observable<string[]> {
+      return this.http.get<string[]>(`${this.baseUrl}/namespaces/namespaces/${type}`).pipe(
+        catchError(this.handleError('getNamespacesByType', []))
+      );
+    }
+
+   getNamespaceItems(type: string, namespace: string): Observable<any> {
+     return this.http.get(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
+       catchError(this.handleError('getNamespaceItems', { type, namespace, items: [], totalCount: 0 }))
+     );
+   }
+
+   getPipelinesUsingNamespace(type: string, namespace: string): Observable<Pipeline[]> {
+     return this.http.get<Pipeline[]>(`${this.baseUrl}/namespaces/${type}/${namespace}/pipelines`).pipe(
+       catchError(this.handleError('getPipelinesUsingNamespace', []))
+     );
+   }
+
+   getProjectsUsingNamespace(type: string, namespace: string): Observable<Project[]> {
+     return this.http.get<Project[]>(`${this.baseUrl}/namespaces/${type}/${namespace}/projects`).pipe(
+       catchError(this.handleError('getProjectsUsingNamespace', []))
+     );
+   }
+
+   clearNamespace(type: string, namespace: string): Observable<any> {
+     return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
+       catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
+     );
+   }
 }
