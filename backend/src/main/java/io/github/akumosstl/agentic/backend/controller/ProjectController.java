@@ -5,6 +5,9 @@ import io.github.akumosstl.agentic.backend.model.Skill;
 import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Agent;
+import io.github.akumosstl.agentic.backend.model.Instruction;
+import io.github.akumosstl.agentic.backend.model.Plugin;
+import io.github.akumosstl.agentic.backend.model.Tool;
 import io.github.akumosstl.agentic.backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -88,6 +91,54 @@ public class ProjectController {
         return projectService.removeAgentFromProject(projectId, agentId);
     }
     
+    // Instructions endpoints
+    @GetMapping("/{id}/instructions")
+    public List<Instruction> getProjectInstructions(@PathVariable Long id) {
+        return projectService.getProjectInstructions(id);
+    }
+    
+    @PostMapping("/{id}/instructions")
+    public Project addInstructionsToProject(@PathVariable Long id, @RequestBody List<Long> instructionIds) {
+        return projectService.addInstructionsToProject(id, instructionIds);
+    }
+    
+    @DeleteMapping("/{projectId}/instructions/{instructionId}")
+    public Project removeInstructionFromProject(@PathVariable Long projectId, @PathVariable Long instructionId) {
+        return projectService.removeInstructionFromProject(projectId, instructionId);
+    }
+    
+    // Plugins endpoints
+    @GetMapping("/{id}/plugins")
+    public List<Plugin> getProjectPlugins(@PathVariable Long id) {
+        return projectService.getProjectPlugins(id);
+    }
+    
+    @PostMapping("/{id}/plugins")
+    public Project addPluginsToProject(@PathVariable Long id, @RequestBody List<Long> pluginIds) {
+        return projectService.addPluginsToProject(id, pluginIds);
+    }
+    
+    @DeleteMapping("/{projectId}/plugins/{pluginId}")
+    public Project removePluginFromProject(@PathVariable Long projectId, @PathVariable Long pluginId) {
+        return projectService.removePluginFromProject(projectId, pluginId);
+    }
+    
+    // Tools endpoints
+    @GetMapping("/{id}/tools")
+    public List<Tool> getProjectTools(@PathVariable Long id) {
+        return projectService.getProjectTools(id);
+    }
+    
+    @PostMapping("/{id}/tools")
+    public Project addToolsToProject(@PathVariable Long id, @RequestBody List<Long> toolIds) {
+        return projectService.addToolsToProject(id, toolIds);
+    }
+    
+    @DeleteMapping("/{projectId}/tools/{toolId}")
+    public Project removeToolFromProject(@PathVariable Long projectId, @PathVariable Long toolId) {
+        return projectService.removeToolFromProject(projectId, toolId);
+    }
+    
     @GetMapping
     public ResponseEntity<Map<String, Object>> getRecentProjects(
             @RequestParam(defaultValue = "0") int page,
@@ -155,6 +206,33 @@ public class ProjectController {
         response.put("searchTerm", term);
         
         return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/{id}/files")
+    public ResponseEntity<Map<String, String>> createProjectFile(@PathVariable Long id, @RequestBody Map<String, String> fileData) {
+        String fileName = fileData.get("fileName");
+        String content = fileData.get("content");
+        
+        Project project = projectService.getProjectById(id);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Project path is not set");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
+        try {
+            projectService.createProjectFile(id, fileName, content);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File created successfully");
+            response.put("fileName", fileName);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
     
     @ExceptionHandler(RuntimeException.class)

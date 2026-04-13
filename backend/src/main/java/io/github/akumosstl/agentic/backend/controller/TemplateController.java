@@ -5,6 +5,7 @@ import io.github.akumosstl.agentic.backend.service.TemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,13 @@ public class TemplateController {
     
     @Autowired
     private TemplateService templateService;
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(error);
+    }
     
     @GetMapping
     public ResponseEntity<Map<String, Object>> getRecentTemplates(

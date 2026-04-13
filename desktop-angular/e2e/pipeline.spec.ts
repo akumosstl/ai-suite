@@ -71,6 +71,26 @@ test.describe('Pipeline Feature', () => {
   });
 });
 
+test.describe('Project File Creation', () => {
+  const apiUrl = 'http://localhost:8080/api';
+
+  test('should create a file in project path via API', async ({ request }) => {
+    const response = await request.post(`${apiUrl}/projects/1/files`, {
+      data: {
+        fileName: 'opencode.json',
+        content: '{"name": "test", "version": "1.0.0"}'
+      }
+    });
+    
+    console.log(`Create file API status: ${response.status()}`);
+    
+    if (response.status() === 200) {
+      const data = await response.json();
+      console.log(`File created: ${data.fileName}`);
+    }
+  });
+});
+
 test.describe('Pipeline API Backend', () => {
   const apiUrl = 'http://localhost:8080/api';
 

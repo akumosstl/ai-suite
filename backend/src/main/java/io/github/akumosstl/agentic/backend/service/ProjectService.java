@@ -6,12 +6,26 @@ import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Target;
+import io.github.akumosstl.agentic.backend.model.SkillFile;
+import io.github.akumosstl.agentic.backend.model.Instruction;
+import io.github.akumosstl.agentic.backend.model.Plugin;
+import io.github.akumosstl.agentic.backend.model.Tool;
+import io.github.akumosstl.agentic.backend.model.InstructionFile;
+import io.github.akumosstl.agentic.backend.model.PluginFile;
+import io.github.akumosstl.agentic.backend.model.ToolFile;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.SkillRepository;
 import io.github.akumosstl.agentic.backend.repository.CommandRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
 import io.github.akumosstl.agentic.backend.repository.AgentRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
+import io.github.akumosstl.agentic.backend.repository.SkillFileRepository;
+import io.github.akumosstl.agentic.backend.repository.InstructionRepository;
+import io.github.akumosstl.agentic.backend.repository.PluginRepository;
+import io.github.akumosstl.agentic.backend.repository.ToolRepository;
+import io.github.akumosstl.agentic.backend.repository.InstructionFileRepository;
+import io.github.akumosstl.agentic.backend.repository.PluginFileRepository;
+import io.github.akumosstl.agentic.backend.repository.ToolFileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +61,27 @@ public class ProjectService {
     
     @Autowired
     private TargetRepository targetRepository;
+    
+    @Autowired
+    private SkillFileRepository skillFileRepository;
+    
+    @Autowired
+    private InstructionRepository instructionRepository;
+    
+    @Autowired
+    private PluginRepository pluginRepository;
+    
+    @Autowired
+    private ToolRepository toolRepository;
+    
+    @Autowired
+    private InstructionFileRepository instructionFileRepository;
+    
+    @Autowired
+    private PluginFileRepository pluginFileRepository;
+    
+    @Autowired
+    private ToolFileRepository toolFileRepository;
     
     public List<Project> getRecentProjects(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -179,6 +214,22 @@ public class ProjectService {
                 String content = skill.getInstructions() != null ? skill.getInstructions() : "";
                 Files.write(filePath, content.getBytes());
                 
+                List<SkillFile> skillFiles = skillFileRepository.findBySkillId(skillId);
+                for (SkillFile skillFile : skillFiles) {
+                    String fileDirPath = fullPath;
+                    if (skillFile.getPath() != null && !skillFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + skillFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    
+                    String attachedFileName = skillFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+                    String fileContent = skillFile.getContent() != null ? skillFile.getContent() : "";
+                    Files.write(attachedFilePath, fileContent.getBytes());
+                }
+                
                 if (!project.getSkills().contains(skill)) {
                     project.addSkill(skill);
                 }
@@ -228,6 +279,26 @@ public class ProjectService {
                 String fileName = skillName + ".md";
                 Path filePath = skillPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
+
+                List<SkillFile> skillFiles = skillFileRepository.findBySkillId(skillId);
+                for (SkillFile skillFile : skillFiles) {
+                    String fileDirPath = fullPath;
+                    if (skillFile.getPath() != null && !skillFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + skillFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    String attachedFileName = skillFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+
+                    File attachedDir = fileDirPathObj.toFile();
+                    if (attachedDir.exists() && attachedDir.isDirectory()) {
+                        File[] files = attachedDir.listFiles();
+                        if (files != null && files.length == 0) {
+                            Files.delete(attachedDir.toPath());
+                        }
+                    }
+                }
 
                 File skillDir = skillPathObj.toFile();
                 if (skillDir.exists() && skillDir.isDirectory()) {
@@ -583,5 +654,479 @@ public class ProjectService {
         
         project.getAgents().removeIf(a -> a.getId().equals(agentId));
         return projectRepository.save(project);
+    }
+    
+    // Instructions management
+    @Transactional(readOnly = true)
+    public List<Instruction> getProjectInstructions(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getInstructions();
+    }
+    
+    @Transactional
+    public Project addInstructionsToProject(Long projectId, List<Long> instructionIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetInstructionsPath = "instructions";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getInstructionsPath() != null && !target.getInstructionsPath().isEmpty()) {
+            targetInstructionsPath = target.getInstructionsPath();
+        }
+        
+        for (Long instructionId : instructionIds) {
+            Instruction instruction = instructionRepository.findById(instructionId)
+                    .orElseThrow(() -> new RuntimeException("Instruction not found: " + instructionId));
+            
+            String fullPath = project.getPath() + File.separator + targetInstructionsPath;
+            if (instruction.getPath() != null && !instruction.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + instruction.getPath();
+            }
+            
+            Path instructionPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(instructionPathObj);
+                String instructionName = instruction.getName();
+                if (instructionName.toLowerCase().endsWith(".md")) {
+                    instructionName = instructionName.substring(0, instructionName.length() - 3);
+                }
+                String fileName = instructionName + ".md";
+                Path filePath = instructionPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+                String content = instruction.getInstructions() != null ? instruction.getInstructions() : "";
+                Files.write(filePath, content.getBytes());
+                
+                List<InstructionFile> instructionFiles = instructionFileRepository.findByInstructionId(instructionId);
+                for (InstructionFile instructionFile : instructionFiles) {
+                    String fileDirPath = fullPath;
+                    if (instructionFile.getPath() != null && !instructionFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + instructionFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    
+                    String attachedFileName = instructionFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+                    String fileContent = instructionFile.getContent() != null ? instructionFile.getContent() : "";
+                    Files.write(attachedFilePath, fileContent.getBytes());
+                }
+                
+                if (!project.getInstructions().contains(instruction)) {
+                    project.addInstruction(instruction);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create instruction file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeInstructionFromProject(Long projectId, Long instructionId) {
+        Project project = getProjectById(projectId);
+        
+        Instruction instructionToRemove = project.getInstructions().stream()
+                .filter(i -> i.getId().equals(instructionId))
+                .findFirst()
+                .orElse(null);
+        
+        if (instructionToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetInstructionsPath = "instructions";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getInstructionsPath() != null && !target.getInstructionsPath().isEmpty()) {
+                targetInstructionsPath = target.getInstructionsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetInstructionsPath;
+            if (instructionToRemove.getPath() != null && !instructionToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + instructionToRemove.getPath();
+            }
+            
+            Path instructionPathObj = Paths.get(fullPath);
+            try {
+                String instructionName = instructionToRemove.getName();
+                if (instructionName.toLowerCase().endsWith(".md")) {
+                    instructionName = instructionName.substring(0, instructionName.length() - 3);
+                }
+                String fileName = instructionName + ".md";
+                Path filePath = instructionPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+
+                List<InstructionFile> instructionFiles = instructionFileRepository.findByInstructionId(instructionId);
+                for (InstructionFile instructionFile : instructionFiles) {
+                    String fileDirPath = fullPath;
+                    if (instructionFile.getPath() != null && !instructionFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + instructionFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    String attachedFileName = instructionFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+
+                    File attachedDir = fileDirPathObj.toFile();
+                    if (attachedDir.exists() && attachedDir.isDirectory()) {
+                        File[] files = attachedDir.listFiles();
+                        if (files != null && files.length == 0) {
+                            Files.delete(attachedDir.toPath());
+                        }
+                    }
+                }
+
+                File instructionDir = instructionPathObj.toFile();
+                if (instructionDir.exists() && instructionDir.isDirectory()) {
+                    File[] files = instructionDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(instructionDir.toPath());
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete instruction file: " + e.getMessage(), e);
+            }
+        }
+        
+        project.getInstructions().removeIf(i -> i.getId().equals(instructionId));
+        return projectRepository.save(project);
+    }
+    
+    // Plugins management
+    @Transactional(readOnly = true)
+    public List<Plugin> getProjectPlugins(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getPlugins();
+    }
+    
+    @Transactional
+    public Project addPluginsToProject(Long projectId, List<Long> pluginIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetPluginsPath = "plugins";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getPluginsPath() != null && !target.getPluginsPath().isEmpty()) {
+            targetPluginsPath = target.getPluginsPath();
+        }
+        
+        for (Long pluginId : pluginIds) {
+            Plugin plugin = pluginRepository.findById(pluginId)
+                    .orElseThrow(() -> new RuntimeException("Plugin not found: " + pluginId));
+            
+            String fullPath = project.getPath() + File.separator + targetPluginsPath;
+            if (plugin.getPath() != null && !plugin.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + plugin.getPath();
+            }
+            
+            Path pluginPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(pluginPathObj);
+                String pluginName = plugin.getName();
+                if (pluginName.toLowerCase().endsWith(".md")) {
+                    pluginName = pluginName.substring(0, pluginName.length() - 3);
+                }
+                String fileName = pluginName + ".md";
+                Path filePath = pluginPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+                String content = plugin.getInstructions() != null ? plugin.getInstructions() : "";
+                Files.write(filePath, content.getBytes());
+                
+                List<PluginFile> pluginFiles = pluginFileRepository.findByPluginId(pluginId);
+                for (PluginFile pluginFile : pluginFiles) {
+                    String fileDirPath = fullPath;
+                    if (pluginFile.getPath() != null && !pluginFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + pluginFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    
+                    String attachedFileName = pluginFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+                    String fileContent = pluginFile.getContent() != null ? pluginFile.getContent() : "";
+                    Files.write(attachedFilePath, fileContent.getBytes());
+                }
+                
+                if (!project.getPlugins().contains(plugin)) {
+                    project.addPlugin(plugin);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create plugin file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removePluginFromProject(Long projectId, Long pluginId) {
+        Project project = getProjectById(projectId);
+        
+        Plugin pluginToRemove = project.getPlugins().stream()
+                .filter(p -> p.getId().equals(pluginId))
+                .findFirst()
+                .orElse(null);
+        
+        if (pluginToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetPluginsPath = "plugins";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getPluginsPath() != null && !target.getPluginsPath().isEmpty()) {
+                targetPluginsPath = target.getPluginsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetPluginsPath;
+            if (pluginToRemove.getPath() != null && !pluginToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + pluginToRemove.getPath();
+            }
+            
+            Path pluginPathObj = Paths.get(fullPath);
+            try {
+                String pluginName = pluginToRemove.getName();
+                if (pluginName.toLowerCase().endsWith(".md")) {
+                    pluginName = pluginName.substring(0, pluginName.length() - 3);
+                }
+                String fileName = pluginName + ".md";
+                Path filePath = pluginPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+
+                List<PluginFile> pluginFiles = pluginFileRepository.findByPluginId(pluginId);
+                for (PluginFile pluginFile : pluginFiles) {
+                    String fileDirPath = fullPath;
+                    if (pluginFile.getPath() != null && !pluginFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + pluginFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    String attachedFileName = pluginFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+
+                    File attachedDir = fileDirPathObj.toFile();
+                    if (attachedDir.exists() && attachedDir.isDirectory()) {
+                        File[] files = attachedDir.listFiles();
+                        if (files != null && files.length == 0) {
+                            Files.delete(attachedDir.toPath());
+                        }
+                    }
+                }
+
+                File pluginDir = pluginPathObj.toFile();
+                if (pluginDir.exists() && pluginDir.isDirectory()) {
+                    File[] files = pluginDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(pluginDir.toPath());
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete plugin file: " + e.getMessage(), e);
+            }
+        }
+        
+        project.getPlugins().removeIf(p -> p.getId().equals(pluginId));
+        return projectRepository.save(project);
+    }
+    
+    // Tools management
+    @Transactional(readOnly = true)
+    public List<Tool> getProjectTools(Long projectId) {
+        Project project = getProjectById(projectId);
+        return project.getTools();
+    }
+    
+    @Transactional
+    public Project addToolsToProject(Long projectId, List<Long> toolIds) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        String targetToolsPath = "tools";
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (target != null && target.getToolsPath() != null && !target.getToolsPath().isEmpty()) {
+            targetToolsPath = target.getToolsPath();
+        }
+        
+        for (Long toolId : toolIds) {
+            Tool tool = toolRepository.findById(toolId)
+                    .orElseThrow(() -> new RuntimeException("Tool not found: " + toolId));
+            
+            String fullPath = project.getPath() + File.separator + targetToolsPath;
+            if (tool.getPath() != null && !tool.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + tool.getPath();
+            }
+            
+            Path toolPathObj = Paths.get(fullPath);
+            try {
+                Files.createDirectories(toolPathObj);
+                String toolName = tool.getName();
+                if (toolName.toLowerCase().endsWith(".md")) {
+                    toolName = toolName.substring(0, toolName.length() - 3);
+                }
+                String fileName = toolName + ".md";
+                Path filePath = toolPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+                String content = tool.getInstructions() != null ? tool.getInstructions() : "";
+                Files.write(filePath, content.getBytes());
+                
+                List<ToolFile> toolFiles = toolFileRepository.findByToolId(toolId);
+                for (ToolFile toolFile : toolFiles) {
+                    String fileDirPath = fullPath;
+                    if (toolFile.getPath() != null && !toolFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + toolFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    
+                    String attachedFileName = toolFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+                    String fileContent = toolFile.getContent() != null ? toolFile.getContent() : "";
+                    Files.write(attachedFilePath, fileContent.getBytes());
+                }
+                
+                if (!project.getTools().contains(tool)) {
+                    project.addTool(tool);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create tool file: " + e.getMessage(), e);
+            }
+        }
+        return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project removeToolFromProject(Long projectId, Long toolId) {
+        Project project = getProjectById(projectId);
+        
+        Tool toolToRemove = project.getTools().stream()
+                .filter(t -> t.getId().equals(toolId))
+                .findFirst()
+                .orElse(null);
+        
+        if (toolToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
+            String targetToolsPath = "tools";
+            Target target = null;
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (target != null && target.getToolsPath() != null && !target.getToolsPath().isEmpty()) {
+                targetToolsPath = target.getToolsPath();
+            }
+            
+            String fullPath = project.getPath() + File.separator + targetToolsPath;
+            if (toolToRemove.getPath() != null && !toolToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + toolToRemove.getPath();
+            }
+            
+            Path toolPathObj = Paths.get(fullPath);
+            try {
+                String toolName = toolToRemove.getName();
+                if (toolName.toLowerCase().endsWith(".md")) {
+                    toolName = toolName.substring(0, toolName.length() - 3);
+                }
+                String fileName = toolName + ".md";
+                Path filePath = toolPathObj.resolve(fileName);
+                Files.deleteIfExists(filePath);
+
+                List<ToolFile> toolFiles = toolFileRepository.findByToolId(toolId);
+                for (ToolFile toolFile : toolFiles) {
+                    String fileDirPath = fullPath;
+                    if (toolFile.getPath() != null && !toolFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + toolFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    String attachedFileName = toolFile.getFileName();
+                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
+                    Files.deleteIfExists(attachedFilePath);
+
+                    File attachedDir = fileDirPathObj.toFile();
+                    if (attachedDir.exists() && attachedDir.isDirectory()) {
+                        File[] files = attachedDir.listFiles();
+                        if (files != null && files.length == 0) {
+                            Files.delete(attachedDir.toPath());
+                        }
+                    }
+                }
+
+                File toolDir = toolPathObj.toFile();
+                if (toolDir.exists() && toolDir.isDirectory()) {
+                    File[] files = toolDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(toolDir.toPath());
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete tool file: " + e.getMessage(), e);
+            }
+        }
+        
+        project.getTools().removeIf(t -> t.getId().equals(toolId));
+        return projectRepository.save(project);
+    }
+    
+    public void createProjectFile(Long projectId, String fileName, String content) throws IOException {
+        Project project = getProjectById(projectId);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            throw new RuntimeException("Project path is not set");
+        }
+        
+        Path filePath = Paths.get(projectPath, fileName);
+        Files.writeString(filePath, content);
     }
 }

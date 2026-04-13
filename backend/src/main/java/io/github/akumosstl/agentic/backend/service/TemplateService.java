@@ -39,11 +39,17 @@ public class TemplateService {
     }
     
     public Template createTemplate(Template template) {
+        if (template.getType() == null || template.getType().isBlank()) {
+            throw new IllegalArgumentException("Template type is required");
+        }
         return templateRepository.save(template);
     }
     
     public Template updateTemplate(Long id, Template templateDetails) {
         Template template = getTemplateById(id);
+        if (templateDetails.getType() == null || templateDetails.getType().isBlank()) {
+            throw new IllegalArgumentException("Template type is required");
+        }
         template.setName(templateDetails.getName());
         template.setDescription(templateDetails.getDescription());
         template.setTemplate(templateDetails.getTemplate());

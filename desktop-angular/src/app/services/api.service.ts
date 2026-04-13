@@ -16,6 +16,10 @@ export interface Project {
   skills?: Skill[];
   commands?: Command[];
   scripts?: Script[];
+  agents?: Agent[];
+  instructions?: Instruction[];
+  plugins?: Plugin[];
+  tools?: Tool[];
 }
 
 export interface Pipeline {
@@ -137,6 +141,57 @@ export interface SkillFile {
   skillId?: number;
 }
 
+export interface Instruction {
+  id?: number;
+  name: string;
+  namespace: string;
+  description?: string;
+  instructions?: string;
+  path?: string;
+}
+
+export interface InstructionFile {
+  id?: number;
+  path: string;
+  fileName: string;
+  content: string;
+  instructionId?: number;
+}
+
+export interface Plugin {
+  id?: number;
+  name: string;
+  namespace: string;
+  description?: string;
+  instructions?: string;
+  path?: string;
+}
+
+export interface PluginFile {
+  id?: number;
+  path: string;
+  fileName: string;
+  content: string;
+  pluginId?: number;
+}
+
+export interface Tool {
+  id?: number;
+  name: string;
+  namespace: string;
+  description?: string;
+  instructions?: string;
+  path?: string;
+}
+
+export interface ToolFile {
+  id?: number;
+  path: string;
+  fileName: string;
+  content: string;
+  toolId?: number;
+}
+
 export interface Target {
   id?: number;
   name: string;
@@ -144,6 +199,9 @@ export interface Target {
   commandsPath?: string;
   scriptsPath?: string;
   agentsPath?: string;
+  instructionsPath?: string;
+  pluginsPath?: string;
+  toolsPath?: string;
 }
 
 export interface TeamMember {
@@ -331,6 +389,72 @@ export class ApiService {
     );
   }
 
+  // Project Instructions
+  getProjectInstructions(projectId: number): Observable<Instruction[]> {
+    return this.http.get<Instruction[]>(`${this.baseUrl}/projects/${projectId}/instructions`).pipe(
+      catchError(this.handleError('getProjectInstructions', []))
+    );
+  }
+
+  addInstructionsToProject(projectId: number, instructionIds: number[]): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/instructions`, instructionIds).pipe(
+      catchError(this.handleError('addInstructionsToProject', {} as Project))
+    );
+  }
+
+  removeInstructionFromProject(projectId: number, instructionId: number): Observable<Project> {
+    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/instructions/${instructionId}`).pipe(
+      catchError(this.handleError('removeInstructionFromProject', {} as Project))
+    );
+  }
+
+  // Project Plugins
+  getProjectPlugins(projectId: number): Observable<Plugin[]> {
+    return this.http.get<Plugin[]>(`${this.baseUrl}/projects/${projectId}/plugins`).pipe(
+      catchError(this.handleError('getProjectPlugins', []))
+    );
+  }
+
+  addPluginsToProject(projectId: number, pluginIds: number[]): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/plugins`, pluginIds).pipe(
+      catchError(this.handleError('addPluginsToProject', {} as Project))
+    );
+  }
+
+  removePluginFromProject(projectId: number, pluginId: number): Observable<Project> {
+    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/plugins/${pluginId}`).pipe(
+      catchError(this.handleError('removePluginFromProject', {} as Project))
+    );
+  }
+
+  // Project Tools
+  getProjectTools(projectId: number): Observable<Tool[]> {
+    return this.http.get<Tool[]>(`${this.baseUrl}/projects/${projectId}/tools`).pipe(
+      catchError(this.handleError('getProjectTools', []))
+    );
+  }
+
+  addToolsToProject(projectId: number, toolIds: number[]): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/tools`, toolIds).pipe(
+      catchError(this.handleError('addToolsToProject', {} as Project))
+    );
+  }
+
+removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
+    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/tools/${toolId}`).pipe(
+      catchError(this.handleError('removeToolFromProject', {} as Project))
+    );
+  }
+  
+  createProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
+      catchError((error) => {
+        console.error('createProjectFile error:', error);
+        throw error;
+      })
+    );
+  }
+  
   // Pipelines for a project
   getPipelinesByProject(projectId: number, page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/projects/${projectId}/pipelines`, {
@@ -773,6 +897,198 @@ export class ApiService {
     );
   }
 
+  // Instructions
+  getInstructions(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/instructions`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getInstructions', [])));
+  }
+
+  searchInstructions(term: string, namespace: string = '', page = 0, size = 10): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (term) {
+      params = params.set('term', term);
+    }
+    if (namespace) {
+      params = params.set('namespace', namespace);
+    }
+    return this.http.get(`${this.baseUrl}/instructions/search`, { params }).pipe(
+      catchError(this.handleError('searchInstructions', []))
+    );
+  }
+
+  createInstruction(instruction: Instruction): Observable<Instruction> {
+    return this.http.post<Instruction>(`${this.baseUrl}/instructions`, instruction).pipe(
+      catchError(this.handleError('createInstruction', instruction))
+    );
+  }
+
+  updateInstruction(id: number, instruction: Instruction): Observable<Instruction> {
+    return this.http.put<Instruction>(`${this.baseUrl}/instructions/${id}`, instruction).pipe(
+      catchError(this.handleError('updateInstruction', instruction))
+    );
+  }
+
+  deleteInstruction(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/instructions/${id}`).pipe(
+      catchError(this.handleError('deleteInstruction', null))
+    );
+  }
+
+  // Instruction Files
+  getInstructionFiles(instructionId: number): Observable<InstructionFile[]> {
+    return this.http.get<InstructionFile[]>(`${this.baseUrl}/instruction-files/instruction/${instructionId}`).pipe(
+      catchError(this.handleError('getInstructionFiles', []))
+    );
+  }
+
+  addInstructionFile(instructionId: number, path: string, fileName: string, content: string): Observable<InstructionFile> {
+    return this.http.post<InstructionFile>(`${this.baseUrl}/instruction-files`, {
+      instructionId,
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<InstructionFile>('addInstructionFile', {} as InstructionFile)));
+  }
+
+  deleteInstructionFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/instruction-files/${id}`).pipe(
+      catchError(this.handleError('deleteInstructionFile', null))
+    );
+  }
+
+  // Plugins
+  getPlugins(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/plugins`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getPlugins', [])));
+  }
+
+  searchPlugins(term: string, namespace: string = '', page = 0, size = 10): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (term) {
+      params = params.set('term', term);
+    }
+    if (namespace) {
+      params = params.set('namespace', namespace);
+    }
+    return this.http.get(`${this.baseUrl}/plugins/search`, { params }).pipe(
+      catchError(this.handleError('searchPlugins', []))
+    );
+  }
+
+  createPlugin(plugin: Plugin): Observable<Plugin> {
+    return this.http.post<Plugin>(`${this.baseUrl}/plugins`, plugin).pipe(
+      catchError(this.handleError('createPlugin', plugin))
+    );
+  }
+
+  updatePlugin(id: number, plugin: Plugin): Observable<Plugin> {
+    return this.http.put<Plugin>(`${this.baseUrl}/plugins/${id}`, plugin).pipe(
+      catchError(this.handleError('updatePlugin', plugin))
+    );
+  }
+
+  deletePlugin(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/plugins/${id}`).pipe(
+      catchError(this.handleError('deletePlugin', null))
+    );
+  }
+
+  // Plugin Files
+  getPluginFiles(pluginId: number): Observable<PluginFile[]> {
+    return this.http.get<PluginFile[]>(`${this.baseUrl}/plugin-files/plugin/${pluginId}`).pipe(
+      catchError(this.handleError('getPluginFiles', []))
+    );
+  }
+
+  addPluginFile(pluginId: number, path: string, fileName: string, content: string): Observable<PluginFile> {
+    return this.http.post<PluginFile>(`${this.baseUrl}/plugin-files`, {
+      pluginId,
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<PluginFile>('addPluginFile', {} as PluginFile)));
+  }
+
+  deletePluginFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/plugin-files/${id}`).pipe(
+      catchError(this.handleError('deletePluginFile', null))
+    );
+  }
+
+  // Tools
+  getTools(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/tools`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getTools', [])));
+  }
+
+  searchTools(term: string, namespace: string = '', page = 0, size = 10): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (term) {
+      params = params.set('term', term);
+    }
+    if (namespace) {
+      params = params.set('namespace', namespace);
+    }
+    return this.http.get(`${this.baseUrl}/tools/search`, { params }).pipe(
+      catchError(this.handleError('searchTools', []))
+    );
+  }
+
+  createTool(tool: Tool): Observable<Tool> {
+    return this.http.post<Tool>(`${this.baseUrl}/tools`, tool).pipe(
+      catchError(this.handleError('createTool', tool))
+    );
+  }
+
+  updateTool(id: number, tool: Tool): Observable<Tool> {
+    return this.http.put<Tool>(`${this.baseUrl}/tools/${id}`, tool).pipe(
+      catchError(this.handleError('updateTool', tool))
+    );
+  }
+
+  deleteTool(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/tools/${id}`).pipe(
+      catchError(this.handleError('deleteTool', null))
+    );
+  }
+
+  // Tool Files
+  getToolFiles(toolId: number): Observable<ToolFile[]> {
+    return this.http.get<ToolFile[]>(`${this.baseUrl}/tool-files/tool/${toolId}`).pipe(
+      catchError(this.handleError('getToolFiles', []))
+    );
+  }
+
+  addToolFile(toolId: number, path: string, fileName: string, content: string): Observable<ToolFile> {
+    return this.http.post<ToolFile>(`${this.baseUrl}/tool-files`, {
+      toolId,
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<ToolFile>('addToolFile', {} as ToolFile)));
+  }
+
+  deleteToolFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/tool-files/${id}`).pipe(
+      catchError(this.handleError('deleteToolFile', null))
+    );
+  }
+
   // Targets
   getTargets(): Observable<Target[]> {
     return this.http.get<Target[]>(`${this.baseUrl}/targets`).pipe(
@@ -801,6 +1117,24 @@ export class ApiService {
   getSkillNamespaces(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/skills/namespaces`).pipe(
       catchError(this.handleError('getSkillNamespaces', []))
+    );
+  }
+
+  getInstructionNamespaces(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/instructions/namespaces`).pipe(
+      catchError(this.handleError('getInstructionNamespaces', []))
+    );
+  }
+
+  getPluginNamespaces(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/plugins/namespaces`).pipe(
+      catchError(this.handleError('getPluginNamespaces', []))
+    );
+  }
+
+  getToolNamespaces(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/tools/namespaces`).pipe(
+      catchError(this.handleError('getToolNamespaces', []))
     );
   }
 

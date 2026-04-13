@@ -12,14 +12,13 @@ import { OpenProjectDialogComponent } from '../open-project-dialog/open-project-
 import { NewProjectDialogComponent } from '../new-project-dialog/new-project-dialog.component'
 import { ExportDialogComponent } from '../export-dialog/export-dialog.component'
 import { ImportDialogComponent, ImportResult } from '../import-dialog/import-dialog.component'
-import { BackupDialogComponent } from '../backup-dialog/backup-dialog.component'
 import { ProjectContextService } from '../../services/project-context.service'
 import { ApiService } from '../../services/api.service'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, BackupDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -72,26 +71,43 @@ import { ApiService } from '../../services/api.service'
         </ng-container>
         
         <ng-container *ngIf="!isMainPage()">
-          <button class="menu-button" routerLink="/agents">
-            <mat-icon>smart_toy</mat-icon>
-            <span>Agents</span>
+          <button class="menu-button" [matMenuTriggerFor]="stackMenu">
+            <mat-icon>app_registration</mat-icon>
+            <span>Stack</span>
+            <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
           </button>
-          
-          <button class="menu-button" routerLink="/skills">
-            <mat-icon>psychology</mat-icon>
-            <span>Skills</span>
-          </button>
+          <mat-menu #stackMenu="matMenu" class="custom-menu">
+            <button mat-menu-item routerLink="/agents" class="menu-item">
+              <mat-icon>smart_toy</mat-icon>
+              <span>Agents</span>
+            </button>
+            <button mat-menu-item routerLink="/skills" class="menu-item">
+              <mat-icon>psychology</mat-icon>
+              <span>Skills</span>
+            </button>
+            <button mat-menu-item routerLink="/instructions" class="menu-item">
+              <mat-icon>rule</mat-icon>
+              <span>Instructions</span>
+            </button>
+            <button mat-menu-item routerLink="/plugins" class="menu-item">
+              <mat-icon>extension</mat-icon>
+              <span>Plugins</span>
+            </button>
+            <button mat-menu-item routerLink="/tools" class="menu-item">
+              <mat-icon>build</mat-icon>
+              <span>Tools</span>
+            </button>
+            <div class="menu-separator"></div>
+            <button mat-menu-item routerLink="/scripts" class="menu-item">
+              <mat-icon>code</mat-icon>
+              <span>Scripts</span>
+            </button>
+            <button mat-menu-item routerLink="/commands" class="menu-item">
+              <mat-icon>terminal</mat-icon>
+              <span>Commands</span>
+            </button>
+          </mat-menu>
 
-          <button class="menu-button" routerLink="/scripts">
-            <mat-icon>code</mat-icon>
-            <span>Scripts</span>
-          </button>
-
-          <button class="menu-button" routerLink="/commands">
-            <mat-icon>terminal</mat-icon>
-            <span>Commands</span>
-          </button>
-          
           <button class="menu-button" [matMenuTriggerFor]="managementMenu">
             <mat-icon>settings</mat-icon>
             <span>Management</span>
@@ -115,11 +131,6 @@ import { ApiService } from '../../services/api.service'
               <mat-icon>file_upload</mat-icon>
               <span>Import</span>
             </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item (click)="openBackup()" class="menu-item">
-              <mat-icon>backup</mat-icon>
-              <span>Backup</span>
-            </button>
           </mat-menu>
         </ng-container>
         
@@ -140,7 +151,7 @@ import { ApiService } from '../../services/api.service'
       <span class="spacer"></span>
       
       <div class="user-info">
-        <mat-icon>account_circle</mat-icon>
+        <mat-icon>my_library_books</mat-icon>
       </div>
     </div>
   `,
@@ -440,19 +451,6 @@ export class MenuBarComponent implements OnInit, OnDestroy {
             this.snackBar.open('Import failed: ' + (err.error?.message || err.message), 'Close', { duration: 5000 });
           }
         });
-      }
-    });
-  }
-
-  openBackup(): void {
-    const dialogRef = this.dialog.open(BackupDialogComponent, {
-      width: '500px',
-      data: { loading: false, result: null }
-    });
-
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result && result.success) {
-        this.snackBar.open('Backup created successfully!', 'Close', { duration: 3000 });
       }
     });
   }

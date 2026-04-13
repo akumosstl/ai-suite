@@ -21,20 +21,27 @@ import { SelectAgentDialogComponent, SelectedStep } from '../../components/selec
 import { SelectSkillDialogComponent } from '../../components/select-skill-dialog/select-skill-dialog.component';
 import { SelectCommandDialogComponent } from '../../components/select-command-dialog/select-command-dialog.component';
 import { SelectScriptDialogComponent } from '../../components/select-script-dialog/select-script-dialog.component';
+import { SelectInstructionDialogComponent } from '../../components/select-instruction-dialog/select-instruction-dialog.component';
+import { SelectPluginDialogComponent } from '../../components/select-plugin-dialog/select-plugin-dialog.component';
+import { SelectToolDialogComponent } from '../../components/select-tool-dialog/select-tool-dialog.component';
 import { ViewProjectSkillsDialogComponent } from '../../components/view-project-skills-dialog/view-project-skills-dialog.component';
 import { ViewProjectCommandsDialogComponent } from '../../components/view-project-commands-dialog/view-project-commands-dialog.component';
 import { ViewProjectScriptsDialogComponent } from '../../components/view-project-scripts-dialog/view-project-scripts-dialog.component';
 import { ViewProjectAgentsDialogComponent } from '../../components/view-project-agents-dialog/view-project-agents-dialog.component';
+import { ViewProjectInstructionsDialogComponent } from '../../components/view-project-instructions-dialog/view-project-instructions-dialog.component';
+import { ViewProjectPluginsDialogComponent } from '../../components/view-project-plugins-dialog/view-project-plugins-dialog.component';
+import { ViewProjectToolsDialogComponent } from '../../components/view-project-tools-dialog/view-project-tools-dialog.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-dialog.component';
 import { StepCliDialogComponent } from '../../components/step-cli-dialog/step-cli-dialog.component';
 import { StepSettingsDialogComponent } from '../../components/step-settings-dialog/step-settings-dialog.component';
+import { CreateFileDialogComponent } from '../../components/create-file-dialog/create-file-dialog.component';
 
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, ViewProjectSkillsDialogComponent, ViewProjectCommandsDialogComponent, ViewProjectScriptsDialogComponent, ViewProjectAgentsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ViewProjectSkillsDialogComponent, ViewProjectCommandsDialogComponent, ViewProjectScriptsDialogComponent, ViewProjectAgentsDialogComponent, ViewProjectInstructionsDialogComponent, ViewProjectPluginsDialogComponent, ViewProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -595,6 +602,113 @@ export class ProjectComponent implements OnInit, OnDestroy {
           }
         });
       }
+    });
+  }
+
+  openViewInstructionsDialog() {
+    if (!this.project?.id) {
+      return;
+    }
+    this.dialog.open(ViewProjectInstructionsDialogComponent, {
+      width: '600px',
+      data: { projectId: this.project.id }
+    });
+  }
+
+  openAddInstructionDialog() {
+    const projectId = this.project?.id;
+    if (!projectId) {
+      return;
+    }
+    const dialogRef = this.dialog.open(SelectInstructionDialogComponent, {
+      width: '600px',
+      data: { projectId }
+    });
+
+    dialogRef.afterClosed().subscribe((selectedInstructions) => {
+      if (selectedInstructions && selectedInstructions.length > 0) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: {
+            success: true,
+            message: `${selectedInstructions.length} instruction(s) added to project!`
+          }
+        });
+      }
+    });
+  }
+
+  openViewPluginsDialog() {
+    if (!this.project?.id) {
+      return;
+    }
+    this.dialog.open(ViewProjectPluginsDialogComponent, {
+      width: '600px',
+      data: { projectId: this.project.id }
+    });
+  }
+
+  openAddPluginDialog() {
+    const projectId = this.project?.id;
+    if (!projectId) {
+      return;
+    }
+    const dialogRef = this.dialog.open(SelectPluginDialogComponent, {
+      width: '600px',
+      data: { projectId }
+    });
+
+    dialogRef.afterClosed().subscribe((selectedPlugins) => {
+      if (selectedPlugins && selectedPlugins.length > 0) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: {
+            success: true,
+            message: `${selectedPlugins.length} plugin(s) added to project!`
+          }
+        });
+      }
+    });
+  }
+
+  openViewToolsDialog() {
+    if (!this.project?.id) {
+      return;
+    }
+    this.dialog.open(ViewProjectToolsDialogComponent, {
+      width: '600px',
+      data: { projectId: this.project.id }
+    });
+  }
+
+  openAddToolDialog() {
+    const projectId = this.project?.id;
+    if (!projectId) {
+      return;
+    }
+    const dialogRef = this.dialog.open(SelectToolDialogComponent, {
+      width: '600px',
+      data: { projectId }
+    });
+
+    dialogRef.afterClosed().subscribe((selectedTools) => {
+      if (selectedTools && selectedTools.length > 0) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: {
+            success: true,
+            message: `${selectedTools.length} tool(s) added to project!`
+          }
+        });
+      }
+    });
+  }
+
+  openCreateFileDialog() {
+    const projectId = this.project?.id;
+    if (!projectId) {
+      return;
+    }
+    this.dialog.open(CreateFileDialogComponent, {
+      width: '600px',
+      data: { projectId }
     });
   }
 

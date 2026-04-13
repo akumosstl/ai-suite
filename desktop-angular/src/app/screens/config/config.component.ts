@@ -86,6 +86,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <th>Commands Path</th>
                     <th>Scripts Path</th>
                     <th>Agents Path</th>
+                    <th>Instructions Path</th>
+                    <th>Plugins Path</th>
+                    <th>Tools Path</th>
                     <th class="actions-col">Actions</th>
                   </tr>
                 </thead>
@@ -104,6 +107,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <td>{{ target.commandsPath }}</td>
                     <td>{{ target.scriptsPath }}</td>
                     <td>{{ target.agentsPath }}</td>
+                    <td>{{ target.instructionsPath }}</td>
+                    <td>{{ target.pluginsPath }}</td>
+                    <td>{{ target.toolsPath }}</td>
                     <td class="actions-col" (click)="$event.stopPropagation()">
                       <button mat-icon-button (click)="deleteTarget(target, $event)" class="delete-btn" title="Delete Target">
                         <mat-icon>delete</mat-icon>
@@ -111,7 +117,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     </td>
                   </tr>
                   <tr *ngIf="targets.length === 0">
-                    <td colspan="6" class="empty-row">No targets found. Click + to add one.</td>
+                    <td colspan="9" class="empty-row">No targets found. Click + to add one.</td>
                   </tr>
                 </tbody>
               </table>
@@ -156,6 +162,24 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <mat-form-field class="full-width" appearance="outline">
                   <mat-label>Agents Path</mat-label>
                   <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
+                  <mat-icon matPrefix>folder</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>Instructions Path</mat-label>
+                  <input matInput [(ngModel)]="targetForm.instructionsPath" placeholder="e.g., .opencode/instructions">
+                  <mat-icon matPrefix>folder</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>Plugins Path</mat-label>
+                  <input matInput [(ngModel)]="targetForm.pluginsPath" placeholder="e.g., .opencode/plugins">
+                  <mat-icon matPrefix>folder</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>Tools Path</mat-label>
+                  <input matInput [(ngModel)]="targetForm.toolsPath" placeholder="e.g., .opencode/tools">
                   <mat-icon matPrefix>folder</mat-icon>
                 </mat-form-field>
 
@@ -583,12 +607,18 @@ export class ConfigComponent implements OnInit {
     commandsPath: string;
     scriptsPath: string;
     agentsPath: string;
+    instructionsPath: string;
+    pluginsPath: string;
+    toolsPath: string;
   } = {
     name: '',
     skillsPath: '',
     commandsPath: '',
     scriptsPath: '',
-    agentsPath: ''
+    agentsPath: '',
+    instructionsPath: '',
+    pluginsPath: '',
+    toolsPath: ''
   };
 
   constructor(
@@ -627,7 +657,10 @@ export class ConfigComponent implements OnInit {
       skillsPath: '.opencode\\skills',
       commandsPath: '.opencode\\commands',
       scriptsPath: '.opencode\\scripts',
-      agentsPath: '.opencode\\agents'
+      agentsPath: '.opencode\\agents',
+      instructionsPath: '.opencode\\instructions',
+      pluginsPath: '.opencode\\plugins',
+      toolsPath: '.opencode\\tools'
     };
     this.apiService.createTarget(defaultTarget).subscribe({
       next: (created) => {
@@ -656,7 +689,10 @@ export class ConfigComponent implements OnInit {
       skillsPath: target.skillsPath || '',
       commandsPath: target.commandsPath || '',
       scriptsPath: target.scriptsPath || '',
-      agentsPath: target.agentsPath || ''
+      agentsPath: target.agentsPath || '',
+      instructionsPath: target.instructionsPath || '',
+      pluginsPath: target.pluginsPath || '',
+      toolsPath: target.toolsPath || ''
     };
   }
 
@@ -669,7 +705,10 @@ export class ConfigComponent implements OnInit {
       skillsPath: '',
       commandsPath: '',
       scriptsPath: '',
-      agentsPath: ''
+      agentsPath: '',
+      instructionsPath: '',
+      pluginsPath: '',
+      toolsPath: ''
     };
   }
 
@@ -681,7 +720,10 @@ export class ConfigComponent implements OnInit {
       skillsPath: '',
       commandsPath: '',
       scriptsPath: '',
-      agentsPath: ''
+      agentsPath: '',
+      instructionsPath: '',
+      pluginsPath: '',
+      toolsPath: ''
     };
   }
 
@@ -729,7 +771,10 @@ export class ConfigComponent implements OnInit {
       skillsPath: this.targetForm.skillsPath,
       commandsPath: this.targetForm.commandsPath,
       scriptsPath: this.targetForm.scriptsPath,
-      agentsPath: this.targetForm.agentsPath
+      agentsPath: this.targetForm.agentsPath,
+      instructionsPath: this.targetForm.instructionsPath,
+      pluginsPath: this.targetForm.pluginsPath,
+      toolsPath: this.targetForm.toolsPath
     };
 
     if (this.isEditing && this.selectedTarget?.id) {

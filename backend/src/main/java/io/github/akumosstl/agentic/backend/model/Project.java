@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.akumosstl.agentic.backend.model.Agent;
+import io.github.akumosstl.agentic.backend.model.Instruction;
+import io.github.akumosstl.agentic.backend.model.Plugin;
+import io.github.akumosstl.agentic.backend.model.Tool;
 
 @Entity
 @Table(name = "project")
@@ -78,6 +81,30 @@ public class Project {
     )
     private List<Agent> agents = new ArrayList<>();
     
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "project_instructions",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "instruction_id")
+    )
+    private List<Instruction> instructions = new ArrayList<>();
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "project_plugins",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "plugin_id")
+    )
+    private List<Plugin> plugins = new ArrayList<>();
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "project_tools",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "tool_id")
+    )
+    private List<Tool> tools = new ArrayList<>();
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -142,6 +169,15 @@ public class Project {
     public List<Agent> getAgents() { return agents; }
     public void setAgents(List<Agent> agents) { this.agents = agents; }
     
+    public List<Instruction> getInstructions() { return instructions; }
+    public void setInstructions(List<Instruction> instructions) { this.instructions = instructions; }
+    
+    public List<Plugin> getPlugins() { return plugins; }
+    public void setPlugins(List<Plugin> plugins) { this.plugins = plugins; }
+    
+    public List<Tool> getTools() { return tools; }
+    public void setTools(List<Tool> tools) { this.tools = tools; }
+    
     public void addSkill(Skill skill) {
         skills.add(skill);
     }
@@ -172,6 +208,30 @@ public class Project {
     
     public void removeAgent(Agent agent) {
         agents.remove(agent);
+    }
+    
+    public void addInstruction(Instruction instruction) {
+        instructions.add(instruction);
+    }
+    
+    public void removeInstruction(Instruction instruction) {
+        instructions.remove(instruction);
+    }
+    
+    public void addPlugin(Plugin plugin) {
+        plugins.add(plugin);
+    }
+    
+    public void removePlugin(Plugin plugin) {
+        plugins.remove(plugin);
+    }
+    
+    public void addTool(Tool tool) {
+        tools.add(tool);
+    }
+    
+    public void removeTool(Tool tool) {
+        tools.remove(tool);
     }
     
     public void addPipeline(Pipeline pipeline) {

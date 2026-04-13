@@ -40,7 +40,7 @@ interface ExportItem {
       <div class="dialog-content">
         <p class="description">Select the data types to export:</p>
         
-        <div class="export-items" *ngIf="!data.loading">
+        <div class="export-items-grid" *ngIf="!data.loading">
           <div class="export-item" *ngFor="let item of exportItems">
             <mat-checkbox
               [(ngModel)]="item.selected"
@@ -112,9 +112,9 @@ interface ExportItem {
       font-size: 0.95rem;
     }
 
-    .export-items {
-      display: flex;
-      flex-direction: column;
+    .export-items-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
 
@@ -211,6 +211,9 @@ export class ExportDialogComponent {
   exportItems: ExportItem[] = [
     { key: 'agents', label: 'Agents', selected: false },
     { key: 'skills', label: 'Skills', selected: false },
+    { key: 'instructions', label: 'Instructions', selected: false },
+    { key: 'plugins', label: 'Plugins', selected: false },
+    { key: 'tools', label: 'Tools', selected: false },
     { key: 'commands', label: 'Commands', selected: false },
     { key: 'scripts', label: 'Scripts', selected: false },
     { key: 'templates', label: 'Templates', selected: false }

@@ -25,6 +25,15 @@ public class ExportImportService {
     @Autowired
     private TemplateRepository templateRepository;
 
+    @Autowired
+    private ToolRepository toolRepository;
+
+    @Autowired
+    private PluginRepository pluginRepository;
+
+    @Autowired
+    private InstructionRepository instructionRepository;
+
     public String exportData(Set<String> types) {
         StringBuilder sql = new StringBuilder();
         sql.append("-- AI Suite Export\n");
@@ -45,6 +54,15 @@ public class ExportImportService {
         if (types.contains("templates")) {
             sql.append(exportTemplates());
         }
+        if (types.contains("tools")) {
+            sql.append(exportTools());
+        }
+        if (types.contains("plugins")) {
+            sql.append(exportPlugins());
+        }
+        if (types.contains("instructions")) {
+            sql.append(exportInstructions());
+        }
 
         return sql.toString();
     }
@@ -52,6 +70,10 @@ public class ExportImportService {
     private String exportAgents() {
         StringBuilder sql = new StringBuilder();
         List<Agent> agents = agentRepository.findAll();
+        
+        if (agents.isEmpty()) {
+            return sql.toString();
+        }
         
         sql.append("-- Agents\n");
         sql.append("INSERT INTO agent (name, category, description, prompt, scope, path, created_at, updated_at) VALUES\n");
@@ -79,6 +101,10 @@ public class ExportImportService {
         StringBuilder sql = new StringBuilder();
         List<Skill> skills = skillRepository.findAll();
         
+        if (skills.isEmpty()) {
+            return sql.toString();
+        }
+        
         sql.append("-- Skills\n");
         sql.append("INSERT INTO skill (name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
         
@@ -104,6 +130,10 @@ public class ExportImportService {
     private String exportCommands() {
         StringBuilder sql = new StringBuilder();
         List<Command> commands = commandRepository.findAll();
+        
+        if (commands.isEmpty()) {
+            return sql.toString();
+        }
         
         sql.append("-- Commands\n");
         sql.append("INSERT INTO command (name, namespace, category, path, description, command, scope, created_at, updated_at) VALUES\n");
@@ -132,6 +162,10 @@ public class ExportImportService {
         StringBuilder sql = new StringBuilder();
         List<Script> scripts = scriptRepository.findAll();
         
+        if (scripts.isEmpty()) {
+            return sql.toString();
+        }
+        
         sql.append("-- Scripts\n");
         sql.append("INSERT INTO script (name, namespace, category, path, description, content, scope, created_at, updated_at) VALUES\n");
         
@@ -159,6 +193,10 @@ public class ExportImportService {
         StringBuilder sql = new StringBuilder();
         List<Template> templates = templateRepository.findAll();
         
+        if (templates.isEmpty()) {
+            return sql.toString();
+        }
+        
         sql.append("-- Templates\n");
         sql.append("INSERT INTO template (name, description, template, type, created_at, updated_at) VALUES\n");
         
@@ -179,6 +217,96 @@ public class ExportImportService {
         return sql.toString();
     }
 
+    private String exportTools() {
+        StringBuilder sql = new StringBuilder();
+        List<io.github.akumosstl.agentic.backend.model.Tool> tools = toolRepository.findAll();
+        
+        if (tools.isEmpty()) {
+            return sql.toString();
+        }
+        
+        sql.append("-- Tools\n");
+        sql.append("INSERT INTO tool (name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
+        
+        for (int i = 0; i < tools.size(); i++) {
+            io.github.akumosstl.agentic.backend.model.Tool t = tools.get(i);
+            sql.append("('").append(escape(t.getName())).append("', ");
+            sql.append("'").append(escape(t.getNamespace())).append("', ");
+            sql.append("'").append(escape(t.getCategory())).append("', ");
+            sql.append("'").append(escape(t.getPath())).append("', ");
+            sql.append("'").append(escape(t.getDescription())).append("', ");
+            sql.append("'").append(escape(t.getInstructions())).append("', ");
+            sql.append("NOW(), NOW())");
+            if (i < tools.size() - 1) {
+                sql.append(",\n");
+            } else {
+                sql.append(";\n\n");
+            }
+        }
+        
+        return sql.toString();
+    }
+
+    private String exportPlugins() {
+        StringBuilder sql = new StringBuilder();
+        List<io.github.akumosstl.agentic.backend.model.Plugin> plugins = pluginRepository.findAll();
+        
+        if (plugins.isEmpty()) {
+            return sql.toString();
+        }
+        
+        sql.append("-- Plugins\n");
+        sql.append("INSERT INTO plugin (name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
+        
+        for (int i = 0; i < plugins.size(); i++) {
+            io.github.akumosstl.agentic.backend.model.Plugin p = plugins.get(i);
+            sql.append("('").append(escape(p.getName())).append("', ");
+            sql.append("'").append(escape(p.getNamespace())).append("', ");
+            sql.append("'").append(escape(p.getCategory())).append("', ");
+            sql.append("'").append(escape(p.getPath())).append("', ");
+            sql.append("'").append(escape(p.getDescription())).append("', ");
+            sql.append("'").append(escape(p.getInstructions())).append("', ");
+            sql.append("NOW(), NOW())");
+            if (i < plugins.size() - 1) {
+                sql.append(",\n");
+            } else {
+                sql.append(";\n\n");
+            }
+        }
+        
+        return sql.toString();
+    }
+
+    private String exportInstructions() {
+        StringBuilder sql = new StringBuilder();
+        List<io.github.akumosstl.agentic.backend.model.Instruction> instructions = instructionRepository.findAll();
+        
+        if (instructions.isEmpty()) {
+            return sql.toString();
+        }
+        
+        sql.append("-- Instructions\n");
+        sql.append("INSERT INTO instruction (name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
+        
+        for (int i = 0; i < instructions.size(); i++) {
+            io.github.akumosstl.agentic.backend.model.Instruction ins = instructions.get(i);
+            sql.append("('").append(escape(ins.getName())).append("', ");
+            sql.append("'").append(escape(ins.getNamespace())).append("', ");
+            sql.append("'").append(escape(ins.getCategory())).append("', ");
+            sql.append("'").append(escape(ins.getPath())).append("', ");
+            sql.append("'").append(escape(ins.getDescription())).append("', ");
+            sql.append("'").append(escape(ins.getInstructions())).append("', ");
+            sql.append("NOW(), NOW())");
+            if (i < instructions.size() - 1) {
+                sql.append(",\n");
+            } else {
+                sql.append(";\n\n");
+            }
+        }
+        
+        return sql.toString();
+    }
+
     private String escape(String value) {
         if (value == null) return "";
         return value.replace("'", "''").replace("\n", "\\n").replace("\r", "");
@@ -187,28 +315,45 @@ public class ExportImportService {
     public ImportResult importData(String sqlContent) {
         ImportResult result = new ImportResult();
         
-        String[] statements = sqlContent.split(";");
+        String[] lines = sqlContent.split("\n");
+        StringBuilder currentStatement = new StringBuilder();
         
-        for (String statement : statements) {
-            statement = statement.trim();
-            if (statement.isEmpty() || statement.startsWith("--")) {
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("--")) {
                 continue;
             }
             
-            if (statement.toUpperCase().contains("INSERT INTO AGENT")) {
-                importAgents(statement, result);
-            } else if (statement.toUpperCase().contains("INSERT INTO SKILL")) {
-                importSkills(statement, result);
-            } else if (statement.toUpperCase().contains("INSERT INTO COMMAND")) {
-                importCommands(statement, result);
-            } else if (statement.toUpperCase().contains("INSERT INTO SCRIPT")) {
-                importScripts(statement, result);
-            } else if (statement.toUpperCase().contains("INSERT INTO TEMPLATE")) {
-                importTemplates(statement, result);
+            currentStatement.append(" ").append(trimmed);
+            
+            if (trimmed.endsWith(";")) {
+                String statement = currentStatement.toString().trim();
+                processStatement(statement, result);
+                currentStatement = new StringBuilder();
             }
         }
         
         return result;
+    }
+
+    private void processStatement(String statement, ImportResult result) {
+        if (statement.toUpperCase().contains("INSERT INTO AGENT")) {
+            importAgents(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO SKILL")) {
+            importSkills(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO COMMAND")) {
+            importCommands(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO SCRIPT")) {
+            importScripts(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO TEMPLATE")) {
+            importTemplates(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO TOOL")) {
+            importTools(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO PLUGIN")) {
+            importPlugins(statement, result);
+        } else if (statement.toUpperCase().contains("INSERT INTO INSTRUCTION")) {
+            importInstructions(statement, result);
+        }
     }
 
     private void importAgents(String statement, ImportResult result) {
@@ -361,6 +506,96 @@ public class ExportImportService {
         }
     }
 
+    private void importTools(String statement, ImportResult result) {
+        String valuesPart = extractValues(statement);
+        if (valuesPart == null) return;
+        
+        List<String[]> rows = parseValues(valuesPart);
+        for (String[] row : rows) {
+            if (row.length < 3) continue;
+            
+            String name = unescape(row[0]);
+            String namespace = unescape(row[1]);
+            
+            Optional<io.github.akumosstl.agentic.backend.model.Tool> existing = toolRepository.findByNameAndNamespace(name, namespace);
+            if (existing.isPresent()) {
+                result.addDetail("Tool", name, false, "Already exists with same name and namespace");
+            } else {
+                io.github.akumosstl.agentic.backend.model.Tool tool = new io.github.akumosstl.agentic.backend.model.Tool();
+                tool.setName(name);
+                tool.setNamespace(namespace);
+                tool.setCategory(row.length > 2 ? unescape(row[2]) : null);
+                tool.setPath(row.length > 3 ? unescape(row[3]) : null);
+                tool.setDescription(row.length > 4 ? unescape(row[4]) : null);
+                tool.setInstructions(row.length > 5 ? unescape(row[5]) : null);
+                toolRepository.save(tool);
+                result.incrementImported();
+                result.addDetail("Tool", name, true, "Imported successfully");
+            }
+            result.incrementTotal();
+        }
+    }
+
+    private void importPlugins(String statement, ImportResult result) {
+        String valuesPart = extractValues(statement);
+        if (valuesPart == null) return;
+        
+        List<String[]> rows = parseValues(valuesPart);
+        for (String[] row : rows) {
+            if (row.length < 3) continue;
+            
+            String name = unescape(row[0]);
+            String namespace = unescape(row[1]);
+            
+            Optional<io.github.akumosstl.agentic.backend.model.Plugin> existing = pluginRepository.findByNameAndNamespace(name, namespace);
+            if (existing.isPresent()) {
+                result.addDetail("Plugin", name, false, "Already exists with same name and namespace");
+            } else {
+                io.github.akumosstl.agentic.backend.model.Plugin plugin = new io.github.akumosstl.agentic.backend.model.Plugin();
+                plugin.setName(name);
+                plugin.setNamespace(namespace);
+                plugin.setCategory(row.length > 2 ? unescape(row[2]) : null);
+                plugin.setPath(row.length > 3 ? unescape(row[3]) : null);
+                plugin.setDescription(row.length > 4 ? unescape(row[4]) : null);
+                plugin.setInstructions(row.length > 5 ? unescape(row[5]) : null);
+                pluginRepository.save(plugin);
+                result.incrementImported();
+                result.addDetail("Plugin", name, true, "Imported successfully");
+            }
+            result.incrementTotal();
+        }
+    }
+
+    private void importInstructions(String statement, ImportResult result) {
+        String valuesPart = extractValues(statement);
+        if (valuesPart == null) return;
+        
+        List<String[]> rows = parseValues(valuesPart);
+        for (String[] row : rows) {
+            if (row.length < 3) continue;
+            
+            String name = unescape(row[0]);
+            String namespace = unescape(row[1]);
+            
+            Optional<io.github.akumosstl.agentic.backend.model.Instruction> existing = instructionRepository.findByNameAndNamespace(name, namespace);
+            if (existing.isPresent()) {
+                result.addDetail("Instruction", name, false, "Already exists with same name and namespace");
+            } else {
+                io.github.akumosstl.agentic.backend.model.Instruction instruction = new io.github.akumosstl.agentic.backend.model.Instruction();
+                instruction.setName(name);
+                instruction.setNamespace(namespace);
+                instruction.setCategory(row.length > 2 ? unescape(row[2]) : null);
+                instruction.setPath(row.length > 3 ? unescape(row[3]) : null);
+                instruction.setDescription(row.length > 4 ? unescape(row[4]) : null);
+                instruction.setInstructions(row.length > 5 ? unescape(row[5]) : null);
+                instructionRepository.save(instruction);
+                result.incrementImported();
+                result.addDetail("Instruction", name, true, "Imported successfully");
+            }
+            result.incrementTotal();
+        }
+    }
+
     private String extractValues(String statement) {
         int start = statement.toUpperCase().indexOf("VALUES");
         if (start == -1) return null;
@@ -369,64 +604,42 @@ public class ExportImportService {
 
     private List<String[]> parseValues(String valuesPart) {
         List<String[]> rows = new ArrayList<>();
-        StringBuilder currentRow = new StringBuilder();
-        boolean inQuote = false;
-        boolean prevWasQuote = false;
         
-        for (int i = 0; i < valuesPart.length(); i++) {
-            char c = valuesPart.charAt(i);
-            
-            if (c == '\'' && !prevWasQuote) {
-                inQuote = !inQuote;
-                currentRow.append(c);
-            } else if (c == '\'' && prevWasQuote) {
-                currentRow.append(c);
-                prevWasQuote = false;
-            } else if (c == ',' && !inQuote) {
-                String value = currentRow.toString().trim();
-                if (value.startsWith("(") && value.endsWith(")")) {
-                    value = value.substring(1, value.length() - 1);
-                }
-                rows.add(parseRow(value));
-                currentRow = new StringBuilder();
-            } else {
-                currentRow.append(c);
-                prevWasQuote = (c == '\'');
-            }
+        valuesPart = valuesPart.trim();
+        if (valuesPart.startsWith("(") && valuesPart.endsWith(")")) {
+            valuesPart = valuesPart.substring(1, valuesPart.length() - 1);
         }
         
-        if (currentRow.length() > 0) {
-            String value = currentRow.toString().trim();
-            if (value.startsWith("(") && value.endsWith(")")) {
-                value = value.substring(1, value.length() - 1);
-            }
-            rows.add(parseRow(value));
-        }
+        String[] columns = splitByCommaOutsideQuotes(valuesPart);
+        rows.add(columns);
         
         return rows;
     }
 
-    private String[] parseRow(String row) {
-        List<String> values = new ArrayList<>();
+    private String[] splitByCommaOutsideQuotes(String value) {
+        List<String> result = new ArrayList<>();
         StringBuilder current = new StringBuilder();
-        boolean inQuote = false;
+        boolean inQuotes = false;
         
-        for (int i = 0; i < row.length(); i++) {
-            char c = row.charAt(i);
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
             
             if (c == '\'') {
-                inQuote = !inQuote;
+                inQuotes = !inQuotes;
                 current.append(c);
-            } else if (c == ',' && !inQuote) {
-                values.add(current.toString().trim());
+            } else if (c == ',' && !inQuotes) {
+                result.add(current.toString().trim());
                 current = new StringBuilder();
             } else {
                 current.append(c);
             }
         }
-        values.add(current.toString().trim());
         
-        return values.toArray(new String[0]);
+        if (current.length() > 0) {
+            result.add(current.toString().trim());
+        }
+        
+        return result.toArray(new String[0]);
     }
 
     private String unescape(String value) {

@@ -64,45 +64,85 @@
         <div class="toolbar">
             <div class="toolbar-section">
                 <div class="button-group">
-                    <button mat-icon-button class="tool-btn" title="Agents" matTooltip="agents"
+                    <button mat-icon-button class="tool-btn add" matTooltip="Config file"
+                        (click)="openCreateFileDialog()">
+                        <mat-icon>insert_drive_file</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" matTooltip="agents"
                         (click)="openViewAgentsDialog()">
                         <mat-icon>smart_toy</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" title="Add Agent" matTooltip="Add agent"
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add agent"
                         (click)="openAddAgentDialog()">
                         <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
-                    <button mat-icon-button class="tool-btn" title="Skills" matTooltip="skills"
+                    <button mat-icon-button class="tool-btn" matTooltip="skills"
                         (click)="openViewSkillsDialog()">
                         <mat-icon>format_list_bulleted</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" title="Add Skill" matTooltip="Add skill"
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add skill"
                         (click)="openAddSkillDialog()">
                         <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
-                    <button mat-icon-button class="tool-btn" title="Commands" matTooltip="commands"
+                    <button mat-icon-button class="tool-btn" matTooltip="commands"
                         (click)="openViewCommandsDialog()">
                         <mat-icon>terminal</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" title="Add Command" matTooltip="Add command"
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add command"
                         (click)="openAddCommandDialog()">
                         <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
-                    <button mat-icon-button class="tool-btn" title="Scripts" matTooltip="scripts"
+                    <button mat-icon-button class="tool-btn" matTooltip="scripts"
                         (click)="openViewScriptsDialog()">
                         <mat-icon>code</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" title="Add Script" matTooltip="Add script"
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add script"
                         (click)="openAddScriptDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" matTooltip="instructions"
+                        (click)="openViewInstructionsDialog()">
+                        <mat-icon>menu_book</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add instruction"
+                        (click)="openAddInstructionDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" matTooltip="plugins"
+                        (click)="openViewPluginsDialog()">
+                        <mat-icon>extension</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add plugin"
+                        (click)="openAddPluginDialog()">
+                        <mat-icon>add_circle</mat-icon>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="button-group">
+                    <button mat-icon-button class="tool-btn" matTooltip="tools"
+                        (click)="openViewToolsDialog()">
+                        <mat-icon>build</mat-icon>
+                    </button>
+                    <button mat-icon-button class="tool-btn add" matTooltip="Add tool"
+                        (click)="openAddToolDialog()">
                         <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>

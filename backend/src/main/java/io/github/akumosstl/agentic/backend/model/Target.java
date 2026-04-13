@@ -24,7 +24,16 @@ public class Target {
 
     @Column(name = "agents_path")
     private String agentsPath;
-
+    
+    @Column(name = "instructions_path")
+    private String instructionsPath;
+    
+    @Column(name = "plugins_path")
+    private String pluginsPath;
+    
+    @Column(name = "tools_path")
+    private String toolsPath;
+    
     @Column(name = "cli")
     private String cli;
 
@@ -87,7 +96,31 @@ public class Target {
     public void setAgentsPath(String agentsPath) {
         this.agentsPath = agentsPath;
     }
-
+    
+    public String getInstructionsPath() {
+        return instructionsPath;
+    }
+    
+    public void setInstructionsPath(String instructionsPath) {
+        this.instructionsPath = instructionsPath;
+    }
+    
+    public String getPluginsPath() {
+        return pluginsPath;
+    }
+    
+    public void setPluginsPath(String pluginsPath) {
+        this.pluginsPath = pluginsPath;
+    }
+    
+    public String getToolsPath() {
+        return toolsPath;
+    }
+    
+    public void setToolsPath(String toolsPath) {
+        this.toolsPath = toolsPath;
+    }
+    
     public String getCli() {
         return cli;
     }
