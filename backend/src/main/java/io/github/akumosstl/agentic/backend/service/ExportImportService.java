@@ -606,12 +606,43 @@ public class ExportImportService {
         List<String[]> rows = new ArrayList<>();
         
         valuesPart = valuesPart.trim();
-        if (valuesPart.startsWith("(") && valuesPart.endsWith(")")) {
-            valuesPart = valuesPart.substring(1, valuesPart.length() - 1);
-        }
         
-        String[] columns = splitByCommaOutsideQuotes(valuesPart);
-        rows.add(columns);
+        int start = 0;
+        int parenCount = 0;
+        boolean inQuotes = false;
+        StringBuilder currentRow = new StringBuilder();
+        
+        for (int i = 0; i < valuesPart.length(); i++) {
+            char c = valuesPart.charAt(i);
+            
+            if (c == '\'') {
+                inQuotes = !inQuotes;
+            }
+            
+            if (!inQuotes) {
+                if (c == '(') {
+                    if (parenCount == 0 && currentRow.length() > 0) {
+                        currentRow.setLength(0);
+                    }
+                    parenCount++;
+                } else if (c == ')') {
+                    parenCount--;
+                }
+                
+                if (parenCount == 0 && currentRow.length() > 0) {
+                    String rowStr = currentRow.toString().trim();
+                    if (rowStr.startsWith("(") && rowStr.endsWith(")")) {
+                        rowStr = rowStr.substring(1, rowStr.length() - 1);
+                    }
+                    String[] columns = splitByCommaOutsideQuotes(rowStr);
+                    rows.add(columns);
+                    currentRow.setLength(0);
+                    continue;
+                }
+            }
+            
+            currentRow.append(c);
+        }
         
         return rows;
     }

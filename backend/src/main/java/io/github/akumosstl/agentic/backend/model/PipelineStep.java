@@ -51,6 +51,12 @@ public class PipelineStep {
     @Column(name = "output_type")
     private String outputType;
     
+    @Column(name = "step_output", columnDefinition = "TEXT")
+    private String stepOutput;
+    
+    @Column(name = "step_output_type")
+    private String stepOutputType;
+    
     @Column(name = "cli")
     private String cli;
     
@@ -139,6 +145,12 @@ public class PipelineStep {
     
     public String getOutputType() { return outputType; }
     public void setOutputType(String outputType) { this.outputType = outputType; }
+    
+    public String getStepOutput() { return stepOutput; }
+    public void setStepOutput(String stepOutput) { this.stepOutput = stepOutput; }
+    
+    public String getStepOutputType() { return stepOutputType; }
+    public void setStepOutputType(String stepOutputType) { this.stepOutputType = stepOutputType; }
     
     public String getCli() { return cli; }
     public void setCli(String cli) { this.cli = cli; }

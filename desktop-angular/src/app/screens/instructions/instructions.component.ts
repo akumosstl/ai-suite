@@ -1112,6 +1112,18 @@ export class InstructionsComponent implements OnInit {
     this.cdr.markForCheck();
     this.selectedInstruction = { ...instruction };
     this.formInstruction = { ...instruction };
+    this.formInstructionFiles = [];
+    if (instruction.id) {
+      this.apiService.getInstructionFiles(instruction.id).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formInstructionFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error loading instruction files:', err)
+      });
+    }
     this.statusMessage = `Instruction selected: ${instruction.name}`;
   }
 

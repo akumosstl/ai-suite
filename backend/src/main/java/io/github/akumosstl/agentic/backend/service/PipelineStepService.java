@@ -315,6 +315,13 @@ public class PipelineStepService {
         return pipelineStepRepository.save(step);
     }
     
+    public PipelineStep saveStepOutput(Long stepId, String content, String type) {
+        PipelineStep step = getStepById(stepId);
+        step.setStepOutput(content);
+        step.setStepOutputType(type);
+        return pipelineStepRepository.save(step);
+    }
+    
     public PipelineStep saveCli(Long stepId, String cli, String parameters, String arguments, String runtime) {
         PipelineStep step = getStepById(stepId);
         step.setCli(cli);
@@ -750,10 +757,10 @@ public class PipelineStepService {
         
         String inputContent = step.getInputContent() != null ? step.getInputContent() : "";
         inputContent = resolveInputContent(inputContent, pipelineId, step.getStepOrder(), runDir);
-        String outputContent = step.getOutputContent() != null ? step.getOutputContent() : "";
+        String stepOutput = step.getStepOutput() != null ? step.getStepOutput() : "";
         
         prompt = prompt.replace("{{agentic-input:file}}", inputContent);
-        prompt = prompt.replace("{{agentic-output:file}}", outputContent);
+        prompt = prompt.replace("{{agentic-output:file}}", stepOutput);
         
         System.out.println("DEBUG: Agent prompt after replacement: " + prompt);
         
@@ -906,6 +913,11 @@ public class PipelineStepService {
         inputContent = resolveInputContent(inputContent, pipelineId, step.getStepOrder(), runDir);
         if (!inputContent.isEmpty()) {
             scriptContent = scriptContent.replace("{{agentic-input:file}}", inputContent);
+        }
+        
+        String stepOutput = step.getStepOutput() != null ? step.getStepOutput() : "";
+        if (!stepOutput.isEmpty()) {
+            scriptContent = scriptContent.replace("{{agentic-output:file}}", stepOutput);
         }
         
         String runtime = step.getRuntime();

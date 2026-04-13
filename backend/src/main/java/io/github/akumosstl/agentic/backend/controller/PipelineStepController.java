@@ -95,6 +95,15 @@ public class PipelineStepController {
         return pipelineStepService.saveOutput(stepId, content, type);
     }
     
+    @PutMapping("/{stepId}/step-output")
+    public PipelineStep saveStepOutput(@PathVariable Long pipelineId,
+                                       @PathVariable Long stepId,
+                                       @RequestBody Map<String, String> outputData) {
+        String content = outputData.get("content");
+        String type = outputData.get("type");
+        return pipelineStepService.saveStepOutput(stepId, content, type);
+    }
+    
     @PutMapping("/{stepId}/cli")
     public PipelineStep saveCli(@PathVariable Long pipelineId,
                                  @PathVariable Long stepId,

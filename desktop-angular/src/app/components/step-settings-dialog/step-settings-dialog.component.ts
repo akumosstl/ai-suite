@@ -498,8 +498,8 @@ export class StepSettingsDialogComponent {
     this.inputContent = data.step.inputContent || '';
     this.inputType = data.step.inputType || 'txt';
 
-    this.outputContent = data.step.outputContent || '';
-    this.outputType = data.step.outputType || 'txt';
+    this.outputContent = data.step.stepOutput || '';
+    this.outputType = data.step.stepOutputType || 'txt';
 
     this.apiService.getTargets().subscribe({
       next: (targets) => {
@@ -611,7 +611,7 @@ export class StepSettingsDialogComponent {
 
     this.apiService.saveStepInput(pipelineId, stepId, this.inputContent, this.inputType).subscribe({
       next: () => {
-        this.apiService.saveStepOutput(pipelineId, stepId, this.outputContent, this.outputType).subscribe({
+        this.apiService.saveStepConfigOutput(pipelineId, stepId, this.outputContent, this.outputType).subscribe({
           next: () => {
             this.apiService.saveStepCli(
               pipelineId, 

@@ -18,6 +18,7 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
     private static final String AGENTIC_JSON_PATH = AGENTIC_DIR + File.separator + "agentic.json";
 
     private static String databasePath;
+    private static int serverPort = 8080;
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -41,12 +42,14 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
 
         loadConfig(agenticFile);
         setDataSourceUrl();
+        setServerPort();
     }
 
     private void createDefaultConfig(File file) throws IOException {
         String defaultConfig = """
             {
               "version": "1.0.0",
+              "port": 8080,
               "database": {
                 "path": "db/agentic_db"
               }
@@ -59,6 +62,11 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> config = mapper.readValue(file, Map.class);
         
+        Object portObj = config.get("port");
+        if (portObj != null) {
+            serverPort = ((Number) portObj).intValue();
+        }
+
         @SuppressWarnings("unchecked")
         Map<String, Object> database = (Map<String, Object>) config.get("database");
         if (database != null && database.get("path") != null) {
@@ -72,5 +80,9 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
         String normalizedPath = databasePath.replace("/", File.separator).replace("\\", File.separator);
         String dbPath = AGENTIC_DIR + File.separator + normalizedPath;
         System.setProperty("spring.datasource.url", "jdbc:h2:file:" + dbPath + ";AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000;WRITE_DELAY=0");
+    }
+
+    private void setServerPort() {
+        System.setProperty("server.port", String.valueOf(serverPort));
     }
 }

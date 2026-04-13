@@ -1112,6 +1112,18 @@ export class ToolsComponent implements OnInit {
     this.cdr.markForCheck();
     this.selectedTool = { ...tool };
     this.formTool = { ...tool };
+    this.formToolFiles = [];
+    if (tool.id) {
+      this.apiService.getToolFiles(tool.id).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formToolFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error loading tool files:', err)
+      });
+    }
     this.statusMessage = `Tool selected: ${tool.name}`;
   }
 

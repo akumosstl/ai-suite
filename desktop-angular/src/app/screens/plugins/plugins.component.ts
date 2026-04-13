@@ -1112,6 +1112,18 @@ export class PluginsComponent implements OnInit {
     this.cdr.markForCheck();
     this.selectedPlugin = { ...plugin };
     this.formPlugin = { ...plugin };
+    this.formPluginFiles = [];
+    if (plugin.id) {
+      this.apiService.getPluginFiles(plugin.id).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formPluginFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error loading plugin files:', err)
+      });
+    }
     this.statusMessage = `Plugin selected: ${plugin.name}`;
   }
 

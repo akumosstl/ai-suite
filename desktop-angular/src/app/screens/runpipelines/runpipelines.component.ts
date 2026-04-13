@@ -9,6 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService, Pipeline, PipelineStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
 import { ConsoleOutputDialogComponent } from '../../components/console-output-dialog/console-output-dialog.component';
+import { InputDialogComponent } from '../../components/input-dialog/input-dialog.component';
 
 const VALID_STATUSES = ['completed', 'running', 'failed', 'pending', 'ready'];
 
@@ -420,6 +421,8 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
               agent: step.agentName ? { name: step.agentName, category: step.agentCategory, scope: 'pipeline' } : undefined,
               script: step.scriptName ? { name: step.scriptName, category: step.scriptCategory, namespace: '', scope: 'pipeline' } : undefined,
               status: isActivePipeline && index === 0 && run.status === 'running' ? 'running' : getStatusClass(step.status, run.status === 'running'),
+              inputContent: step.inputContent || '',
+              inputType: step.inputType,
               outputContent: (step.outputContent || ''),
               outputType: step.outputType,
               loadedFromServer: true
@@ -611,15 +614,12 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   }
   
   openInput(step: PipelineStep) {
-    if (!this.pipeline?.id || !step.id) return;
-    
-    this.apiService.getPipelineSteps(this.pipeline.id).subscribe({
-      next: (steps) => {
-        const updatedStep = steps.find(s => s.id === step.id);
-        if (updatedStep) {
-          this.cdr.detectChanges();
-        }
-      }
+    this.dialog.open(InputDialogComponent, {
+      data: { step, pipelineId: this.pipeline?.id },
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      panelClass: 'input-dialog-panel'
     });
   }
   

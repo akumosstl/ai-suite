@@ -49,6 +49,8 @@ export interface PipelineStep {
   inputType?: string;
   outputContent?: string;
   outputType?: string;
+  stepOutput?: string;
+  stepOutputType?: string;
   cli?: string;
   parameters?: string;
   arguments?: string;
@@ -584,6 +586,15 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
       type
     }).pipe(
       catchError(this.handleError('saveStepOutput', {} as PipelineStep))
+    );
+  }
+
+  saveStepConfigOutput(pipelineId: number, stepId: number, content: string, type: string): Observable<PipelineStep> {
+    return this.http.put<PipelineStep>(`${this.baseUrl}/pipelines/${pipelineId}/steps/${stepId}/step-output`, {
+      content,
+      type
+    }).pipe(
+      catchError(this.handleError('saveStepConfigOutput', {} as PipelineStep))
     );
   }
 
