@@ -24,6 +24,15 @@ import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 
+/**
+ * Componente de Gerenciamento de Comandos.
+ * Permite criar, editar, buscar e excluir comandos do sistema.
+ * Fornece interface para visualização de lista paginada e formulário de detalhes.
+ * 
+ * @component
+ * @name CommandsComponent
+ * @selector app-commands
+ */
 @Component({
   selector: 'app-commands',
   standalone: true,
@@ -589,6 +598,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
@@ -598,6 +608,14 @@ import { ProjectContextService } from '../../services/project-context.service';
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
       opacity: 0.9;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     .prompt-field-container:hover {
@@ -769,6 +787,15 @@ import { ProjectContextService } from '../../services/project-context.service';
 
 })
 
+/**
+ * Tela de gerenciamento de comandos customizados.
+ * Permite visualizar, criar e editar comandos do sistema.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Componente de tela para operações com comandos customizados.
+ */
 export class CommandsComponent implements OnInit {
   fromHome = false;
   commands: Command[] = [];
@@ -803,14 +830,24 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Navega para a tela do menu principal.
+   */
   goHome() {
     this.router.navigate(['/menu'])
   }
 
+  /**
+   * Alterna a visibilidade do painel lateral esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  /**
+   * Retorna um objeto Command vazio com valores padrão.
+   * @returns Objeto Command com propriedades vazias
+   */
   private getEmptyCommand(): Command {
     return {
       name: '',
@@ -822,6 +859,9 @@ export class CommandsComponent implements OnInit {
     };
   }
 
+  /**
+   * Carrega a lista de namespaces de comandos disponíveis.
+   */
   loadNamespaces(): void {
     this.apiService.getCommandNamespaces().subscribe({
       next: (namespaces) => {
@@ -839,6 +879,10 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
+   * @param value - Valor digitado pelo usuário
+   */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
@@ -849,6 +893,10 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de busca.
+   * @param value - Valor digitado pelo usuário
+   */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
@@ -859,12 +907,18 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Inicializa o componente carregando namespaces e lista de comandos.
+   */
   ngOnInit(): void {
     console.log('CommandsComponent ngOnInit');
     this.loadNamespaces();
     this.loadCommands();
   }
 
+  /**
+   * Carrega a lista de comandos do backend com paginação.
+   */
   loadCommands(): void {
     console.log('Loading commands...');
     this.loading = true;
@@ -902,6 +956,9 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Busca comandos por nome e/ou namespace.
+   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -935,6 +992,9 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Limpa os filtros de busca e recarrega a lista completa de comandos.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -942,6 +1002,10 @@ export class CommandsComponent implements OnInit {
     this.loadCommands();
   }
 
+  /**
+   * Manipula mudança de página no componente de paginação.
+   * @param event - Evento de mudança de página
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -952,6 +1016,10 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Seleciona um comando da lista e preenche o formulário com seus dados.
+   * @param command - Comando selecionado
+   */
   selectCommand(command: Command): void {
     this.cdr.markForCheck();
     this.selectedCommand = { ...command };
@@ -959,6 +1027,9 @@ export class CommandsComponent implements OnInit {
     this.statusMessage = `Command selected: ${command.name}`;
   }
 
+  /**
+   * Salva (cria ou atualiza) um comando no backend.
+   */
   saveCommand(): void {
     if (!this.formCommand.name) {
       this.statusMessage = 'Error: Name is required';
@@ -1004,6 +1075,9 @@ export class CommandsComponent implements OnInit {
     }
   }
 
+  /**
+   * Exclui o comando atualmente selecionado.
+   */
   deleteCommand(): void {
     if (!this.selectedCommand?.id) {
       this.statusMessage = 'No command selected to delete';
@@ -1029,6 +1103,11 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Exclui um comando da lista (modo inline com confirmação).
+   * @param command - Comando a ser excluído
+   * @param event - Evento do clique para stopPropagation
+   */
   deleteCommandInline(command: Command, event: Event): void {
     event.stopPropagation();
     
@@ -1082,12 +1161,19 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Limpa o formulário, resetando para um novo comando vazio.
+   */
   clearForm(): void {
     this.selectedCommand = null;
     this.formCommand = this.getEmptyCommand();
     this.statusMessage = 'Form cleared - ready for new command';
   }
 
+  /**
+   * Retorna a classe CSS para estilização da mensagem de status.
+   * @returns Classe CSS ('success', 'error' ou 'info')
+   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -1095,6 +1181,11 @@ export class CommandsComponent implements OnInit {
     return 'info';
   }
 
+  /**
+   * Gera uma prévia do comando com até 15 palavras.
+   * @param prompt - Texto completo do comando
+   * @returns Preview truncado
+   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -1102,6 +1193,9 @@ export class CommandsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
+  /**
+   * Abre o editor de comando em um modal para edição do comando.
+   */
   openCommandEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
@@ -1122,6 +1216,9 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre o dialog para criar um novo projeto.
+   */
   newProject(): void {
     const dialogRef = this.dialog.open(NewProjectDialogComponent, {
       width: '500px',
@@ -1153,6 +1250,9 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre o dialog para selecionar e abrir um projeto existente.
+   */
   openProject(): void {
     const dialogRef = this.dialog.open(OpenProjectDialogComponent, {
       width: '900px',
@@ -1170,6 +1270,9 @@ export class CommandsComponent implements OnInit {
     });
   }
 
+  /**
+   * Fecha a janela atual do aplicativo.
+   */
   exit(): void {
     window.close();
   }

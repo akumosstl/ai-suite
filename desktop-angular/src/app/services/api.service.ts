@@ -3,6 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
+/**
+ * Interface que representa um Projeto no sistema.
+ * Um projeto é a entidade principal que contém configurações e executa pipelines.
+ * 
+ * @interface Project
+ */
 export interface Project {
   id?: number;
   name: string;
@@ -22,6 +28,12 @@ export interface Project {
   tools?: Tool[];
 }
 
+/**
+ * Interface que representa um Pipeline de execução.
+ * Um pipeline é uma sequência de passos que podem ser executados por agentes.
+ * 
+ * @interface Pipeline
+ */
 export interface Pipeline {
   id?: number;
   name: string;
@@ -34,6 +46,12 @@ export interface Pipeline {
   type?: string;
 }
 
+/**
+ * Interface que representa um passo (step) dentro de um pipeline.
+ * Cada step pode ser executado por um agente ou script específico.
+ * 
+ * @interface PipelineStep
+ */
 export interface PipelineStep {
   id?: number;
   pipelineId?: number;
@@ -41,6 +59,8 @@ export interface PipelineStep {
   agentId?: number;
   script?: Script;
   scriptId?: number;
+  scriptNamespace?: string;
+  agentNamespace?: string;
   stepOrder?: number;
   status?: string;
   createdAt?: string;
@@ -59,10 +79,18 @@ export interface PipelineStep {
   loadedFromServer?: boolean;
 }
 
+/**
+ * Interface que representa uma execução de pipeline.
+ * Armazena o histórico de execução de um pipeline.
+ * 
+ * @interface PipelineRun
+ */
 export interface PipelineRun {
   id?: number;
   pipelineId?: number;
   pipelineName?: string;
+  projectId?: number;
+  projectName?: string;
   status?: string;
   startedAt?: string;
   completedAt?: string;
@@ -70,13 +98,18 @@ export interface PipelineRun {
   steps?: PipelineRunStep[];
 }
 
+/**
+ * Interface que representa um passo executado durante uma execução de pipeline.
+ * 
+ * @interface PipelineRunStep
+ */
 export interface PipelineRunStep {
   id?: number;
   stepOrder?: number;
   agentName?: string;
-  agentCategory?: string;
+  agentNamespace?: string;
   scriptName?: string;
-  scriptCategory?: string;
+  scriptNamespace?: string;
   status?: string;
   inputContent?: string;
   inputType?: string;
@@ -86,16 +119,28 @@ export interface PipelineRunStep {
   updatedAt?: string;
 }
 
+/**
+ * Interface que representa um Agente no sistema.
+ * Um agente é uma entidade que pode executar passos de pipeline.
+ * 
+ * @interface Agent
+ */
 export interface Agent {
   id?: number;
   name: string;
-  category: string;
+  namespace: string;
   description?: string;
   prompt?: string;
   scope: string;
   path?: string;
 }
 
+/**
+ * Interface que representa um Script no sistema.
+ * Scripts são utilizadas por agentes para executar tarefas específicas.
+ * 
+ * @interface Script
+ */
 export interface Script {
   id?: number;
   name: string;
@@ -106,6 +151,12 @@ export interface Script {
   path?: string;
 }
 
+/**
+ * Interface que representa um Comando no sistema.
+ * Comandos são instruções que podem ser executadas por agentes.
+ * 
+ * @interface Command
+ */
 export interface Command {
   id?: number;
   name: string;
@@ -116,6 +167,12 @@ export interface Command {
   path?: string;
 }
 
+/**
+ * Interface que representa uma Skill no sistema.
+ * Skills são habilidades que podem ser atribuídas a agentes.
+ * 
+ * @interface Skill
+ */
 export interface Skill {
   id?: number;
   name: string;
@@ -125,6 +182,12 @@ export interface Skill {
   path?: string;
 }
 
+/**
+ * Interface que representa um Template no sistema.
+ * Templates são modelos pré-definidos para criar entidades.
+ * 
+ * @interface Template
+ */
 export interface Template {
   id?: number;
   name: string;
@@ -135,6 +198,11 @@ export interface Template {
   updatedAt?: string;
 }
 
+/**
+ * Interface que representa um arquivo associado a uma skill.
+ * 
+ * @interface SkillFile
+ */
 export interface SkillFile {
   id?: number;
   path: string;
@@ -143,6 +211,12 @@ export interface SkillFile {
   skillId?: number;
 }
 
+/**
+ * Interface que representa uma Instrução no sistema.
+ * Instruções são diretrizes que orientam o comportamento de agentes.
+ * 
+ * @interface Instruction
+ */
 export interface Instruction {
   id?: number;
   name: string;
@@ -152,6 +226,11 @@ export interface Instruction {
   path?: string;
 }
 
+/**
+ * Interface que representa um arquivo associado a uma instrução.
+ * 
+ * @interface InstructionFile
+ */
 export interface InstructionFile {
   id?: number;
   path: string;
@@ -160,6 +239,12 @@ export interface InstructionFile {
   instructionId?: number;
 }
 
+/**
+ * Interface que representa um Plugin no sistema.
+ * Plugins são extensões que adicionam funcionalidades aos agentes.
+ * 
+ * @interface Plugin
+ */
 export interface Plugin {
   id?: number;
   name: string;
@@ -169,6 +254,11 @@ export interface Plugin {
   path?: string;
 }
 
+/**
+ * Interface que representa um arquivo associado a um plugin.
+ * 
+ * @interface PluginFile
+ */
 export interface PluginFile {
   id?: number;
   path: string;
@@ -177,6 +267,12 @@ export interface PluginFile {
   pluginId?: number;
 }
 
+/**
+ * Interface que representa uma Ferramenta (Tool) no sistema.
+ * Ferramentas são recursos que podem ser utilizados por agentes.
+ * 
+ * @interface Tool
+ */
 export interface Tool {
   id?: number;
   name: string;
@@ -186,6 +282,11 @@ export interface Tool {
   path?: string;
 }
 
+/**
+ * Interface que representa um arquivo associado a uma ferramenta.
+ * 
+ * @interface ToolFile
+ */
 export interface ToolFile {
   id?: number;
   path: string;
@@ -194,6 +295,12 @@ export interface ToolFile {
   toolId?: number;
 }
 
+/**
+ * Interface que representa um Alvo (Target) no sistema.
+ * Alvos definem os caminhos para arquivos de configuração do projeto.
+ * 
+ * @interface Target
+ */
 export interface Target {
   id?: number;
   name: string;
@@ -206,6 +313,12 @@ export interface Target {
   toolsPath?: string;
 }
 
+/**
+ * Interface que representa um membro de equipe.
+ * Usado no sistema de gestão de projetos.
+ * 
+ * @interface TeamMember
+ */
 export interface TeamMember {
   id?: number;
   gameId: number;
@@ -217,6 +330,11 @@ export interface TeamMember {
   experience: number;
 }
 
+/**
+ * Interface que representa uma escolha de evento.
+ * 
+ * @interface EventChoice
+ */
 export interface EventChoice {
   text: string;
   outcome: {
@@ -226,6 +344,11 @@ export interface EventChoice {
   };
 }
 
+/**
+ * Interface que representa um evento no sistema de gestão.
+ * 
+ * @interface GameEvent
+ */
 export interface GameEvent {
   id: number;
   description: string;
@@ -238,6 +361,11 @@ export interface GameEvent {
   choices: EventChoice[];
 }
 
+/**
+ * Interface que representa o estado do jogo/gestão.
+ * 
+ * @interface GameState
+ */
 export interface GameState {
   id?: number;
   phase: string;
@@ -248,6 +376,11 @@ export interface GameState {
   status: string;
 }
 
+/**
+ * Interface que representa uma ação no sistema de gestão.
+ * 
+ * @interface Action
+ */
 export interface Action {
   id?: number;
   gameId: number;
@@ -257,6 +390,11 @@ export interface Action {
   effect?: any;
 }
 
+/**
+ * Interface que representa uma revisão de sprint.
+ * 
+ * @interface SprintReview
+ */
 export interface SprintReview {
   id?: number;
   gameId: number;
@@ -265,11 +403,31 @@ export interface SprintReview {
   feedback?: string;
 }
 
+/**
+ * Serviço de comunicação com a API backend.
+ * 
+ * @description
+ * Fornece métodos para todas as operações CRUD e consultas à API REST.
+ * Utiliza HttpClient para realizar requisições HTTP ao backend.
+
+ * @service ApiService
+ * @injectable providedIn: 'root'
+ */
 @Injectable({
   providedIn: 'root'
 })
+/**
+ * Serviço responsável pela comunicação com a API backend.
+ * Fornece métodos para requisições HTTP relacionadas a projetos, agentes, skills, etc.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @service
+ * @description Serviço de integração com endpoints REST do backend.
+ */
 export class ApiService {
-  private baseUrl = '/api'; // proxy to backend
+  /** URL base para todas as requisições API (via proxy) */
+  private baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 
@@ -493,37 +651,10 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  continuePipeline(projectId: number, pipelineId: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/continue`, {}).pipe(
-      catchError((error) => {
-        console.error('continuePipeline error:', error);
-        throw error;
-      })
-    );
-  }
-
-  isPipelinePaused(projectId: number, pipelineId: number): Observable<{paused: boolean, pendingStepOrder?: number}> {
-    return this.http.get<{paused: boolean, pendingStepOrder?: number}>(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/paused`).pipe(
-      catchError((error) => {
-        console.error('isPipelinePaused error:', error);
-        return of({paused: false});
-      })
-    );
-  }
-
   stopPipeline(projectId: number, pipelineId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/stop`, {}).pipe(
       catchError((error) => {
         console.error('stopPipeline error:', error);
-        throw error;
-      })
-    );
-  }
-
-  pausePipeline(projectId: number, pipelineId: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/pause`, {}).pipe(
-      catchError((error) => {
-        console.error('pausePipeline error:', error);
         throw error;
       })
     );
@@ -641,6 +772,26 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
   getPipelineRunById(runId: number): Observable<PipelineRun> {
     return this.http.get<PipelineRun>(`${this.baseUrl}/pipeline-runs/${runId}`).pipe(
       catchError(this.handleError('getPipelineRunById', {} as PipelineRun))
+    );
+  }
+
+  getAllPipelineRuns(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/all-pipeline-runs`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getAllPipelineRuns', { runs: [], totalElements: 0, totalPages: 0 })));
+  }
+
+  getTop20AllPipelineRuns(): Observable<PipelineRun[]> {
+    return this.http.get<PipelineRun[]>(`${this.baseUrl}/all-pipeline-runs/top20`).pipe(
+      catchError(this.handleError('getTop20AllPipelineRuns', []))
+    );
+  }
+
+  cleanupAllPipelineRuns(): Observable<{ deletedCount: number; message: string }> {
+    return this.http.delete<{ deletedCount: number; message: string }>(`${this.baseUrl}/all-pipeline-runs/cleanup`).pipe(
+      catchError(this.handleError('cleanupAllPipelineRuns', { deletedCount: 0, message: 'Error' }))
     );
   }
 

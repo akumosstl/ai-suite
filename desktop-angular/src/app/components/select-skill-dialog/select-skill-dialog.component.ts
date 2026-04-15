@@ -12,10 +12,22 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Skill } from '../../services/api.service';
 
+/**
+ * Interface de dados para o diálogo de seleção de habilidades.
+ * @property projectId - ID do projeto ao qual as habilidades serão adicionadas.
+ */
 export interface SelectSkillDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de habilidades.
+ * Permite buscar e selecionar habilidades para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla.
+ * 
+ * @componentName SelectSkillDialog
+ * @selector app-select-skill-dialog
+ */
 @Component({
   selector: 'app-select-skill-dialog',
   standalone: true,
@@ -513,6 +525,10 @@ export class SelectSkillDialogComponent {
   }
 
   loadSkills(): void {
+    /**
+     * Carrega a lista de habilidades do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     if (this.searchTerm.trim()) {
       this.apiService.searchSkills(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({
@@ -552,27 +568,45 @@ export class SelectSkillDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de habilidades resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadSkills();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de habilidades.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadSkills();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadSkills();
   }
 
   toggleRow(row: Skill): void {
+    /**
+     * Alterna a seleção de uma habilidade específica.
+     * @param row - Habilidade a ser selecionada ou desmarcada.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todas as habilidades visíveis na tabela.
+     * Se todas estiverem selecionadas, desmarca todas.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -585,10 +619,18 @@ export class SelectSkillDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todas as habilidades visíveis estão selecionadas.
+     * @returns true se todas as habilidades estão selecionadas.
+     */
     return this.skills.length > 0 && this.skills.every(skill => this.selection.isSelected(skill));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona as habilidades selecionadas ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const skillIds = this.selection.selected
         .filter(s => s.id)
@@ -608,6 +650,9 @@ export class SelectSkillDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

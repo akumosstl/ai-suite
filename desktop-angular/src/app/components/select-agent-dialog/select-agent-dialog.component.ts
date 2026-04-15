@@ -13,16 +13,34 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService, Agent, Script } from '../../services/api.service';
 
+/**
+ * Componente de diálogo para seleção de agentes.
+ * Permite buscar e selecionar agentes ou scripts para adicionar a um projeto ou pipeline.
+ * 
+ * @componentName SelectAgentDialog
+ * @selector app-select-agent-dialog
+ */
 export interface SelectAgentDialogData {
   projectId?: number;
   mode: 'project' | 'pipeline';
 }
 
+/**
+ * Representa um item selecionado no diálogo, podendo ser um agente ou script.
+ */
 export interface SelectedStep {
   type: 'agent' | 'script';
   item: Agent | Script;
 }
 
+/**
+ * Componente de diálogo para seleção de agentes.
+ * Permite buscar e selecionar agentes ou scripts para adicionar a um projeto ou pipeline.
+ * Suporta pesquisa paginada e seleção múltipla.
+ * 
+ * @componentName SelectAgentDialog
+ * @selector app-select-agent-dialog
+ */
 @Component({
   selector: 'app-select-agent-dialog',
   standalone: true,
@@ -101,11 +119,11 @@ export interface SelectedStep {
                 </ng-container>
                 <ng-container matColumnDef="category">
                   <th mat-header-cell *matHeaderCellDef>
-                    <mat-icon class="column-icon">category</mat-icon>
+                    <mat-icon class="column-icon">namespace</mat-icon>
                     Category
                   </th>
                   <td mat-cell *matCellDef="let agent">
-                    <span class="category-badge">{{ agent.category }}</span>
+                    <span class="category-badge">{{ agent.namespace }}</span>
                   </td>
                 </ng-container>
                 <ng-container matColumnDef="scope">
@@ -242,7 +260,7 @@ export interface SelectedStep {
                 Category
               </th>
               <td mat-cell *matCellDef="let agent">
-                <span class="category-badge">{{ agent.category }}</span>
+                <span class="category-badge">{{ agent.namespace }}</span>
               </td>
             </ng-container>
             <ng-container matColumnDef="scope">
@@ -712,6 +730,10 @@ export class SelectAgentDialogComponent {
   }
 
   loadAgents(): void {
+    /**
+     * Carrega a lista de agentes do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     if (this.searchTerm.trim()) {
       this.apiService.searchAgents(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({
@@ -737,6 +759,10 @@ export class SelectAgentDialogComponent {
   }
 
   loadScripts(): void {
+    /**
+     * Carrega a lista de scripts do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.scriptsLoading = true;
     if (this.scriptSearchTerm.trim()) {
       this.apiService.searchScripts(this.scriptSearchTerm, '', this.scriptCurrentPage, this.scriptPageSize).subscribe({
@@ -789,48 +815,80 @@ export class SelectAgentDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de agentes resetting para a primeira página.
+     */
     this.currentPage = 0;
     this.loadAgents();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de agentes.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadAgents();
   }
 
   searchScripts(): void {
+    /**
+     * Executa a pesquisa de scripts resetando para a primeira página.
+     */
     this.scriptCurrentPage = 0;
     this.loadScripts();
   }
 
   clearScriptSearch(): void {
+    /**
+     * Limpa o termo de pesquisa de scripts e recarrega a lista.
+     */
     this.scriptSearchTerm = '';
     this.scriptCurrentPage = 0;
     this.loadScripts();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação de agentes.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadAgents();
   }
 
   onScriptPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação de scripts.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.scriptCurrentPage = event.pageIndex;
     this.scriptPageSize = event.pageSize;
     this.loadScripts();
   }
 
   toggleRow(row: Agent): void {
+    /**
+     * Alterna a seleção de um agente específico.
+     * @param row - Agente a ser selecionado ou desmarcado.
+     */
     this.selection.toggle(row);
   }
 
   toggleScriptRow(row: Script): void {
+    /**
+     * Alterna a seleção de um script específico.
+     * @param row - Script a ser selecionado ou desmarcado.
+     */
     this.scriptSelection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todos os agentes visíveis na tabela.
+     * Se todos estiverem selecionados, desmarca todos.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -843,6 +901,10 @@ export class SelectAgentDialogComponent {
   }
 
   toggleAllScriptRows(): void {
+    /**
+     * Alterna a seleção de todos os scripts visíveis na tabela.
+     * Se todos estiverem selecionados, desmarca todos.
+     */
     if (this.isAllScriptsSelected()) {
       this.scriptSelection.clear();
     } else {
@@ -855,14 +917,27 @@ export class SelectAgentDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todos os agentes visíveis estão selecionados.
+     * @returns true se todos os agentes estão selecionados.
+     */
     return this.agents.length > 0 && this.agents.every(agent => this.selection.isSelected(agent));
   }
 
   isAllScriptsSelected(): boolean {
+    /**
+     * Verifica se todos os scripts visíveis estão selecionados.
+     * @returns true se todos os scripts estão selecionados.
+     */
     return this.scripts.length > 0 && this.scripts.every(script => this.scriptSelection.isSelected(script));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Em modo 'pipeline', retorna apenas o primeiro item selecionado.
+     * Em modo 'project', adiciona os selecionados ao projeto via API.
+     */
     if (this.data.mode === 'pipeline') {
       if (this.selectedTab === 0 && this.selection.selected.length > 0) {
         this.dialogRef.close({ type: 'agent', item: this.selection.selected[0] });
@@ -890,6 +965,9 @@ export class SelectAgentDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

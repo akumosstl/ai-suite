@@ -12,10 +12,22 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Command } from '../../services/api.service';
 
+/**
+ * Interface de dados para o diálogo de seleção de comandos.
+ * @property projectId - ID do projeto ao qual os comandos serão adicionados.
+ */
 export interface SelectCommandDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de comandos.
+ * Permite buscar e selecionar comandos para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla.
+ * 
+ * @componentName SelectCommandDialog
+ * @selector app-select-command-dialog
+ */
 @Component({
   selector: 'app-select-command-dialog',
   standalone: true,
@@ -495,6 +507,10 @@ export class SelectCommandDialogComponent {
   }
 
   loadCommands(): void {
+    /**
+     * Carrega a lista de comandos do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     if (this.searchTerm.trim()) {
       this.apiService.searchCommands(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({
@@ -534,27 +550,45 @@ export class SelectCommandDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de comandos resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadCommands();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de comandos.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadCommands();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadCommands();
   }
 
   toggleRow(row: Command): void {
+    /**
+     * Alterna a seleção de um comando específico.
+     * @param row - Comando a ser selecionado ou desmarcado.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todos os comandos visíveis na tabela.
+     * Se todos estiverem selecionados, desmarca todos.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -567,10 +601,18 @@ export class SelectCommandDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todos os comandos visíveis estão selecionados.
+     * @returns true se todos os comandos estão selecionados.
+     */
     return this.commands.length > 0 && this.commands.every(command => this.selection.isSelected(command));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona os comandos selecionados ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const commandIds = this.selection.selected
         .filter(c => c.id)
@@ -590,6 +632,9 @@ export class SelectCommandDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

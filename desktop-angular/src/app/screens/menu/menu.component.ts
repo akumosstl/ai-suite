@@ -10,6 +10,18 @@ import { ApiService, Project } from '../../services/api.service';
 import { NewProjectDialogComponent } from '../../components/new-project-dialog/new-project-dialog.component';
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 
+/**
+ * Componente da tela de menu principal.
+ * 
+ * @description
+ * Tela inicial da aplicação que apresenta o menu de navegação.
+ * Permite criar novos projetos, abrir projetos existentes,
+ * navegar para agentes, configurações ou sair da aplicação.
+ * 
+ * @component MenuComponent
+ * @selector app-menu
+ * @standalone true
+ */
 @Component({
   selector: 'app-menu',
   standalone: true,

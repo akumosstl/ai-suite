@@ -12,6 +12,16 @@ import io.github.akumosstl.agentic.backend.model.Instruction;
 import io.github.akumosstl.agentic.backend.model.Plugin;
 import io.github.akumosstl.agentic.backend.model.Tool;
 
+/**
+ * Entidade que representa um Projeto no sistema.
+ * 
+ * Um projeto é a unidade principal de organização que agrupaseriais,
+ * pipelines, agentes, scripts, commands, skills, instructions, plugins e tools.
+ * Cada projeto pode ter um target associado e um caminho no sistema de arquivos.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @Table(name = "project")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

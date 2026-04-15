@@ -106,6 +106,11 @@ import { ApiService } from '../../services/api.service'
               <mat-icon>terminal</mat-icon>
               <span>Commands</span>
             </button>
+            <div class="menu-separator"></div>
+            <button mat-menu-item routerLink="/pipelines" class="menu-item">
+              <mat-icon>alt_route</mat-icon>
+              <span>Pipelines</span>
+            </button>
           </mat-menu>
 
           <button class="menu-button" [matMenuTriggerFor]="managementMenu">
@@ -293,13 +298,45 @@ import { ApiService } from '../../services/api.service'
     }
   `]
 })
+/**
+ * Componente responsável pela barra de menu superior.
+ * Gerencia navegação, exibição de menus e ações de projeto.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Barra de navegação principal da aplicação, com menus de projeto, stack e gerenciamento.
+ *
+ * Métodos principais:
+ * - goBack: Navega para o projeto anterior
+ * - newProject: Abre diálogo para criar novo projeto
+ * - openProject: Abre diálogo para selecionar projeto existente
+ * - goToProject: Navega para a página do projeto selecionado
+ * - exit: Retorna ao menu principal
+ * - openExport/openImport: Exporta ou importa dados do projeto
+ */
 export class MenuBarComponent implements OnInit, OnDestroy {
+  /**
+   * Exibe o botão de voltar quando está em páginas internas.
+   */
   showBackButton = false;
+  /**
+   * Exibe o menu de projetos quando está no menu principal.
+   */
   showProjectMenu = true;
-  selectedProjectId: number | null = null;
-  private routerSubscription: Subscription | null = null;
+  /**
+ * ID do projeto selecionado atualmente.
+ */
+selectedProjectId: number | null = null;
+  /**
+ * Subscription para eventos de navegação do Angular Router.
+ */
+private routerSubscription: Subscription | null = null;
 
-  constructor(
+  /**
+ * Injeta dependências necessárias para navegação, diálogos, contexto de projeto, API e notificações.
+ */
+constructor(
     private router: Router, 
     private dialog: MatDialog,
     private projectContext: ProjectContextService,
@@ -313,7 +350,10 @@ export class MenuBarComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnInit(): void {
+  /**
+ * Inicializa o componente e configura a escuta de eventos de navegação.
+ */
+ngOnInit(): void {
     this.selectedProjectId = this.projectContext.getProjectId();
     
     this.routerSubscription = this.router.events.pipe(
@@ -326,7 +366,10 @@ export class MenuBarComponent implements OnInit, OnDestroy {
     this.updateNavigationState(this.router.url);
   }
 
-  ngOnDestroy(): void {
+  /**
+ * Limpa subscriptions ao destruir o componente.
+ */
+ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }

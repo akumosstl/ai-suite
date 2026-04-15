@@ -2,6 +2,16 @@ package io.github.akumosstl.agentic.backend.model;
 
 import jakarta.persistence.*;
 
+/**
+ * Entidade que representa um Alvo (Target) no sistema.
+ * 
+ * Um target define as configurações de caminhos para diferentes
+ * tipos de recursos (skills, commands, scripts, agents, etc.)
+ * e o CLI padrão a ser usado.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @Table(name = "targets")
 public class Target {

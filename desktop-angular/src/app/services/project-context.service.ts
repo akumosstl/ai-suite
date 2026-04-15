@@ -1,23 +1,48 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+/**
+ * Serviço de gerenciamento de contexto do projeto atual.
+ * 
+ * @description
+ * Mantém o estado do projeto selecionado e navegação entre telas.
+ * Utiliza localStorage para persistência de dados entre sessões.
+ * 
+ * @service ProjectContextService
+ * @injectable providedIn: 'root'
+ */
 @Injectable({
   providedIn: 'root'
 })
+/**
+ * Serviço de contexto do projeto.
+ * Gerencia o estado do projeto selecionado e informações compartilhadas entre componentes.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @service
+ * @description Serviço singleton para controle de contexto do projeto.
+ */
 export class ProjectContextService {
+  /** Observable do ID do projeto atual */
   private projectIdSource = new BehaviorSubject<number | null>(this.getStoredProjectId());
   currentProjectId$ = this.projectIdSource.asObservable();
 
+  /** Observable da URL anterior navegada */
   private previousUrlSource = new BehaviorSubject<string | null>(null);
   previousUrl$ = this.previousUrlSource.asObservable();
 
+  /** Observable indicando se veio da tela de projeto */
   private fromProjectSource = new BehaviorSubject<boolean>(false);
   fromProject$ = this.fromProjectSource.asObservable();
 
+  /** Observable do pipeline selecionado */
   private selectedPipelineIdSource = new BehaviorSubject<number | null>(null);
   selectedPipelineId$ = this.selectedPipelineIdSource.asObservable();
 
+  /** Chave para storage do ID do projeto */
   private readonly PROJECT_ID_KEY = 'lastProjectId';
+  /** Chave para storage do pipeline selecionado */
   private readonly SELECTED_PIPELINE_KEY = 'selectedPipelineId';
 
   constructor() {}

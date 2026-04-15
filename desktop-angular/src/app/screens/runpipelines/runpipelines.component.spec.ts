@@ -90,31 +90,8 @@ describe('RunpipelinesComponent', () => {
 
       expect(component.pipelineSteps[0].status).toBe('completed');
       expect(component.pipelineSteps[0].outputContent).toContain('Step completed');
-    });
-
-    it('should handle pipeline paused event', () => {
-      const mockData = {
-        completedStepOrder: 1,
-        nextStepOrder: 2
-      };
-
-      component.isRunning = true;
-      component.currentStepIndex = 0;
-
-      component.handleStepOutput = jasmine.createSpy('handleStepOutput');
-
-      const event = {
-        data: JSON.stringify({ stepOrder: 1, output: 'Paused', status: 'paused' })
-      } as any;
-
-      const listener = (component as any).eventSource?.addEventListener;
-      if (listener) {
-        listener('pipeline-paused', event);
-      }
-
-      expect(component.isPaused).toBe(true);
-    });
-
+});
+    
     it('should handle pipeline complete event', () => {
       const mockData = { status: 'completed' };
 
@@ -158,21 +135,7 @@ describe('RunpipelinesComponent', () => {
       component.stopPipeline();
 
       expect(apiService.stopPipeline).toHaveBeenCalledWith(1, 1);
-    });
-
-    it('should continue step-by-step pipeline', () => {
-      component.projectId = 1;
-      component.pipeline = { id: 1 } as Pipeline;
-      component.isPaused = true;
-
-      spyOn(apiService, 'continuePipeline').and.returnValue(of({}));
-
-      component.continuePipeline();
-
-      expect(apiService.continuePipeline).toHaveBeenCalledWith(1, 1);
-      expect(component.isPaused).toBe(false);
-      expect(component.isRunning).toBe(true);
-    });
+});
   });
 
   describe('Polling', () => {
@@ -232,13 +195,8 @@ describe('RunStepByStepComponent', () => {
       'isPipelinePaused',
       'getPipelineSteps'
     ]);
-  });
-
-  it('should handle paused state correctly', () => {
-    const isPaused = true;
-    expect(isPaused).toBe(true);
-  });
-
+});
+  
   it('should handle step-by-step execution', () => {
     const currentStepIndex = 0;
     expect(currentStepIndex).toBe(0);

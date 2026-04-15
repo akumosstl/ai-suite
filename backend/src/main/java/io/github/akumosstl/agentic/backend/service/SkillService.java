@@ -67,10 +67,6 @@ public class SkillService {
         return skillRepository.findByNamespace(namespace);
     }
     
-    public List<Skill> getSkillsByCategory(String category) {
-        return skillRepository.findByCategory(category);
-    }
-    
     public List<Skill> searchSkills(String searchTerm, String namespace, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Skill> skillPage = skillRepository.searchSkills(searchTerm, namespace, pageable);
@@ -95,5 +91,9 @@ public class SkillService {
     
     public List<String> getDistinctCategories() {
         return skillRepository.findDistinctCategories();
+    }
+    
+    public List<Skill> getSkillsByCategory(String category) {
+        return skillRepository.findByCategory(category);
     }
 }

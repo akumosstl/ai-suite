@@ -2,19 +2,9 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
-      <option name="id" value="release-porto" />
-      <option name="name" value="release-porto" />
-      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/Releases_Porto/" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven-central" />
-      <option name="name" value="maven-central" />
-      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-central/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="arquitetura-releases" />
@@ -32,6 +22,36 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="maven-group" />
+      <option name="name" value="maven-group" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-group/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="snapshots-porto" />
+      <option name="name" value="snapshots-porto" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/Snapshots_Porto/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="release-porto" />
+      <option name="name" value="release-porto" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/Releases_Porto/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="porto-repo" />
+      <option name="name" value="porto-repo" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven-central" />
+      <option name="name" value="maven-central" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-central/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mikos-repo1" />
+      <option name="name" value="mikos-repo1" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/maven2/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="maven-public" />
       <option name="name" value="maven-public" />
       <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-public/" />
@@ -42,14 +62,14 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="maven-group" />
-      <option name="name" value="maven-group" />
-      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-group/" />
+      <option name="id" value="porto-novo" />
+      <option name="name" value="porto-novo" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-public/" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="snapshots-porto" />
-      <option name="name" value="snapshots-porto" />
-      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/Snapshots_Porto/" />
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/maven-public/" />
     </remote-repository>
   </component>
 </project>

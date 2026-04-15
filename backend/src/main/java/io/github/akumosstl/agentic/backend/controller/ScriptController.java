@@ -10,6 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador REST para gerenciamento de Scripts.
+ * 
+ * Fornece endpoints para criar, listar, atualizar e excluir scripts.
+ * Suporta paginação, busca e filtragem por namespace.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/scripts")
 @CrossOrigin(origins = "*")

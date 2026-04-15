@@ -5,10 +5,12 @@ import io.github.akumosstl.agentic.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -82,16 +84,15 @@ public class BackupService {
         if (agents.isEmpty()) return "";
         
         sql.append("-- Agents\n");
-        sql.append("INSERT INTO agent (id, name, category, description, prompt, scope, path, created_at, updated_at) VALUES\n");
+        sql.append("INSERT INTO agent (id, name, namespace, description, prompt, path, created_at, updated_at) VALUES\n");
         
         for (int i = 0; i < agents.size(); i++) {
             Agent a = agents.get(i);
             sql.append("(").append(a.getId()).append(", ");
             sql.append("'").append(escape(a.getName())).append("', ");
-            sql.append("'").append(escape(a.getCategory())).append("', ");
+            sql.append("'").append(escape(a.getNamespace())).append("', ");
             sql.append("'").append(escape(a.getDescription())).append("', ");
             sql.append("'").append(escape(a.getPrompt())).append("', ");
-            sql.append("'").append(escape(a.getScope())).append("', ");
             sql.append("'").append(escape(a.getPath())).append("', ");
             sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
             if (i < agents.size() - 1) {
@@ -111,14 +112,13 @@ public class BackupService {
         if (skills.isEmpty()) return "";
         
         sql.append("-- Skills\n");
-        sql.append("INSERT INTO skill (id, name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
+        sql.append("INSERT INTO skill (id, name, namespace, path, description, instructions, created_at, updated_at) VALUES\n");
         
         for (int i = 0; i < skills.size(); i++) {
             Skill s = skills.get(i);
             sql.append("(").append(s.getId()).append(", ");
             sql.append("'").append(escape(s.getName())).append("', ");
             sql.append("'").append(escape(s.getNamespace())).append("', ");
-            sql.append("'").append(escape(s.getCategory())).append("', ");
             sql.append("'").append(escape(s.getPath())).append("', ");
             sql.append("'").append(escape(s.getDescription())).append("', ");
             sql.append("'").append(escape(s.getInstructions())).append("', ");
@@ -140,7 +140,7 @@ public class BackupService {
         if (commands.isEmpty()) return "";
         
         sql.append("-- Commands\n");
-        sql.append("INSERT INTO command (id, name, namespace, category, path, description, command, scope, created_at, updated_at) VALUES\n");
+        sql.append("INSERT INTO command (id, name, namespace, category, path, description, command, created_at, updated_at) VALUES\n");
         
         for (int i = 0; i < commands.size(); i++) {
             Command c = commands.get(i);
@@ -151,7 +151,6 @@ public class BackupService {
             sql.append("'").append(escape(c.getPath())).append("', ");
             sql.append("'").append(escape(c.getDescription())).append("', ");
             sql.append("'").append(escape(c.getCommand())).append("', ");
-            sql.append("'").append(escape(c.getScope())).append("', ");
             sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
             if (i < commands.size() - 1) {
                 sql.append(",\n");

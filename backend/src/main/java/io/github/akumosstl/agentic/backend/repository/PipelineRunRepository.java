@@ -22,4 +22,6 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, Long> 
     List<PipelineRun> findTop20ByPipeline_Project_IdOrderByCreatedAtDesc(Long projectId);
     
     List<PipelineRun> findByStatus(String status);
+    
+    List<PipelineRun> findByStatusNot(String status);
 }

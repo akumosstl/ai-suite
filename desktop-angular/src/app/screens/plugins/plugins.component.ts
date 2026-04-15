@@ -1,3 +1,10 @@
+/**
+ * Componente para gerenciamento de Plugins.
+ * Permite criar, editar, listar, buscar e excluir plugins do sistema.
+ * 
+ * @Component PluginsComponent
+ * selector: app-plugins
+ */
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -619,6 +626,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
@@ -628,6 +636,14 @@ import { ProjectContextService } from '../../services/project-context.service';
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
       opacity: 0.9;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     .prompt-field-container:hover {
@@ -897,6 +913,15 @@ import { ProjectContextService } from '../../services/project-context.service';
   `]
 
 })
+/**
+ * Tela de gerenciamento de plugins.
+ * Permite visualizar, adicionar e remover plugins do sistema.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Componente de tela para operações com plugins.
+ */
 export class PluginsComponent implements OnInit {
   fromHome = false;
   plugins: Plugin[] = [];
@@ -932,14 +957,24 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Navega para a tela inicial (menu).
+   */
   goHome() {
     this.router.navigate(['/menu'])
   }
 
+  /**
+   * Alterna a visibilidade do painel lateral esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  /**
+   * Retorna um objeto Plugin vazio para o formulário.
+   * @returns Objeto Plugin com valores padrão
+   */
   private getEmptyPlugin(): Plugin {
     return {
       name: '',
@@ -950,6 +985,9 @@ export class PluginsComponent implements OnInit {
     };
   }
 
+  /**
+   * Carrega a lista de namespaces disponíveis para plugins.
+   */
   loadNamespaces(): void {
     this.apiService.getPluginNamespaces().subscribe({
       next: (namespaces) => {
@@ -967,6 +1005,10 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Filtra os namespaces disponíveis com base no valor digitado.
+   * @param value - Valor digitado para filtrar namespaces
+   */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
@@ -977,6 +1019,10 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Filtra os namespaces para o campo de busca.
+   * @param value - Valor digitado para filtrar namespaces
+   */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
@@ -987,6 +1033,9 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Abre o diálogo para adicionar arquivo ao plugin.
+   */
   openAddFileDialog(): void {
     const dialogRef = this.dialog.open(AddPluginFileDialogComponent, {
       width: '500px',
@@ -1008,6 +1057,10 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Remove um arquivo da lista de arquivos.
+   * @param index - Índice do arquivo a remover
+   */
   removeFile(index: number): void {
     this.ngZone.run(() => {
       this.formPluginFiles.splice(index, 1);
@@ -1015,12 +1068,18 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Inicializa o componente carregando namespaces e plugins.
+   */
   ngOnInit(): void {
     console.log('PluginsComponent ngOnInit');
     this.loadNamespaces();
     this.loadPlugins();
   }
 
+  /**
+   * Carrega a lista de plugins do servidor.
+   */
   loadPlugins(): void {
     console.log('Loading plugins...');
     this.loading = true;
@@ -1058,6 +1117,9 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Busca plugins pelo termo e namespace.
+   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -1091,6 +1153,9 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Limpa filtros de busca e recarrega lista.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -1098,6 +1163,10 @@ export class PluginsComponent implements OnInit {
     this.loadPlugins();
   }
 
+  /**
+   * Trata mudança de página.
+   * @param event - Evento de paginação
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -1108,6 +1177,10 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Seleciona plugin e carrega no formulário.
+   * @param plugin - Plugin a selecionar
+   */
   selectPlugin(plugin: Plugin): void {
     this.cdr.markForCheck();
     this.selectedPlugin = { ...plugin };
@@ -1127,6 +1200,9 @@ export class PluginsComponent implements OnInit {
     this.statusMessage = `Plugin selected: ${plugin.name}`;
   }
 
+  /**
+   * Salva o plugin (cria ou atualiza).
+   */
   savePlugin(): void {
     if (!this.formPlugin.name) {
       this.statusMessage = 'Error: Name is required';
@@ -1188,6 +1264,9 @@ export class PluginsComponent implements OnInit {
     }
   }
 
+  /**
+   * Exclui o plugin selecionado.
+   */
   deletePlugin(): void {
     if (!this.selectedPlugin?.id) {
       this.statusMessage = 'No plugin selected to delete';
@@ -1213,6 +1292,11 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Exclui plugin da lista.
+   * @param plugin - Plugin a excluir
+   * @param event - Evento do clique
+   */
   deletePluginInline(plugin: Plugin, event: Event): void {
     event.stopPropagation();
     
@@ -1266,6 +1350,9 @@ export class PluginsComponent implements OnInit {
     });
   }
 
+  /**
+   * Limpa o formulário.
+   */
   clearForm(): void {
     this.selectedPlugin = null;
     this.formPlugin = this.getEmptyPlugin();
@@ -1273,6 +1360,10 @@ export class PluginsComponent implements OnInit {
     this.statusMessage = 'Form cleared - ready for new plugin';
   }
 
+  /**
+   * Retorna classe CSS do status.
+   * @returns Classe CSS based message type
+   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -1280,6 +1371,11 @@ export class PluginsComponent implements OnInit {
     return 'info';
   }
 
+  /**
+   * Gera preview das instruções.
+   * @param prompt - Conteúdo das instruções
+   * @returns Preview truncado
+   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -1287,6 +1383,9 @@ export class PluginsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
+  /**
+   * Abre editor modal de instruções.
+   */
   openInstructionsEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',

@@ -4,6 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa uma Ferramenta (Tool) no sistema.
+ * 
+ * Uma tool é uma utilidade que pode ser usada por agentes ou
+ * em pipelines. Pode ter arquivos associados.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tool {

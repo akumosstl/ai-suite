@@ -19,6 +19,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador REST para gerenciamento de Projetos.
+ * 
+ * Fornece endpoints para gerenciar projetos e suas associações
+ * (agentes, skills, commands, scripts, instructions, plugins, tools).
+ * Suporta manipulação de arquivos de projeto.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "*")

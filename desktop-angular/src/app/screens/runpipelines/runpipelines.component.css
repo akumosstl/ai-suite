@@ -60,11 +60,6 @@
     border-radius: 12px;
 }
 
-.step-progress.paused {
-    background: #ff9800;
-    color: #fff;
-}
-
 .menu-actions {
     display: flex;
     gap: 8px;
@@ -621,6 +616,14 @@
     width: 18px;
     height: 18px;
     color: #4fc3f7;
+}
+
+.copy-btn {
+    background: #2e7d32;
+}
+
+.copy-btn:hover {
+    background: #388e3c;
 }
 
 .console-output {

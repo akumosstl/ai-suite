@@ -16,7 +16,6 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
     List<Command> findTop10ByOrderByCreatedAtDesc();
     List<Command> findByNamespace(String namespace);
     List<Command> findByCategory(String category);
-    List<Command> findByScope(String scope);
     Optional<Command> findByNameAndNamespace(String name, String namespace);
     
     @Query("SELECT c FROM Command c WHERE " +

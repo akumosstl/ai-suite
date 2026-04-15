@@ -25,6 +25,15 @@ import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 
+/**
+ * Componente de Gerenciamento de Skills.
+ * Permite criar, editar, buscar e excluir skills do sistema.
+ * Fornece interface para visualização de lista paginada, formulário de detalhes e gerenciamento de arquivos.
+ * 
+ * @component
+ * @name SkillsComponent
+ * @selector app-skills
+ */
 @Component({
   selector: 'app-skills',
   standalone: true,
@@ -621,11 +630,20 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
       cursor: pointer;
       pointer-events: auto;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
@@ -900,6 +918,15 @@ import { ProjectContextService } from '../../services/project-context.service';
 
 })
 
+/**
+ * Tela de gerenciamento de skills.
+ * Permite visualizar, criar e editar skills do sistema.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Componente de tela para operações com skills.
+ */
 export class SkillsComponent implements OnInit {
   fromHome = false;
   skills: Skill[] = [];
@@ -935,14 +962,24 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Navega para a tela do menu principal.
+   */
   goHome() {
     this.router.navigate(['/menu'])
   }
 
+  /**
+   * Alterna a visibilidade do painel lateral esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  /**
+   * Retorna um objeto Skill vazio com valores padrão.
+   * @returns Objeto Skill com propriedades vazias
+   */
   private getEmptySkill(): Skill {
     return {
       name: '',
@@ -953,6 +990,9 @@ export class SkillsComponent implements OnInit {
     };
   }
 
+  /**
+   * Carrega a lista de namespaces de skills disponíveis.
+   */
   loadNamespaces(): void {
     this.apiService.getSkillNamespaces().subscribe({
       next: (namespaces) => {
@@ -970,6 +1010,10 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
+   * @param value - Valor digitado pelo usuário
+   */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
@@ -980,6 +1024,10 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de busca.
+   * @param value - Valor digitado pelo usuário
+   */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
@@ -990,6 +1038,9 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Abre o dialog para adicionar um novo arquivo à skill.
+   */
   openAddFileDialog(): void {
     const dialogRef = this.dialog.open(AddSkillFileDialogComponent, {
       width: '500px',
@@ -1011,6 +1062,10 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Remove um arquivo da lista de arquivos da skill.
+   * @param index - Índice do arquivo a ser removido
+   */
   removeFile(index: number): void {
     this.ngZone.run(() => {
       this.formSkillFiles.splice(index, 1);
@@ -1018,12 +1073,18 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Inicializa o componente carregando namespaces e lista de skills.
+   */
   ngOnInit(): void {
     console.log('SkillsComponent ngOnInit');
     this.loadNamespaces();
     this.loadSkills();
   }
 
+  /**
+   * Carrega a lista de skills do backend com paginação.
+   */
   loadSkills(): void {
     console.log('Loading skills...');
     this.loading = true;
@@ -1062,6 +1123,9 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Busca skills por nome e/ou namespace.
+   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -1095,6 +1159,9 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Limpa os filtros de busca e recarrega a lista completa de skills.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -1102,6 +1169,10 @@ export class SkillsComponent implements OnInit {
     this.loadSkills();
   }
 
+  /**
+   * Manipula mudança de página no componente de paginação.
+   * @param event - Evento de mudança de página
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -1112,6 +1183,10 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Seleciona uma skill da lista e preenche o formulário com seus dados.
+   * @param skill - Skill selecionada
+   */
   selectSkill(skill: Skill): void {
     this.cdr.markForCheck();
     this.selectedSkill = { ...skill };
@@ -1119,6 +1194,9 @@ export class SkillsComponent implements OnInit {
     this.statusMessage = `Skill selected: ${skill.name}`;
   }
 
+  /**
+   * Salva (cria ou atualiza) uma skill no backend, incluindo arquivos associados.
+   */
   saveSkill(): void {
     if (!this.formSkill.name) {
       this.statusMessage = 'Error: Name is required';
@@ -1182,6 +1260,9 @@ export class SkillsComponent implements OnInit {
     }
   }
 
+  /**
+   * Exclui a skill atualmente selecionada.
+   */
   deleteSkill(): void {
     if (!this.selectedSkill?.id) {
       this.statusMessage = 'No skill selected to delete';
@@ -1207,6 +1288,11 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Exclui uma skill da lista (modo inline com confirmação).
+   * @param skill - Skill a ser excluída
+   * @param event - Evento do clique para stopPropagation
+   */
   deleteSkillInline(skill: Skill, event: Event): void {
     event.stopPropagation();
     
@@ -1260,6 +1346,9 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Limpa o formulário, resetando para uma nova skill vazia.
+   */
   clearForm(): void {
     this.selectedSkill = null;
     this.formSkill = this.getEmptySkill();
@@ -1267,6 +1356,10 @@ export class SkillsComponent implements OnInit {
     this.statusMessage = 'Form cleared - ready for new skill';
   }
 
+  /**
+   * Retorna a classe CSS para estilização da mensagem de status.
+   * @returns Classe CSS ('success', 'error' ou 'info')
+   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -1274,6 +1367,11 @@ export class SkillsComponent implements OnInit {
     return 'info';
   }
 
+  /**
+   * Gera uma prévia das instruções com até 15 palavras.
+   * @param prompt - Texto completo das instruções
+   * @returns Preview truncado
+   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -1281,6 +1379,9 @@ export class SkillsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
+  /**
+   * Abre o editor de instruções em um modal para edição das instruções da skill.
+   */
   openInstructionsEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
@@ -1301,6 +1402,9 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre o dialog para criar um novo projeto.
+   */
   newProject(): void {
     const dialogRef = this.dialog.open(NewProjectDialogComponent, {
       width: '500px',
@@ -1332,6 +1436,9 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre o dialog para selecionar e abrir um projeto existente.
+   */
   openProject(): void {
     const dialogRef = this.dialog.open(OpenProjectDialogComponent, {
       width: '900px',
@@ -1351,6 +1458,9 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Fecha a janela atual do aplicativo.
+   */
   exit(): void {
     window.close();
   }

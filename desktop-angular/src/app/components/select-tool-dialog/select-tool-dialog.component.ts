@@ -13,10 +13,22 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Tool } from '../../services/api.service';
 import { SelectionModel } from '@angular/cdk/collections';
 
+/**
+ * Interface de dados para o diálogo de seleção de ferramentas.
+ * @property projectId - ID do projeto ao qual as ferramentas serão adicionadas.
+ */
 export interface SelectToolDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de ferramentas.
+ * Permite buscar e selecionar ferramentas para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla usando SelectionModel do CDK.
+ * 
+ * @componentName SelectToolDialog
+ * @selector app-select-tool-dialog
+ */
 @Component({
   selector: 'app-select-tool-dialog',
   standalone: true,
@@ -436,6 +448,10 @@ export class SelectToolDialogComponent {
   }
 
   loadTools(): void {
+    /**
+     * Carrega a lista de ferramentas do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     const searchOrList = this.searchTerm 
       ? this.apiService.searchTools(this.searchTerm, '', this.currentPage, this.pageSize)
@@ -457,27 +473,45 @@ export class SelectToolDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de ferramentas resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadTools();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de ferramentas.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadTools();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadTools();
   }
 
   toggleRow(row: Tool): void {
+    /**
+     * Alterna a seleção de uma ferramenta específica.
+     * @param row - Ferramenta a ser selecionada ou desmarcada.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todas as ferramentas visíveis na tabela.
+     * Se todas estiverem selecionadas, desmarca todas.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -490,10 +524,18 @@ export class SelectToolDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todas as ferramentas visíveis estão selecionadas.
+     * @returns true se todas as ferramentas estão selecionadas.
+     */
     return this.tools.length > 0 && this.tools.every(tool => this.selection.isSelected(tool));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona as ferramentas selecionadas ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const toolIds = this.selection.selected
         .filter(t => t.id)
@@ -513,6 +555,9 @@ export class SelectToolDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

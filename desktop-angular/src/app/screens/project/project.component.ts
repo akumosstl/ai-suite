@@ -24,13 +24,13 @@ import { SelectScriptDialogComponent } from '../../components/select-script-dial
 import { SelectInstructionDialogComponent } from '../../components/select-instruction-dialog/select-instruction-dialog.component';
 import { SelectPluginDialogComponent } from '../../components/select-plugin-dialog/select-plugin-dialog.component';
 import { SelectToolDialogComponent } from '../../components/select-tool-dialog/select-tool-dialog.component';
-import { ViewProjectSkillsDialogComponent } from '../../components/view-project-skills-dialog/view-project-skills-dialog.component';
-import { ViewProjectCommandsDialogComponent } from '../../components/view-project-commands-dialog/view-project-commands-dialog.component';
-import { ViewProjectScriptsDialogComponent } from '../../components/view-project-scripts-dialog/view-project-scripts-dialog.component';
-import { ViewProjectAgentsDialogComponent } from '../../components/view-project-agents-dialog/view-project-agents-dialog.component';
-import { ViewProjectInstructionsDialogComponent } from '../../components/view-project-instructions-dialog/view-project-instructions-dialog.component';
-import { ViewProjectPluginsDialogComponent } from '../../components/view-project-plugins-dialog/view-project-plugins-dialog.component';
-import { ViewProjectToolsDialogComponent } from '../../components/view-project-tools-dialog/view-project-tools-dialog.component';
+import { ProjectAgentsDialogComponent } from '../../components/project-agents-dialog/project-agents-dialog.component';
+import { ProjectSkillsDialogComponent } from '../../components/project-skills-dialog/project-skills-dialog.component';
+import { ProjectCommandsDialogComponent } from '../../components/project-commands-dialog/project-commands-dialog.component';
+import { ProjectScriptsDialogComponent } from '../../components/project-scripts-dialog/project-scripts-dialog.component';
+import { ProjectInstructionsDialogComponent } from '../../components/project-instructions-dialog/project-instructions-dialog.component';
+import { ProjectPluginsDialogComponent } from '../../components/project-plugins-dialog/project-plugins-dialog.component';
+import { ProjectToolsDialogComponent } from '../../components/project-tools-dialog/project-tools-dialog.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-dialog.component';
@@ -38,13 +38,30 @@ import { StepCliDialogComponent } from '../../components/step-cli-dialog/step-cl
 import { StepSettingsDialogComponent } from '../../components/step-settings-dialog/step-settings-dialog.component';
 import { CreateFileDialogComponent } from '../../components/create-file-dialog/create-file-dialog.component';
 
+/**
+ * Componente principal de gerenciamento de projetos e pipelines.
+ * Permite criar, editar e executar pipelines, gerenciar steps,
+ * adicionar agentes, skills, scripts, comandos e outros recursos ao projeto.
+ * 
+ * @componentName ProjectComponent
+ * @selector app-project
+ */
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ViewProjectSkillsDialogComponent, ViewProjectCommandsDialogComponent, ViewProjectScriptsDialogComponent, ViewProjectAgentsDialogComponent, ViewProjectInstructionsDialogComponent, ViewProjectPluginsDialogComponent, ViewProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ProjectSkillsDialogComponent, ProjectCommandsDialogComponent, ProjectScriptsDialogComponent, ProjectAgentsDialogComponent, ProjectInstructionsDialogComponent, ProjectPluginsDialogComponent, ProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
+/**
+ * Tela de detalhes do projeto.
+ * Exibe informações, agentes, skills e configurações do projeto selecionado.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Componente de tela para visualização e edição de projetos.
+ */
 export class ProjectComponent implements OnInit, OnDestroy {
   pipelinesExpanded = false;
   pipelines: Pipeline[] = [];
@@ -91,6 +108,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     private projectContext: ProjectContextService
   ) {}
 
+  /**
+   * Copia o texto para a área de transferência e exibe mensagem de sucesso.
+   * @param text - Texto a ser copiado
+   */
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       this.showMessage('Endpoint copied to clipboard', 'success');
@@ -100,6 +121,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Para a execução do pipeline atual.
+   */
   stopPipeline() {
     if (!this.selectedPipeline?.id || !this.project?.id) {
       return;
@@ -119,26 +143,12 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
-  pausePipeline() {
-    if (!this.selectedPipeline?.id || !this.project?.id) {
-      return;
-    }
+  
 
-    this.apiService.pausePipeline(this.project.id, this.selectedPipeline.id).subscribe({
-      next: () => {
-        this.showMessage('Pipeline paused successfully', 'success');
-        this.isRunningPipeline = false;
-        this.runningPipelineId = null;
-        this.pipelineStatus = 'paused';
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error pausing pipeline:', err);
-        this.showMessage('Error pausing pipeline', 'error');
-      }
-    });
-  }
-
+  /**
+   * Inicializa o componente carregando o projeto pelos parâmetros da rota
+   * ou pelo estado de navegação.
+   */
   ngOnInit() {
     const nav = this.router.getCurrentNavigation()
     const stateProject = nav?.extras?.state?.['project']
@@ -171,12 +181,19 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Limpa o intervalo de verificação quando o componente é destruído.
+   */
   ngOnDestroy() {
     if (this.runningCheckInterval) {
       clearInterval(this.runningCheckInterval);
     }
   }
 
+  /**
+   * Carrega os detalhes de um projeto pelo ID.
+   * @param id - ID do projeto a ser carregado
+   */
   loadProject(id: number) {
     console.log('Loading project with id:', id);
     this.loading = true;
@@ -197,6 +214,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Carrega todos os targets disponíveis para edição do projeto.
+   */
   loadTargets(): void {
     this.apiService.getTargets().subscribe({
       next: (targets) => {
@@ -209,6 +229,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Ativa o modo de edição do projeto e carrega os targets.
+   */
   editProjectInfo() {
     if (!this.project) return;
     this.loadTargets();
@@ -221,11 +244,17 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.isEditingProject = true;
   }
   
+  /**
+   * Cancela a edição do projeto sem salvar.
+   */
   cancelEditProject() {
     this.isEditingProject = false;
     this.editProject = { name: '', description: '', path: '', target: '' };
   }
   
+  /**
+   * Salva as informações editadas do projeto.
+   */
   saveProjectInfo() {
     if (!this.project) return;
     
@@ -259,6 +288,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Exibe uma mensagem temporária na interface.
+   * @param msg - Mensagem a ser exibida
+   * @param type - Tipo da mensagem (success ou error)
+   */
   showMessage(msg: string, type: 'success' | 'error') {
     this.message = msg;
     this.messageType = type;
@@ -267,6 +301,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  /**
+   * Carrega as pipelines de um projeto específico.
+   * @param projectId - ID do projeto
+   */
   loadPipelines(projectId: number | undefined) {
     if (projectId === undefined) return;
     
@@ -294,6 +332,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Seleciona uma pipeline e carrega seus steps.
+   * @param pipeline - Pipeline a ser selecionada
+   */
   selectPipeline(pipeline: Pipeline) {
     this.selectedPipeline = pipeline;
     this.projectContext.setSelectedPipelineId(pipeline.id ?? null);
@@ -305,6 +347,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.startRunningCheckInterval();
   }
 
+  /**
+   * Restaura a pipeline selecionada anteriormente a partir do contexto do projeto.
+   */
   private restoreSelectedPipeline(): void {
     const storedPipelineId = this.projectContext.getSelectedPipelineId();
     if (storedPipelineId && this.pipelines.length > 0) {
@@ -315,14 +360,23 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Alterna a expansão da lista de pipelines.
+   */
   togglePipelines() {
     this.pipelinesExpanded = !this.pipelinesExpanded;
   }
 
+  /**
+   * Alterna o estado de recolhimento do painel esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  /**
+   * Exibe o formulário para criação de uma nova pipeline.
+   */
   showCreatePipelineForm() {
     this.showPipelineForm = true;
     this.showProjectInfo = false;
@@ -336,6 +390,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Exibe o painel de informações do projeto.
+   */
   showProjectInfoPanel() {
     this.showProjectInfo = true;
     this.showPipelineForm = false;
@@ -343,6 +400,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.message = '';
   }
 
+  /**
+   * Cria uma nova pipeline com os dados do formulário.
+   */
   savePipeline() {
     if (!this.project || !this.newPipeline.name) {
       return;
@@ -381,6 +441,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cancela a criação/edição da pipeline e retorna ao modo de visualização.
+   */
   cancelPipelineForm() {
     this.showPipelineForm = false;
     this.showProjectInfo = true;
@@ -394,6 +457,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     };
   }
   
+  /**
+   * Filtra as extensões de saída disponíveis com base no valor digitado.
+   * @param value - Valor digitado pelo usuário
+   */
   onOutputExtensionChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredOutputExtensions = this.outputExtensions.filter(ext => 
@@ -404,6 +471,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }
   }
   
+  /**
+   * Carrega os steps de uma pipeline específica.
+   * @param pipelineId - ID da pipeline
+   */
   loadPipelineSteps(pipelineId: number) {
     this.apiService.getPipelineSteps(pipelineId).subscribe({
       next: (steps) => {
@@ -417,6 +488,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar um novo step (agente ou script) à pipeline.
+   */
   openAddStepDialog() {
     const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
       width: '600px',
@@ -480,16 +554,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar as skills do projeto.
+   */
   openViewSkillsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectSkillsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectSkillsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar uma skill ao projeto.
+   */
   openAddSkillDialog() {
     if (!this.project?.id) {
       return;
@@ -511,16 +591,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar os comandos do projeto.
+   */
   openViewCommandsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectCommandsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectCommandsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar um comando ao projeto.
+   */
   openAddCommandDialog() {
     if (!this.project?.id) {
       return;
@@ -542,16 +628,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar os scripts do projeto.
+   */
   openViewScriptsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectScriptsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectScriptsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar um script ao projeto.
+   */
   openAddScriptDialog() {
     if (!this.project?.id) {
       return;
@@ -573,16 +665,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar os agentes do projeto.
+   */
   openViewAgentsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectAgentsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectAgentsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar um agente ao projeto.
+   */
   openAddAgentDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
@@ -605,16 +703,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar as instruções do projeto.
+   */
   openViewInstructionsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectInstructionsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectInstructionsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
 
+  /**
+   * Abre o diálogo para adicionar uma instrução ao projeto.
+   */
   openAddInstructionDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
@@ -637,12 +741,15 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Abre o diálogo para visualizar os plugins do projeto.
+   */
   openViewPluginsDialog() {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectPluginsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectPluginsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
@@ -673,8 +780,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
     if (!this.project?.id) {
       return;
     }
-    this.dialog.open(ViewProjectToolsDialogComponent, {
-      width: '600px',
+    this.dialog.open(ProjectToolsDialogComponent, {
+      width: '900px',
       data: { projectId: this.project.id }
     });
   }
@@ -838,17 +945,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.apiService.getLatestPipelineRun(this.selectedPipeline.id).subscribe({
       next: (run) => {
         const isRunning = run && run.status === 'running';
-        const isPaused = run && run.status === 'paused';
         const isPipelineRunning = this.selectedPipeline && this.selectedPipeline.status === 'running';
-        const isPipelinePaused = this.selectedPipeline && this.selectedPipeline.status === 'paused';
         if (isRunning || isPipelineRunning) {
           this.isRunningPipeline = true;
           this.runningPipelineId = this.selectedPipeline!.id ?? null;
           this.pipelineStatus = 'running';
-        } else if (isPaused || isPipelinePaused) {
-          this.isRunningPipeline = false;
-          this.runningPipelineId = this.selectedPipeline!.id ?? null;
-          this.pipelineStatus = 'paused';
         } else {
           this.isRunningPipeline = false;
           this.runningPipelineId = null;

@@ -5,6 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa um arquivo de Instrução no sistema.
+ * 
+ * Armazena o conteúdo de um arquivo específico associado a uma instrução.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class InstructionFile {

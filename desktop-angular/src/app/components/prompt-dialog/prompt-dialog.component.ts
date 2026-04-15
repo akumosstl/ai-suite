@@ -4,12 +4,23 @@ import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+/**
+ * Interface para dados de entrada do diálogo de prompt.
+ * Define o título, o conteúdo do prompt e o tipo (agent ou script).
+ */
 export interface PromptDialogData {
   title: string;
   prompt: string;
   type: 'agent' | 'script';
 }
 
+/**
+ * Componente de diálogo para visualização de prompts de agente ou script.
+ * Exibe o conteúdo do prompt em formato pré-formatado.
+ * 
+ * @componentName PromptDialogComponent
+ * @selector app-prompt-dialog
+ */
 @Component({
   selector: 'app-prompt-dialog',
   standalone: true,
@@ -155,6 +166,9 @@ export class PromptDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: PromptDialogData
   ) {}
 
+  /**
+   * Fecha o diálogo de prompt.
+   */
   close() {
     this.dialogRef.close();
   }

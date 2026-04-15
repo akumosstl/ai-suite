@@ -5,6 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa uma etapa (step) dentro de um Pipeline.
+ * 
+ * Cada etapa pode executar um agente ou um script e possui ordem de execução.
+ * Armazena dados de entrada, saída e configurações de execução.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @Table(name = "pipeline_step", 
        uniqueConstraints = @UniqueConstraint(columnNames = {"pipeline_id", "step_order"}))
@@ -120,6 +129,11 @@ public class PipelineStep {
     @com.fasterxml.jackson.annotation.JsonProperty("scriptId")
     public Long getScriptId() {
         return script != null ? script.getId() : null;
+    }
+    
+    @com.fasterxml.jackson.annotation.JsonProperty("scriptNamespace")
+    public String getScriptNamespace() {
+        return script != null ? script.getNamespace() : null;
     }
     
     public Integer getStepOrder() { return stepOrder; }

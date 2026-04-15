@@ -20,6 +20,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+/**
+ * Serviço para gerenciamento de Agentes.
+ * 
+ * Realiza operações de CRUD, busca e criação de arquivos de agente.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Service
 public class AgentService {
     
@@ -32,6 +40,13 @@ public class AgentService {
     @Autowired
     private TargetRepository targetRepository;
     
+    /**
+     * Busca agentes recentes com paginação.
+     * 
+     * @param page Número da página
+     * @param size Tamanho da página
+     * @return Lista de agentes
+     */
     public List<Agent> getRecentAgents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Agent> agentPage = agentRepository.findAll(pageable);
@@ -114,10 +129,8 @@ public class AgentService {
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
         agent.setName(agentDetails.getName());
-        agent.setCategory(agentDetails.getCategory());
         agent.setDescription(agentDetails.getDescription());
         agent.setPrompt(agentDetails.getPrompt());
-        agent.setScope(agentDetails.getScope());
         agent.setPath(agentDetails.getPath());
         return agentRepository.save(agent);
     }
@@ -132,14 +145,6 @@ public class AgentService {
             }
         }
         agentRepository.deleteById(id);
-    }
-    
-    public List<Agent> getAgentsByCategory(String category) {
-        return agentRepository.findByCategory(category);
-    }
-    
-    public List<Agent> getAgentsByScope(String scope) {
-        return agentRepository.findByScope(scope);
     }
     
     public List<Agent> searchAgents(String searchTerm, String namespace, int page, int size) {
@@ -159,17 +164,21 @@ public class AgentService {
     public long countAllAgents() {
         return agentRepository.count();
     }
-
-    public List<String> getDistinctCategories() {
-        return agentRepository.findDistinctCategories();
-    }
     
     public List<String> getDistinctNamespaces() {
         return agentRepository.findDistinctNamespaces();
     }
     
+    public List<String> getDistinctCategories() {
+        return agentRepository.findDistinctCategories();
+    }
+    
+    public List<Agent> getAgentsByCategory(String category) {
+        return agentRepository.findByCategory(category);
+    }
+    
     public List<Agent> getAgentsByNamespace(String namespace) {
-        return agentRepository.findByNamespaceOrCategory(namespace);
+        return agentRepository.findByNamespace(namespace);
     }
     
     public List<Agent> searchByNamespace(String searchTerm, String namespace, int page, int size) {

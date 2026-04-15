@@ -76,15 +76,15 @@ public class ExportImportService {
         }
         
         sql.append("-- Agents\n");
-        sql.append("INSERT INTO agent (name, category, description, prompt, scope, path, created_at, updated_at) VALUES\n");
+        sql.append("INSERT INTO agent (name, namespace, category, description, prompt, path, created_at, updated_at) VALUES\n");
         
         for (int i = 0; i < agents.size(); i++) {
             Agent a = agents.get(i);
             sql.append("('").append(escape(a.getName())).append("', ");
-            sql.append("'").append(escape(a.getCategory())).append("', ");
+            sql.append("'").append(escape(a.getNamespace() != null ? a.getNamespace() : "")).append("', ");
+            sql.append("'").append(escape(a.getCategory() != null ? a.getCategory() : "")).append("', ");
             sql.append("'").append(escape(a.getDescription())).append("', ");
             sql.append("'").append(escape(a.getPrompt())).append("', ");
-            sql.append("'").append(escape(a.getScope())).append("', ");
             sql.append("'").append(escape(a.getPath())).append("', ");
             sql.append("NOW(), NOW())");
             if (i < agents.size() - 1) {
@@ -112,7 +112,7 @@ public class ExportImportService {
             Skill s = skills.get(i);
             sql.append("('").append(escape(s.getName())).append("', ");
             sql.append("'").append(escape(s.getNamespace())).append("', ");
-            sql.append("'").append(escape(s.getCategory())).append("', ");
+            sql.append("'").append(escape(s.getCategory() != null ? s.getCategory() : "")).append("', ");
             sql.append("'").append(escape(s.getPath())).append("', ");
             sql.append("'").append(escape(s.getDescription())).append("', ");
             sql.append("'").append(escape(s.getInstructions())).append("', ");
@@ -136,7 +136,7 @@ public class ExportImportService {
         }
         
         sql.append("-- Commands\n");
-        sql.append("INSERT INTO command (name, namespace, category, path, description, command, scope, created_at, updated_at) VALUES\n");
+        sql.append("INSERT INTO command (name, namespace, category, path, description, command, created_at, updated_at) VALUES\n");
         
         for (int i = 0; i < commands.size(); i++) {
             Command c = commands.get(i);
@@ -146,7 +146,6 @@ public class ExportImportService {
             sql.append("'").append(escape(c.getPath())).append("', ");
             sql.append("'").append(escape(c.getDescription())).append("', ");
             sql.append("'").append(escape(c.getCommand())).append("', ");
-            sql.append("'").append(escape(c.getScope())).append("', ");
             sql.append("NOW(), NOW())");
             if (i < commands.size() - 1) {
                 sql.append(",\n");
@@ -365,7 +364,8 @@ public class ExportImportService {
             if (row.length < 5) continue;
             
             String name = unescape(row[0]);
-            String category = unescape(row[1]);
+            String namespace = unescape(row[1]);
+            String category = unescape(row[2]);
             
             Optional<Agent> existing = agentRepository.findByNameAndCategory(name, category);
             if (existing.isPresent()) {
@@ -373,10 +373,10 @@ public class ExportImportService {
             } else {
                 Agent agent = new Agent();
                 agent.setName(name);
+                agent.setNamespace(namespace);
                 agent.setCategory(category);
-                agent.setDescription(row.length > 2 ? unescape(row[2]) : null);
-                agent.setPrompt(row.length > 3 ? unescape(row[3]) : null);
-                agent.setScope(row.length > 4 ? unescape(row[4]) : "global");
+                agent.setDescription(row.length > 3 ? unescape(row[3]) : null);
+                agent.setPrompt(row.length > 4 ? unescape(row[4]) : null);
                 agent.setPath(row.length > 5 ? unescape(row[5]) : null);
                 agentRepository.save(agent);
                 result.incrementImported();
@@ -438,7 +438,6 @@ public class ExportImportService {
                 command.setPath(row.length > 3 ? unescape(row[3]) : null);
                 command.setDescription(row.length > 4 ? unescape(row[4]) : null);
                 command.setCommand(row.length > 5 ? unescape(row[5]) : null);
-                command.setScope(row.length > 6 ? unescape(row[6]) : "global");
                 commandRepository.save(command);
                 result.incrementImported();
                 result.addDetail("Command", name, true, "Imported successfully");

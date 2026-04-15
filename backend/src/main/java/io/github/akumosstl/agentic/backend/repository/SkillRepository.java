@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface SkillRepository extends JpaRepository<Skill, Long> {
     List<Skill> findTop10ByOrderByCreatedAtDesc();
     List<Skill> findByNamespace(String namespace);
-    List<Skill> findByCategory(String category);
     Optional<Skill> findByNameAndNamespace(String name, String namespace);
     
     @Query("SELECT s FROM Skill s WHERE " +
@@ -31,4 +30,6 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     
     @Query("SELECT DISTINCT s.category FROM Skill s WHERE s.category IS NOT NULL AND s.category <> '' ORDER BY s.category")
     List<String> findDistinctCategories();
+    
+    List<Skill> findByCategory(String category);
 }

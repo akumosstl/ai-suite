@@ -9,6 +9,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repositório JPA para a entidade Project.
+ * 
+ * Fornece métodos de acesso ao banco de dados para a entidade Project,
+ * incluindo buscas por nome e status.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     

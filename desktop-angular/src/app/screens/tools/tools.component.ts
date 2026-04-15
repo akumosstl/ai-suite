@@ -171,7 +171,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                     {{ ns }}
                   </mat-option>
                 </mat-autocomplete>
-                <mat-icon matPrefix>category</mat-icon>
+                <mat-icon matPrefix>namespace</mat-icon>
               </mat-form-field>
               
               <mat-form-field class="form-field" appearance="outline">
@@ -619,6 +619,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
@@ -628,6 +629,14 @@ import { ProjectContextService } from '../../services/project-context.service';
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
       opacity: 0.9;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     .prompt-field-container:hover {

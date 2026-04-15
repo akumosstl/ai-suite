@@ -1,0 +1,159 @@
+<div class="agents-container">
+    <app-menu-bar></app-menu-bar>
+
+    <div class="content" [class.left-collapsed]="leftPanelCollapsed">
+        <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <mat-icon>smart_toy</mat-icon>
+                    <span>Agents</span>
+                </div>
+                <button class="icon-btn add-btn" (click)="clearForm()" title="Add new agent">
+                    <mat-icon>person_add</mat-icon>
+                </button>
+            </div>
+
+            <div class="search-section">
+                <mat-form-field class="search-field" appearance="outline">
+                    <mat-label>Search by name...</mat-label>
+                    <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+                    <mat-icon matPrefix>search</mat-icon>
+                </mat-form-field>
+                <mat-form-field class="search-field" appearance="outline">
+                    <mat-label>Namespace</mat-label>
+                    <input matInput [(ngModel)]="searchNamespace" [matAutocomplete]="searchNamespaceAutoComplete"
+                        (input)="onSearchNamespaceChange($event.target.value)" (keyup.enter)="search()">
+                    <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
+                        <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
+                            {{ ns }}
+                        </mat-option>
+                    </mat-autocomplete>
+                    <mat-icon matPrefix>category</mat-icon>
+                </mat-form-field>
+                <button class="icon-btn search-btn" (click)="search()" title="Search">
+                    <mat-icon>search</mat-icon>
+                </button>
+                <button class="icon-btn clear-btn" (click)="clearSearch()" title="Clear"
+                    *ngIf="searchTerm || searchNamespace">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <div *ngIf="loading === true" class="loading-state">
+                <mat-spinner diameter="32" color="primary"></mat-spinner>
+                <span>Loading agents...</span>
+            </div>
+
+            <div class="agent-list">
+                <div class="list-item" *ngFor="let agent of agents" [class.selected]="agent === selectedAgent"
+                    (click)="selectAgent(agent)">
+                    <div class="agent-avatar">
+                        <mat-icon>person</mat-icon>
+                    </div>
+                    <div class="agent-info">
+                        <span class="agent-name">{{ agent.name }}</span>
+                        <span class="agent-category">{{ agent.namespace }}</span>
+                    </div>
+                    <button class="icon-btn delete-btn" (click)="deleteAgentInline(agent, $event)" title="Delete agent">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                    <mat-icon class="chevron">chevron_right</mat-icon>
+                </div>
+
+                <div *ngIf="agents.length === 0 && !loading" class="empty-state">
+                    <mat-icon>person_off</mat-icon>
+                    <span>No agents found</span>
+                    <small>Create your first agent</small>
+                </div>
+            </div>
+
+            <mat-paginator class="custom-paginator" [length]="totalElements" [pageSize]="pageSize"
+                [pageIndex]="currentPage" (page)="onPageChange($event)" showFirstLastButtons>
+            </mat-paginator>
+        </div>
+
+        <app-panel-toggle [isCollapsed]="leftPanelCollapsed" (toggle)="toggleLeftPanel()"
+            [class.collapsed]="leftPanelCollapsed">
+        </app-panel-toggle>
+
+        <div class="right-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <mat-icon>settings</mat-icon>
+                    <span>Agent Details</span>
+                </div>
+                <div class="header-actions" *ngIf="selectedAgent">
+                    <button class="icon-btn clear-btn" (click)="clearForm()" title="Clear form">
+                        <mat-icon>refresh</mat-icon>
+                    </button>
+                    <button class="icon-btn delete-btn" (click)="deleteAgent()" title="Delete agent">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <div class="form-row">
+                    <mat-form-field class="form-field" appearance="outline">
+                        <mat-label>Name</mat-label>
+                        <input matInput [(ngModel)]="formAgent.name" placeholder="Enter agent name">
+                        <mat-icon matPrefix>badge</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field class="form-field" appearance="outline">
+                        <mat-label>Namespace</mat-label>
+                        <input matInput [(ngModel)]="formAgent.namespace" [matAutocomplete]="namespaceAutoComplete"
+                            (input)="onNamespaceChange($event.target.value)">
+                        <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
+                            <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
+                                {{ ns }}
+                            </mat-option>
+                        </mat-autocomplete>
+                        <mat-icon matPrefix>category</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field class="form-field" appearance="outline">
+                        <mat-label>Path</mat-label>
+                        <input matInput [(ngModel)]="formAgent.path" placeholder="Enter path">
+                        <mat-icon matPrefix>link</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <mat-form-field class="full-width" appearance="outline">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput [(ngModel)]="formAgent.description" rows="3"
+                        placeholder="Describe this agent's purpose"></textarea>
+                    <mat-icon matPrefix>description</mat-icon>
+                </mat-form-field>
+
+                <div class="prompt-field-container" (click)="openPromptEditor()">
+                    <mat-form-field class="full-width prompt-field" appearance="outline">
+                        <mat-label>Prompt</mat-label>
+                        <input matInput [value]="getPromptPreview(formAgent.prompt)" disabled
+                            class="prompt-preview-input">
+                        <mat-icon matPrefix>code</mat-icon>
+                    </mat-form-field>
+                    <button mat-icon-button type="button" class="prompt-edit-btn" title="Edit prompt">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                </div>
+
+                <div class="button-row">
+                    <button class="btn btn-primary" (click)="saveAgent()" [disabled]="!formAgent.name">
+                        <mat-icon>save</mat-icon>
+                        {{ formAgent.id ? 'Update Agent' : 'Create Agent' }}
+                    </button>
+                    <button class="btn btn-secondary" (click)="clearForm()">
+                        <mat-icon>refresh</mat-icon>
+                        Clear Form
+                    </button>
+                </div>
+
+                <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+                    <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+                    {{ statusMessage }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

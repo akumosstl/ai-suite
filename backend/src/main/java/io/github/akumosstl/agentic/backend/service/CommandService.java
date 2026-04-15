@@ -43,7 +43,6 @@ public class CommandService {
         command.setPath(commandDetails.getPath());
         command.setDescription(commandDetails.getDescription());
         command.setCommand(commandDetails.getCommand());
-        command.setScope(commandDetails.getScope());
         return commandRepository.save(command);
     }
     
@@ -58,11 +57,7 @@ public class CommandService {
     public List<Command> getCommandsByCategory(String category) {
         return commandRepository.findByCategory(category);
     }
-    
-    public List<Command> getCommandsByScope(String scope) {
-        return commandRepository.findByScope(scope);
-    }
-    
+
     public List<Command> searchCommands(String searchTerm, String namespace, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Command> commandPage = commandRepository.searchCommands(searchTerm, namespace, pageable);

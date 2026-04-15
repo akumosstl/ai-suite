@@ -4,6 +4,7 @@ import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Target;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
@@ -36,6 +37,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Serviço para gerenciamento de Etapas (Steps) de Pipeline.
+ * 
+ * Realiza operações de CRUD, execução de etapas de pipeline,
+ * resolução de placeholders e streaming de saída em tempo real.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Service
 public class PipelineStepService {
     
@@ -86,6 +96,31 @@ public class PipelineStepService {
             .replace("\n", " ");
     }
 
+    private List<String> parseCommandWindows(String commandLine) {
+        List<String> args = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < commandLine.length(); i++) {
+            char c = commandLine.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ' ' && !inQuotes) {
+                if (current.length() > 0) {
+                    args.add(current.toString());
+                    current = new StringBuilder();
+                }
+            } else {
+                current.append(c);
+            }
+        }
+        if (current.length() > 0) {
+            args.add(current.toString());
+        }
+
+        return args.isEmpty() ? java.util.List.of("node") : args;
+    }
+
     private String resolveInputContent(String inputContent, Long pipelineId, int currentStepOrder, String runDir) {
         if (inputContent == null || inputContent.isEmpty()) {
             return inputContent;
@@ -102,17 +137,35 @@ public class PipelineStepService {
         return resolved;
     }
     
-    private String getProjectTargetCli(Long projectId) {
+    private String getProjectTargetCli(Long pipelineId) {
         try {
-            String cli = entityManager.createQuery(
-                "SELECT t.cli FROM Project p JOIN Target t WHERE p.id = :projectId AND t.id = p.targetId",
-                String.class)
-                .setParameter("projectId", projectId)
+            Project project = entityManager.createQuery(
+                "SELECT p FROM Pipeline pipeline JOIN pipeline.project p WHERE pipeline.id = :pipelineId",
+                Project.class)
+                .setParameter("pipelineId", pipelineId)
                 .getSingleResult();
-            System.out.println("DEBUG: Found project target CLI via JPQL: " + cli);
-            return cli;
+            
+            if (project.getTargetId() != null) {
+                Target target = targetRepository.findById(project.getTargetId()).orElse(null);
+                if (target != null) {
+                    System.out.println("DEBUG: Found project target CLI via targetId: " + target.getCli());
+                    return target.getCli();
+                }
+            }
+            
+            String targetName = project.getTarget();
+            if (targetName != null && !targetName.isEmpty()) {
+                var targetOpt = targetRepository.findByName(targetName);
+                if (targetOpt.isPresent()) {
+                    System.out.println("DEBUG: Found project target CLI via target name: " + targetOpt.get().getCli());
+                    return targetOpt.get().getCli();
+                }
+            }
+            
+            System.out.println("DEBUG: No target found for project, no CLI configured");
+            return "opencode";
         } catch (Exception e) {
-            System.out.println("DEBUG: Error getting project target CLI via JPQL: " + e.getMessage());
+            System.out.println("DEBUG: Error getting project target CLI: " + e.getMessage());
         }
         return "opencode";
     }
@@ -334,22 +387,8 @@ public class PipelineStepService {
     @Autowired
     private SseService sseService;
     
-    private final Map<Long, AtomicBoolean> pausedPipelines = new ConcurrentHashMap<>();
     private final Set<Long> stoppedPipelines = ConcurrentHashMap.newKeySet();
     private final Map<Long, ReentrantLock> pipelineLocks = new ConcurrentHashMap<>();
-    private final Map<Long, Integer> pendingStepOrders = new ConcurrentHashMap<>();
-    
-    public void pausePipeline(Long pipelineId) {
-        pausedPipelines.putIfAbsent(pipelineId, new AtomicBoolean(true));
-        pausedPipelines.get(pipelineId).set(true);
-    }
-    
-    public void resumePipeline(Long pipelineId) {
-        AtomicBoolean paused = pausedPipelines.get(pipelineId);
-        if (paused != null) {
-            paused.set(false);
-        }
-    }
     
     // Map to track running processes per pipeline
     private final Map<Long, Process> runningProcesses = new ConcurrentHashMap<>();
@@ -360,8 +399,6 @@ public class PipelineStepService {
 
     public void stopPipelineExecution(Long pipelineId) {
         stoppedPipelines.add(pipelineId);
-        pausedPipelines.remove(pipelineId);
-        pendingStepOrders.remove(pipelineId);
         
         Optional<PipelineRun> runningRun = pipelineRunRepository.findAll().stream()
             .filter(r -> r.getPipeline() != null && r.getPipeline().getId().equals(pipelineId))
@@ -379,51 +416,8 @@ public class PipelineStepService {
         }
     }
     
-    public void pausePipelineExecution(Long pipelineId) {
-        stoppedPipelines.add(pipelineId);
-        pausedPipelines.putIfAbsent(pipelineId, new AtomicBoolean(true));
-        
-        List<PipelineStep> steps = getStepsByPipeline(pipelineId);
-        for (PipelineStep step : steps) {
-            if ("running".equals(step.getStatus())) {
-                step.setStatus("paused");
-                pipelineStepRepository.save(step);
-                setPendingStepOrder(pipelineId, step.getStepOrder() + 1);
-                break;
-            }
-        }
-        
-        Optional<PipelineRun> runningRun = pipelineRunRepository.findAll().stream()
-            .filter(r -> r.getPipeline() != null && r.getPipeline().getId().equals(pipelineId))
-            .filter(r -> "running".equals(r.getStatus()))
-            .findFirst();
-        runningRun.ifPresent(run -> {
-            run.setStatus("paused");
-            pipelineRunRepository.save(run);
-        });
-        
-        Process process = runningProcesses.remove(pipelineId);
-        if (process != null && process.isAlive()) {
-            process.destroyForcibly();
-            System.out.println("Paused and stopped running process for pipeline " + pipelineId);
-        }
-    }
-    
     public boolean isPipelineStopped(Long pipelineId) {
         return stoppedPipelines.contains(pipelineId);
-    }
-    
-    public boolean isPipelinePaused(Long pipelineId) {
-        AtomicBoolean paused = pausedPipelines.get(pipelineId);
-        return paused != null && paused.get();
-    }
-    
-    public void setPendingStepOrder(Long pipelineId, int stepOrder) {
-        pendingStepOrders.put(pipelineId, stepOrder);
-    }
-    
-    public Integer getPendingStepOrder(Long pipelineId) {
-        return pendingStepOrders.get(pipelineId);
     }
     
     public ReentrantLock getPipelineLock(Long pipelineId) {
@@ -431,6 +425,10 @@ public class PipelineStepService {
     }
     
     public void executePipeline(Long pipelineId, String workingDir, String runDir, String outputExtension) {
+        executePipeline(pipelineId, null, workingDir, runDir, outputExtension);
+    }
+    
+    public void executePipeline(Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension) {
         stoppedPipelines.remove(pipelineId);
         
         ReentrantLock lock = getPipelineLock(pipelineId);
@@ -440,38 +438,18 @@ public class PipelineStepService {
         }
         
         try {
-            System.out.println("DEBUG: executePipeline started for pipeline " + pipelineId);
+            System.out.println("DEBUG: executePipeline started for pipeline " + pipelineId + (runId != null ? " with runId " + runId : ""));
             
             List<PipelineStep> steps = getStepsByPipeline(pipelineId);
             
             for (PipelineStep step : steps) {
-                step.setOutputContent(null);
-                step.setOutputType(null);
-                step.setStatus("ready");
-                pipelineStepRepository.save(step);
-            }
-            pipelineStepRepository.flush();
-            
-            Integer pendingStepOrder = pendingStepOrders.get(pipelineId);
-            int startIndex = 0;
-            if (pendingStepOrder != null && pendingStepOrder > 1) {
-                startIndex = pendingStepOrder - 1;
-                System.out.println("DEBUG: Resuming from step " + pendingStepOrder);
-            }
-            
-            boolean allPreviousCompleted = true;
-            for (int i = 0; i < startIndex; i++) {
-                PipelineStep step = steps.get(i);
-                if (!"completed".equals(step.getStatus())) {
+                if ("paused".equals(step.getStatus())) {
                     step.setStatus("ready");
-                    step.setOutputContent(null);
-                    pipelineStepRepository.save(step);
-                    allPreviousCompleted = false;
+                } else if (!"completed".equals(step.getStatus()) && !"failed".equals(step.getStatus())) {
+                    step.setStatus("ready");
                 }
-            }
-            
-            if (allPreviousCompleted && startIndex > 0) {
-                System.out.println("DEBUG: All previous steps completed, will continue from step " + (startIndex + 1));
+                step.setOutputContent(null);
+                pipelineStepRepository.save(step);
             }
             
             pipelineStepRepository.flush();
@@ -480,9 +458,9 @@ public class PipelineStepService {
             boolean isStepByStep = "step_by_step".equals(pipeline.getType());
             
             if (isStepByStep) {
-                executePipelineStepByStep(pipelineId, workingDir, runDir, outputExtension, startIndex);
+                executePipelineStepByStep(pipelineId, runId, workingDir, runDir, outputExtension);
             } else {
-                executePipelineSequential(pipelineId, workingDir, runDir, outputExtension);
+                executePipelineSequential(pipelineId, runId, workingDir, runDir, outputExtension);
             }
             
             stopPipelineExecution(pipelineId);
@@ -492,61 +470,61 @@ public class PipelineStepService {
         }
     }
     
-    private void executePipelineSequential(Long pipelineId, String workingDir, String runDir, String outputExtension) {
+    private void executePipelineSequential(Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension) {
         List<PipelineStep> steps = getStepsByPipeline(pipelineId);
         System.out.println("DEBUG: Found " + steps.size() + " steps");
         
-        sseService.sendStepOutput(pipelineId, 0L, 0, "Working directory: " + workingDir + "\n", "running");
-        sseService.sendStepOutput(pipelineId, 0L, 0, "Run directory: " + runDir + "\n", "running");
+        sendSseStepOutput(runId, pipelineId, 0L, 0, "Working directory: " + workingDir + "\n", "running");
+        sendSseStepOutput(runId, pipelineId, 0L, 0, "Run directory: " + runDir + "\n", "running");
         
         String previousOutputFile = null;
         
-        for (PipelineStep step : steps) {
+        for (int i = 0; i < steps.size(); i++) {
+            PipelineStep step = steps.get(i);
             if (isPipelineStopped(pipelineId)) {
-                markRemainingStepsFailed(pipelineId, step.getStepOrder());
+                markRemainingStepsFailed(pipelineId, runId, step.getStepOrder());
                 break;
             }
-            executeStep(step, pipelineId, workingDir, runDir, outputExtension, previousOutputFile);
+            executeStep(step, pipelineId, runId, workingDir, runDir, outputExtension, previousOutputFile);
             if ("completed".equals(step.getStatus()) && step.getOutputContent() != null) {
                 previousOutputFile = runDir + File.separator + "step" + step.getStepOrder() + "-result." + outputExtension;
             }
         }
     }
     
-    private void markRemainingStepsFailed(Long pipelineId, int fromStepOrder) {
+    private void markRemainingStepsFailed(Long pipelineId, Long runId, int fromStepOrder) {
         List<PipelineStep> steps = getStepsByPipeline(pipelineId);
         for (PipelineStep step : steps) {
             if (step.getStepOrder() > fromStepOrder && !"completed".equals(step.getStatus()) && !"failed".equals(step.getStatus())) {
                 step.setStatus("failed");
                 step.setOutputContent("Skipped due to pipeline stop");
                 pipelineStepRepository.save(step);
-                syncRunStepStatus(pipelineId, step.getStepOrder(), "failed", "Skipped due to pipeline stop", "text");
-                sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), "Skipped due to pipeline stop\n--- Step failed ---\n", "failed");
+                syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "failed", "Skipped due to pipeline stop", "text");
+                sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), "Skipped due to pipeline stop\n--- Step failed ---\n", "failed");
             }
         }
     }
     
-    private void executePipelineStepByStep(Long pipelineId, String workingDir, String runDir, String outputExtension, int startIndex) {
+    private void executePipelineStepByStep(Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension) {
         List<PipelineStep> steps = getStepsByPipeline(pipelineId);
         System.out.println("DEBUG: Found " + steps.size() + " steps (step-by-step mode)");
         
-        sseService.sendStepOutput(pipelineId, 0L, 0, "Working directory: " + workingDir + "\n", "running");
-        sseService.sendStepOutput(pipelineId, 0L, 0, "Run directory: " + runDir + "\n", "running");
-        sseService.sendStepOutput(pipelineId, 0L, 0, "Pipeline mode: step-by-step\n", "running");
+        sendSseStepOutput(runId, pipelineId, 0L, 0, "Working directory: " + workingDir + "\n", "running");
+        sendSseStepOutput(runId, pipelineId, 0L, 0, "Run directory: " + runDir + "\n", "running");
+        sendSseStepOutput(runId, pipelineId, 0L, 0, "Pipeline mode: step-by-step\n", "running");
         
         String previousOutputFile = null;
-        pausedPipelines.putIfAbsent(pipelineId, new AtomicBoolean(false));
         
-        for (int i = startIndex; i < steps.size(); i++) {
+        for (int i = 0; i < steps.size(); i++) {
             PipelineStep step = steps.get(i);
-            if (!pausedPipelines.containsKey(pipelineId) || isPipelineStopped(pipelineId)) {
+            if (isPipelineStopped(pipelineId)) {
                 if (isPipelineStopped(pipelineId)) {
-                    markRemainingStepsFailed(pipelineId, step.getStepOrder());
+                    markRemainingStepsFailed(pipelineId, runId, step.getStepOrder());
                 }
                 break;
             }
             
-            executeStep(step, pipelineId, workingDir, runDir, outputExtension, previousOutputFile);
+            executeStep(step, pipelineId, runId, workingDir, runDir, outputExtension, previousOutputFile);
             
             if ("completed".equals(step.getStatus()) && step.getOutputContent() != null) {
                 previousOutputFile = runDir + File.separator + "step" + step.getStepOrder() + "-result." + outputExtension;
@@ -559,48 +537,37 @@ public class PipelineStepService {
                 
                 int nextStepOrder = step.getStepOrder() + 1;
                 if (nextStepOrder <= steps.size()) {
-                    sseService.sendStepOutput(pipelineId, 0L, step.getStepOrder(), "Step " + step.getStepOrder() + " completed. Waiting for continue...\n", "paused");
-                    setPendingStepOrder(pipelineId, nextStepOrder);
-                    sseService.sendPipelinePaused(pipelineId, step.getStepOrder(), nextStepOrder);
-                    
-                    pausedPipelines.get(pipelineId).set(true);
-                    waitForResume(pipelineId);
-                    
-                    if (!pausedPipelines.containsKey(pipelineId) || !pausedPipelines.get(pipelineId).compareAndSet(false, false)) {
-                        break;
-                    }
+                    sendSseStepOutput(runId, pipelineId, 0L, step.getStepOrder(), "Step " + step.getStepOrder() + " completed. Waiting for continue...\n", "running");
                 } else {
-                    sseService.sendStepOutput(pipelineId, 0L, step.getStepOrder(), "All steps completed!\n", "completed");
+                    sendSseStepOutput(runId, pipelineId, 0L, step.getStepOrder(), "All steps completed!\n", "completed");
                 }
             }
         }
     }
     
-    private void waitForResume(Long pipelineId) {
-        AtomicBoolean paused = pausedPipelines.get(pipelineId);
-        if (paused == null) {
-            return;
-        }
-        
-        int waitCount = 0;
-        while (paused.get() && !isPipelineStopped(pipelineId) && waitCount < 7200) {
-            try {
-                Thread.sleep(500);
-                waitCount++;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
+    private void sendSseStepOutput(Long runId, Long pipelineId, Long stepId, Integer stepOrder, String output, String status) {
+        if (runId != null) {
+            sseService.sendStepOutputToRun(runId, pipelineId, stepId, stepOrder, output, status);
+        } else {
+            sseService.sendStepOutput(pipelineId, stepId, stepOrder, output, status);
         }
     }
     
-    private void executeStep(PipelineStep step, Long pipelineId, String workingDir, String runDir, String outputExtension, String previousOutputFile) {
+    private void sendSseStepError(Long runId, Long pipelineId, Long stepId, String error, String stackTrace) {
+        if (runId != null) {
+            sseService.sendStepErrorToRun(runId, pipelineId, stepId, error, stackTrace);
+        } else {
+            sseService.sendStepError(pipelineId, stepId, error, stackTrace);
+        }
+    }
+    
+    private void executeStep(PipelineStep step, Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension, String previousOutputFile) {
         if (isPipelineStopped(pipelineId)) {
             step.setStatus("failed");
             step.setOutputContent("Pipeline was stopped by user");
             pipelineStepRepository.save(step);
-            syncRunStepStatus(pipelineId, step.getStepOrder(), "failed", "Pipeline was stopped by user", "text");
-            sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), "Pipeline was stopped by user\n--- Step failed ---\n", "failed");
+            syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "failed", "Pipeline was stopped by user", "text");
+            sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), "Pipeline was stopped by user\n--- Step failed ---\n", "failed");
             return;
         }
         
@@ -610,12 +577,12 @@ public class PipelineStepService {
             step.setStatus("running");
             pipelineStepRepository.save(step);
             pipelineStepRepository.flush();
-            sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), "Starting step: " + (step.getAgent() != null ? step.getAgent().getName() : "script") + "\n", "running");
-            syncRunStepStatus(pipelineId, step.getStepOrder(), "running", null, null);
+            sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), "Starting step: " + (step.getAgent() != null ? step.getAgent().getName() : "script") + "\n", "running");
+            syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "running", null, null);
             
             if (previousOutputFile != null) {
                 String normalizedPath = previousOutputFile.replace("\\", "/");
-                sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), "Previous output file: " + normalizedPath + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), "Previous output file: " + normalizedPath + "\n", "running");
             }
             
             System.out.println("DEBUG: Step status set to running, calling executeAgentStep");
@@ -627,9 +594,9 @@ public class PipelineStepService {
             System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
             
             if ("script".equals(stepType)) {
-                output = executeScriptStep(step, pipelineId, step.getId(), workingDir, runDir, previousOutputFile);
+                output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
             } else if (step.getAgent() != null) {
-                output = executeAgentStep(step, pipelineId, step.getId(), workingDir, runDir, previousOutputFile);
+                output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
             } else if (step.getScript() != null) {
                 output = "Script execution not implemented yet";
             } else {
@@ -643,8 +610,8 @@ public class PipelineStepService {
                 step.setOutputContent(stopOutput);
                 step.setOutputType("text");
                 pipelineStepRepository.save(step);
-                syncRunStepStatus(pipelineId, step.getStepOrder(), "failed", stopOutput, "text");
-                sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), stopOutput + "\n--- Step failed ---\n", "failed");
+                syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "failed", stopOutput, "text");
+                sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), stopOutput + "\n--- Step failed ---\n", "failed");
                 return;
             }
             
@@ -654,7 +621,7 @@ public class PipelineStepService {
             step.setStatus("completed");
             pipelineStepRepository.save(step);
             
-            syncRunStepStatus(pipelineId, step.getStepOrder(), "completed", fullOutput, "text");
+            syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "completed", fullOutput, "text");
             
             String resultFileName = "step" + step.getStepOrder() + "-result." + outputExtension;
             File resultFile = new File(runDir, resultFileName);
@@ -665,7 +632,7 @@ public class PipelineStepService {
                 System.out.println("DEBUG: Error creating result file: " + e.getMessage());
             }
             
-            sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), fullOutput, "completed");
+            sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), fullOutput, "completed");
             
         } catch (Exception e) {
             System.out.println("DEBUG: Exception in executeStep: " + e.getMessage());
@@ -675,9 +642,9 @@ public class PipelineStepService {
             step.setOutputContent(errorOutput);
             step.setOutputType("text");
             pipelineStepRepository.save(step);
-            syncRunStepStatus(pipelineId, step.getStepOrder(), "failed", errorOutput, "text");
-            sseService.sendStepOutput(pipelineId, step.getId(), step.getStepOrder(), errorOutput, "failed");
-            sseService.sendStepError(pipelineId, step.getId(), e.getMessage(), 
+            syncRunStepStatus(runId, pipelineId, step.getStepOrder(), "failed", errorOutput, "text");
+            sendSseStepOutput(runId, pipelineId, step.getId(), step.getStepOrder(), errorOutput, "failed");
+            sendSseStepError(runId, pipelineId, step.getId(), e.getMessage(), 
                 java.util.Arrays.toString(e.getStackTrace()));
         }
     }
@@ -685,12 +652,12 @@ public class PipelineStepService {
     private static final int PERSIST_INTERVAL = 10;
     private int lineCount = 0;
     
-    private void streamProcessOutput(BufferedReader reader, Long pipelineId, Long stepId, int stepOrder, StringBuilder outputBuilder) {
+    private void streamProcessOutput(BufferedReader reader, Long pipelineId, Long runId, Long stepId, int stepOrder, StringBuilder outputBuilder) {
         try {
             String line;
             while ((line = reader.readLine()) != null) {
                 outputBuilder.append(line).append("\n");
-                sseService.sendStepOutput(pipelineId, stepId, stepOrder, line + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, stepOrder, line + "\n", "running");
                 lineCount++;
                 if (lineCount % PERSIST_INTERVAL == 0) {
                     persistOutputIncrementally(stepId, outputBuilder.toString());
@@ -700,7 +667,7 @@ public class PipelineStepService {
                 persistOutputIncrementally(stepId, outputBuilder.toString());
             }
         } catch (Exception e) {
-            sseService.sendStepOutput(pipelineId, stepId, stepOrder, "Error reading output: " + e.getMessage() + "\n", "running");
+            sendSseStepOutput(runId, pipelineId, stepId, stepOrder, "Error reading output: " + e.getMessage() + "\n", "running");
         }
     }
     
@@ -717,7 +684,7 @@ public class PipelineStepService {
         }
     }
     
-    private String executeAgentStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
+    private String executeAgentStep(PipelineStep step, Long pipelineId, Long runId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
         Agent agent = step.getAgent();
         
         System.out.println("DEBUG: executeAgentStep - agent is null: " + (agent == null));
@@ -730,7 +697,7 @@ public class PipelineStepService {
         
         if (prompt == null || prompt.isEmpty()) {
             prompt = "Hello, please respond.";
-            sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Warning: Agent has no prompt, using default.\n", "running");
+            sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Warning: Agent has no prompt, using default.\n", "running");
         }
         
         System.out.println("DEBUG: Step " + step.getStepOrder() + " - Agent prompt before replacement: " + prompt);
@@ -743,11 +710,11 @@ public class PipelineStepService {
                 String normalizedPath = previousOutputFile.replace("\\", "/");
                 System.out.println("DEBUG: Replacing with: " + normalizedPath);
                 prompt = prompt.replace(placeholder, normalizedPath);
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "INFO: Replaced {{previous-output-file}} with: " + normalizedPath + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "INFO: Replaced {{previous-output-file}} with: " + normalizedPath + "\n", "running");
             } else {
                 System.out.println("DEBUG: No previous output file, replacing with empty string");
                 prompt = prompt.replace(placeholder, "");
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "WARNING: {{previous-output-file}} found but no previous step output - replaced with empty string\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "WARNING: {{previous-output-file}} found but no previous step output - replaced with empty string\n", "running");
             }
         } else {
             System.out.println("DEBUG: Placeholder NOT found in prompt");
@@ -810,7 +777,7 @@ public class PipelineStepService {
         List<String> command;
         
         if (os.contains("win")) {
-            command = List.of("cmd.exe", "/c", "chcp 65001 >nul && " + fullCommand.toString());
+            command = List.of("cmd.exe", "/c", fullCommand.toString());
         } else {
             command = List.of("bash", "-c", fullCommand.toString());
         }
@@ -834,7 +801,7 @@ public class PipelineStepService {
         processBuilder.redirectOutput(Redirect.PIPE);
         processBuilder.redirectInput(Redirect.PIPE);
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting process with real-time output streaming...\n", "running");
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Starting process with real-time output streaming...\n", "running");
         System.out.println("DEBUG: Starting process with real-time streaming...");
         Process process = processBuilder.start();
         registerRunningProcess(pipelineId, process);
@@ -845,9 +812,9 @@ public class PipelineStepService {
             try {
                 BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-                streamProcessOutput(reader, pipelineId, stepId, step.getStepOrder(), output);
+                streamProcessOutput(reader, pipelineId, runId, stepId, step.getStepOrder(), output);
             } catch (Exception e) {
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
             }
         });
         outputThread.start();
@@ -861,7 +828,7 @@ public class PipelineStepService {
             System.out.println("DEBUG: Could not write to stdin: " + e.getMessage());
         }
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Waiting for process to complete...\n", "running");
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Waiting for process to complete...\n", "running");
         System.out.println("DEBUG: Waiting for process to complete...");
         int exitCode = process.waitFor();
         
@@ -886,7 +853,7 @@ public class PipelineStepService {
         return output.toString();
     }
     
-    private String executeScriptStep(PipelineStep step, Long pipelineId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
+    private String executeScriptStep(PipelineStep step, Long pipelineId, Long runId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
         Script script = step.getScript();
         String scriptContent = script.getContent();
         
@@ -899,11 +866,11 @@ public class PipelineStepService {
             if (previousOutputFile != null) {
                 System.out.println("DEBUG: Found {{previous-output-file}} in script, replacing with: " + previousOutputFile);
                 scriptContent = scriptContent.replace(placeholder, previousOutputFile);
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "INFO: Replaced {{previous-output-file}} with: " + previousOutputFile + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "INFO: Replaced {{previous-output-file}} with: " + previousOutputFile + "\n", "running");
             } else {
                 System.out.println("DEBUG: Found {{previous-output-file}} in script but no previous output file available, replacing with empty string");
                 scriptContent = scriptContent.replace(placeholder, "");
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "WARNING: {{previous-output-file}} found in script but no previous step output available - replaced with empty string\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "WARNING: {{previous-output-file}} found in script but no previous step output available - replaced with empty string\n", "running");
             }
         } else {
             System.out.println("DEBUG: No {{previous-output-file}} placeholder found in script");
@@ -989,7 +956,7 @@ public class PipelineStepService {
             tempScript.setExecutable(true);
         }
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Executing script: " + script.getName() + " (runtime: " + runtime + ")\n", "running");
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Executing script: " + script.getName() + " (runtime: " + runtime + ")\n", "running");
         
         List<String> fullCommand = new ArrayList<>(command);
         fullCommand.add(tempScript.getAbsolutePath());
@@ -1014,8 +981,8 @@ public class PipelineStepService {
         processBuilder.redirectErrorStream(true);
         processBuilder.redirectOutput(Redirect.PIPE);
         
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Starting script with real-time output streaming...\n", "running");
-        sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Command: " + String.join(" ", fullCommand) + "\n", "running");
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Starting script with real-time output streaming...\n", "running");
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Command: " + String.join(" ", fullCommand) + "\n", "running");
         System.out.println("DEBUG: Starting script with real-time streaming...");
         Process process = processBuilder.start();
         registerRunningProcess(pipelineId, process);
@@ -1026,9 +993,9 @@ public class PipelineStepService {
             try {
                 BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-                streamProcessOutput(reader, pipelineId, stepId, step.getStepOrder(), output);
+                streamProcessOutput(reader, pipelineId, runId, stepId, step.getStepOrder(), output);
             } catch (Exception e) {
-                sseService.sendStepOutput(pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
+                sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Error reading output: " + e.getMessage() + "\n", "running");
             }
         });
         outputThread.start();
@@ -1049,21 +1016,39 @@ public class PipelineStepService {
         return output.toString();
     }
     
-    private void syncRunStepStatus(Long pipelineId, Integer stepOrder, String status, String outputContent, String outputType) {
+    private void syncRunStepStatus(Long runId, Long pipelineId, Integer stepOrder, String status, String outputContent, String outputType) {
         try {
-            List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
-            if (runs != null && !runs.isEmpty()) {
-                PipelineRun latestRun = runs.get(0);
-                if ("running".equals(latestRun.getStatus())) {
-                    pipelineRunService.updateRunStep(latestRun.getId(), stepOrder, status, outputContent, outputType);
+            Long targetRunId = runId;
+            Long targetPipelineId = pipelineId;
+            
+            if (targetRunId == null) {
+                List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
+                System.out.println("DEBUG: syncRunStepStatus - found " + runs.size() + " runs for pipeline " + pipelineId);
+                if (runs != null && !runs.isEmpty()) {
+                    targetRunId = runs.get(0).getId();
+                    targetPipelineId = runs.get(0).getPipeline().getId();
                 }
+            } else {
+                PipelineRun run = pipelineRunService.getRunById(targetRunId);
+                if (run != null) {
+                    targetPipelineId = run.getPipeline().getId();
+                }
+            }
+            
+            if (targetRunId != null) {
+                System.out.println("DEBUG: syncRunStepStatus - syncing run " + targetRunId + " (pipeline " + targetPipelineId + "), step " + stepOrder + " to " + status);
+                pipelineRunService.updateRunStep(targetRunId, stepOrder, status, outputContent, outputType);
             }
         } catch (Exception e) {
             System.out.println("DEBUG: Error syncing run step status: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private void configureProcessEnvironment(Map<String, String> env) {
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = osName.contains("win");
+        
         String userHome = System.getenv("USERPROFILE");
         if (userHome == null) {
             userHome = System.getenv("HOME");
@@ -1071,8 +1056,21 @@ public class PipelineStepService {
         
         env.put("OPENCODE_HOME", userHome != null ? userHome : System.getProperty("user.home"));
         
+        if (isWindows) {
+            String pathext = env.get("PATHEXT");
+            if (pathext == null || !pathext.contains(".CMD")) {
+                env.put("PATHEXT", ".CMD;.EXE;.BAT;.PS1");
+            }
+        }
+        
         String path = env.get("PATH");
-        String pathSeparator = System.getProperty("os.name").toLowerCase().contains("win") ? ";" : ":";
+        String pathSeparator = isWindows ? ";" : ":";
+        
+        String systemPath = System.getenv("PATH");
+        
+        if (path == null) {
+            path = systemPath;
+        }
         
         if (path != null && userHome != null) {
             StringBuilder newPath = new StringBuilder();
@@ -1083,7 +1081,30 @@ public class PipelineStepService {
             }
             
             newPath.append(userHome).append("\\AppData\\Roaming\\npm");
+            newPath.append(pathSeparator);
+            newPath.append("C:\\Program Files\\nodejs");
+            
+            if (isWindows) {
+                Path psPath = Paths.get("C:\\Program Files\\PowerShell\\7");
+                if (Files.exists(psPath)) {
+                    newPath.append(pathSeparator).append(psPath.toAbsolutePath());
+                }
+                
+                Path psPath86 = Paths.get("C:\\Program Files (x86)\\PowerShell\\7");
+                if (Files.exists(psPath86)) {
+                    newPath.append(pathSeparator).append(psPath86.toAbsolutePath());
+                }
+                
+                Path opencodePath = Paths.get("C:\\Users\\" + System.getenv("USERNAME") + "\\AppData\\Local\\Programs\\opencode");
+                if (Files.exists(opencodePath)) {
+                    newPath.append(pathSeparator).append(opencodePath.toAbsolutePath());
+                }
+            }
+            
             env.put("PATH", newPath.toString() + pathSeparator + path);
+            
+            System.out.println("DEBUG: Updated PATH for process: " + newPath);
+            System.out.println("DEBUG: Original system PATH: " + systemPath);
         }
     }
 }

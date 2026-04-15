@@ -108,7 +108,7 @@ describe('ProjectComponent Pipeline Features', () => {
   describe('Pipeline Step Management', () => {
     it('should load pipeline steps correctly', () => {
       const mockSteps: PipelineStep[] = [
-        { id: 1, stepOrder: 1, type: 'agent', status: 'ready', agent: { id: 1, name: 'Agent 1' } as any } as PipelineStep,
+        { id: 1, stepOrder: 1, type: 'agent', status: 'ready', agent: { id: 1, name: 'Agent 1', namespace: 'default', scope: 'global' } as any } as PipelineStep,
         { id: 2, stepOrder: 2, type: 'script', status: 'pending', script: { id: 1, name: 'Script 1' } as any } as PipelineStep
       ];
 
@@ -158,7 +158,7 @@ describe('ProjectComponent Pipeline Features', () => {
 
     it('should remove step from pipeline', () => {
       const mockPipeline: Pipeline = { id: 1 } as Pipeline;
-      const mockStep: PipelineStep = { id: 1, stepOrder: 1, agent: { name: 'Agent' } as any } as PipelineStep;
+      const mockStep: PipelineStep = { id: 1, stepOrder: 1, agent: { name: 'Agent', namespace: 'default', scope: 'global' } as any } as PipelineStep;
 
       component.selectedPipeline = mockPipeline;
       component.pipelineSteps = [mockStep];

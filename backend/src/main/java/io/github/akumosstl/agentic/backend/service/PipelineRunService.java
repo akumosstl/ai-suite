@@ -49,6 +49,11 @@ public class PipelineRunService {
                 .orElseThrow(() -> new RuntimeException("Pipeline run not found"));
     }
     
+    public Long getPipelineIdByRunId(Long runId) {
+        PipelineRun run = getRunById(runId);
+        return run.getPipeline().getId();
+    }
+    
     @Transactional
     public PipelineRun createRun(Long pipelineId) {
         Pipeline pipeline = pipelineService.getPipelineById(pipelineId);
@@ -59,36 +64,16 @@ public class PipelineRunService {
         if (steps != null) {
             for (PipelineStep step : steps) {
                 PipelineRunStep runStep = new PipelineRunStep(step.getStepOrder());
-                runStep.setStatus("ready"); // New run - all steps start as ready
+                runStep.setStatus("ready");
                 runStep.setAgentName(step.getAgent() != null ? step.getAgent().getName() : null);
-                runStep.setAgentCategory(step.getAgent() != null ? step.getAgent().getCategory() : null);
+                runStep.setAgentNamespace(step.getAgent() != null ? step.getAgent().getNamespace() : null);
                 runStep.setScriptName(step.getScript() != null ? step.getScript().getName() : null);
-                runStep.setScriptCategory(step.getScript() != null ? step.getScript().getCategory() : null);
+                runStep.setScriptNamespace(step.getScript() != null ? step.getScript().getNamespace() : null);
                 runStep.setInputContent(step.getInputContent());
                 runStep.setInputType(step.getInputType());
                 runStep.setOutputContent("");
                 runStep.setOutputType(step.getOutputType());
                 run.addStep(runStep);
-            }
-        }
-        
-        return pipelineRunRepository.save(run);
-    }
-    
-    @Transactional
-    public PipelineRun updateRunStepStatus(Long runId, Integer stepOrder, String status, String outputContent, String outputType) {
-        PipelineRun run = getRunById(runId);
-        
-        for (PipelineRunStep step : run.getSteps()) {
-            if (step.getStepOrder().equals(stepOrder)) {
-                step.setStatus(status);
-                if (outputContent != null) {
-                    step.setOutputContent(outputContent);
-                }
-                if (outputType != null) {
-                    step.setOutputType(outputType);
-                }
-                break;
             }
         }
         
@@ -132,5 +117,23 @@ public class PipelineRunService {
     public void deleteRunsByPipeline(Long pipelineId) {
         List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
         pipelineRunRepository.deleteAll(runs);
+    }
+    
+    public Page<PipelineRun> getAllRuns(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return pipelineRunRepository.findAll(pageable);
+    }
+    
+    public List<PipelineRun> getTop20AllRuns() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").descending());
+        return pipelineRunRepository.findAll(pageable).getContent();
+    }
+    
+    @Transactional
+    public int deleteAllNonRunningRuns() {
+        List<PipelineRun> nonRunningRuns = pipelineRunRepository.findByStatusNot("running");
+        int count = nonRunningRuns.size();
+        pipelineRunRepository.deleteAll(nonRunningRuns);
+        return count;
     }
 }

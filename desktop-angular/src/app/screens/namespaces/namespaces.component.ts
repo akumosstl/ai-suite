@@ -13,19 +13,41 @@ import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { ApiService, Agent, Skill, Command, Script, Pipeline, Project } from '../../services/api.service';
 
+/**
+ * Interface que representa os itens de um namespace.
+ * Contém o tipo, namespace, lista de itens e contagem total.
+ */
 interface NamespaceItems {
+  /** Tipo de item (agent, skill, command, script) */
   type: string;
+  /** Nome do namespace */
   namespace: string;
+  /** Array de itens do namespace */
   items: any[];
+  /** Total de itens no namespace */
   totalCount: number;
 }
 
+/**
+ * Interface que representa o resultado de uma operação de limpeza de namespace.
+ */
 interface ClearResult {
+  /** Indica se a operação foi bem-sucedida */
   success: boolean;
+  /** Número de itens deletados */
   deletedCount: number;
+  /** Mensagem de resultado */
   message: string;
 }
 
+/**
+ * Componente de gerenciamento de namespaces.
+ * Exibe uma visão geral dos namespaces organizados por tipo (agents, skills, commands, scripts)
+ * e permite visualizar detalhes, limpar itens e buscar por namespace.
+ * 
+ * @componentName NamespacesComponent
+ * @selector app-namespaces
+ */
 @Component({
   selector: 'app-namespaces',
   standalone: true,
@@ -727,10 +749,17 @@ export class NamespacesComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
   
+  /**
+   * Alterna o estado de recolhimento do painel esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
   
+  /**
+   * Retorna o label legível para o tipo de namespace selecionado.
+   * @returns String com o label do tipo
+   */
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
@@ -741,6 +770,14 @@ export class NamespacesComponent implements OnInit {
     return labels[this.selectedType] || 'Unknown';
   }
   
+  /**
+   * Seleciona um novo tipo de namespace e recarrega a lista.
+   * @param type - Tipo de namespace (agents, skills, commands, scripts)
+   */
+  /**
+   * Seleciona um novo tipo de namespace e reseta o estado.
+   * @param type - Tipo de namespace (agents, skills, commands, scripts)
+   */
   selectType(type: string): void {
     this.selectedType = type;
     this.selectedNamespace = null;
@@ -754,6 +791,12 @@ export class NamespacesComponent implements OnInit {
     this.loadNamespaces();
   }
   
+  /**
+   * Carrega a lista de namespaces do tipo selecionado.
+   */
+  /**
+   * Carrega a lista de namespaces do tipo selecionado.
+   */
   loadNamespaces(): void {
     this.loading = true;
     this.apiService.getNamespacesByType(this.selectedType).subscribe({
@@ -777,6 +820,12 @@ export class NamespacesComponent implements OnInit {
     });
   }
   
+  /**
+   * Filtra os namespaces pelo termo de busca.
+   */
+  /**
+   * Filtra os namespaces pelo termo de busca.
+   */
   search(): void {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
@@ -788,16 +837,38 @@ export class NamespacesComponent implements OnInit {
     }
   }
   
+  /**
+   * Limpa o filtro de busca e exibe todos os namespaces.
+   */
+  /**
+   * Limpa o filtro de busca e exibe todos os namespaces.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.namespaces = [...this.allNamespaces];
   }
   
+  /**
+   * Seleciona um namespace e carrega seus detalhes.
+   * @param namespace - Nome do namespace a ser selecionado
+   */
+  /**
+   * Seleciona um namespace e carrega seus detalhes.
+   * @param namespace - Nome do namespace a ser selecionado
+   */
   selectNamespace(namespace: string): void {
     this.selectedNamespace = namespace;
     this.loadNamespaceDetails();
   }
   
+  /**
+   * Carrega os detalhes do namespace selecionado:
+   * itens, pipelines e projetos que utilizam o namespace.
+   */
+  /**
+   * Carrega os detalhes do namespace selecionado:
+   * itens, pipelines e projetos que utilizam o namespace.
+   */
   loadNamespaceDetails(): void {
     if (!this.selectedNamespace) return;
     
@@ -852,6 +923,14 @@ export class NamespacesComponent implements OnInit {
     });
   }
   
+  /**
+   * Limpa todos os itens do namespace selecionado via diálogo de confirmação.
+   * Remove apenas itens que não estão sendo usados por pipelines ou projetos.
+   */
+  /**
+   * Limpa todos os itens do namespace selecionado via diálogo de confirmação.
+   * Remove apenas itens que não estão sendo usados por pipelines ou projetos.
+   */
   clearNamespace(): void {
     if (!this.selectedNamespace) return;
     

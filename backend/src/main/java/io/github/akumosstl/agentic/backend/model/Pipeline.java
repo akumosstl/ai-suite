@@ -9,6 +9,15 @@ import java.util.List;
 
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 
+/**
+ * Entidade que representa um Pipeline de execução.
+ * 
+ * Um pipeline é uma sequência de etapas (steps) que são executadas em ordem.
+ * Cada pipeline pertence a um projeto e possui um status que indica seu estado atual.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @Table(name = "pipeline")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -17,37 +26,47 @@ public class Pipeline {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    /** Nome do pipeline */
     @Column(nullable = false)
     private String name;
     
+    /** Descrição do pipeline */
     @Column(length = 2000)
     private String description;
     
+    /** Status atual do pipeline: "pending", "running", "completed", "failed" */
     @Column(name = "status")
-    private String status; // "pending", "running", "completed", "failed"
+    private String status;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    /** Projeto associado ao pipeline */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", nullable = false)
     @JsonIgnore
     private Project project;
     
+    /** Data de criação */
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    /** Data da última atualização */
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    /** Extensão do arquivo de saída */
     @Column(name = "output_extension")
     private String outputExtension;
     
+    /** Tipo do pipeline */
     @Column(name = "type")
     private String type;
     
+    /** Lista de etapas do pipeline */
     @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("stepOrder ASC")
     @JsonIgnore
     private List<PipelineStep> steps = new ArrayList<>();
     
+    /** Lista de execuções do pipeline */
     @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("createdAt DESC")
     @JsonIgnore

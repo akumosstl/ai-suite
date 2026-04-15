@@ -13,10 +13,22 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Plugin } from '../../services/api.service';
 import { SelectionModel } from '@angular/cdk/collections';
 
+/**
+ * Interface de dados para o diálogo de seleção de plugins.
+ * @property projectId - ID do projeto ao qual os plugins serão adicionados.
+ */
 export interface SelectPluginDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de plugins.
+ * Permite buscar e selecionar plugins para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla usando SelectionModel do CDK.
+ * 
+ * @componentName SelectPluginDialog
+ * @selector app-select-plugin-dialog
+ */
 @Component({
   selector: 'app-select-plugin-dialog',
   standalone: true,
@@ -436,6 +448,10 @@ export class SelectPluginDialogComponent {
   }
 
   loadPlugins(): void {
+    /**
+     * Carrega a lista de plugins do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     const searchOrList = this.searchTerm 
       ? this.apiService.searchPlugins(this.searchTerm, '', this.currentPage, this.pageSize)
@@ -457,27 +473,45 @@ export class SelectPluginDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de plugins resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadPlugins();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de plugins.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadPlugins();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadPlugins();
   }
 
   toggleRow(row: Plugin): void {
+    /**
+     * Alterna a seleção de um plugin específico.
+     * @param row - Plugin a ser selecionado ou desmarcado.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todos os plugins visíveis na tabela.
+     * Se todos estiverem selecionados, desmarca todos.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -490,10 +524,18 @@ export class SelectPluginDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todos os plugins visíveis estão selecionados.
+     * @returns true se todos os plugins estão selecionados.
+     */
     return this.plugins.length > 0 && this.plugins.every(plugin => this.selection.isSelected(plugin));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona os plugins selecionados ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const pluginIds = this.selection.selected
         .filter(p => p.id)
@@ -513,6 +555,9 @@ export class SelectPluginDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

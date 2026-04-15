@@ -41,6 +41,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+/**
+ * Serviço para gerenciamento de Projetos.
+ * 
+ * Realiza operações de CRUD, gerenciamento de associações de recursos
+ * (agentes, skills, commands, scripts, instructions, plugins, tools)
+ * e manipulação de arquivos no sistema de arquivos.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Service
 public class ProjectService {
     

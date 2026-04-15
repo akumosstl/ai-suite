@@ -7,11 +7,22 @@ import { ApiService, PipelineStep } from '../../services/api.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+/**
+ * Interface para dados de entrada do diálogo de input.
+ * Contém o passo do pipeline e opcionalmente o ID do pipeline para polling.
+ */
 export interface InputDialogData {
   step: PipelineStep;
   pipelineId?: number;
 }
 
+/**
+ * Componente de diálogo para visualização do input de um passo de pipeline.
+ * Suporta polling para atualização em tempo real do conteúdo do input.
+ * 
+ * @componentName InputDialogComponent
+ * @selector app-input-dialog
+ */
 @Component({
   selector: 'app-input-dialog',
   standalone: true,
@@ -156,6 +167,10 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     }
   }
   
+  /**
+   * Inicia o polling para atualizar o conteúdo do input em tempo real.
+   * Verifica a cada 2 segundos se há novas mudanças no input do passo.
+   */
   private startPolling() {
     this.pollingInterval = setInterval(() => {
       if (this.data.pipelineId && this.data.step.id) {
@@ -173,6 +188,9 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     }, 2000);
   }
   
+  /**
+   * Fecha o diálogo de input.
+   */
   close() {
     this.dialogRef.close();
   }

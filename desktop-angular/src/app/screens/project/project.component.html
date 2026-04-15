@@ -75,20 +75,12 @@
                         (click)="openViewAgentsDialog()">
                         <mat-icon>smart_toy</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add agent"
-                        (click)="openAddAgentDialog()">
-                        <mat-icon>add_circle</mat-icon>
-                    </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
                     <button mat-icon-button class="tool-btn" matTooltip="skills"
                         (click)="openViewSkillsDialog()">
                         <mat-icon>format_list_bulleted</mat-icon>
-                    </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add skill"
-                        (click)="openAddSkillDialog()">
-                        <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
                 <div class="divider"></div>
@@ -97,20 +89,12 @@
                         (click)="openViewCommandsDialog()">
                         <mat-icon>terminal</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add command"
-                        (click)="openAddCommandDialog()">
-                        <mat-icon>add_circle</mat-icon>
-                    </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
                     <button mat-icon-button class="tool-btn" matTooltip="scripts"
                         (click)="openViewScriptsDialog()">
                         <mat-icon>code</mat-icon>
-                    </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add script"
-                        (click)="openAddScriptDialog()">
-                        <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
                 <div class="divider"></div>
@@ -119,10 +103,6 @@
                         (click)="openViewInstructionsDialog()">
                         <mat-icon>menu_book</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add instruction"
-                        (click)="openAddInstructionDialog()">
-                        <mat-icon>add_circle</mat-icon>
-                    </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
@@ -130,20 +110,12 @@
                         (click)="openViewPluginsDialog()">
                         <mat-icon>extension</mat-icon>
                     </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add plugin"
-                        (click)="openAddPluginDialog()">
-                        <mat-icon>add_circle</mat-icon>
-                    </button>
                 </div>
                 <div class="divider"></div>
                 <div class="button-group">
                     <button mat-icon-button class="tool-btn" matTooltip="tools"
                         (click)="openViewToolsDialog()">
                         <mat-icon>build</mat-icon>
-                    </button>
-                    <button mat-icon-button class="tool-btn add" matTooltip="Add tool"
-                        (click)="openAddToolDialog()">
-                        <mat-icon>add_circle</mat-icon>
                     </button>
                 </div>
             </div>
@@ -269,20 +241,9 @@
                     <div class="header-actions">
                         <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
                             [disabled]="pipelineSteps.length === 0 || isRunningPipeline" 
-                            *ngIf="!isRunningPipeline && pipelineStatus !== 'paused'">
+                            *ngIf="!isRunningPipeline">
                             <mat-icon>play_arrow</mat-icon>
                             <span class="btn-text">Run</span>
-                        </button>
-                        <button class="icon-btn run-btn" (click)="runPipeline()" title="Resume pipeline"
-                            [disabled]="pipelineSteps.length === 0" 
-                            *ngIf="pipelineStatus === 'paused'">
-                            <mat-icon>play_arrow</mat-icon>
-                            <span class="btn-text">Resume</span>
-                        </button>
-                        <button class="icon-btn pause-btn" (click)="pausePipeline()" title="Pause pipeline"
-                            *ngIf="isRunningPipeline">
-                            <mat-icon>pause</mat-icon>
-                            <span class="btn-text">Pause</span>
                         </button>
                         <button class="icon-btn stop-btn" (click)="stopPipeline()" title="Stop pipeline"
                             *ngIf="isRunningPipeline">
@@ -371,15 +332,6 @@
                                     <mat-icon>content_copy</mat-icon>
                                 </button>
                             </div>
-                            <div class="endpoint-item">
-                                <span class="endpoint-label">Pause Pipeline:</span>
-                                <code class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/pause</code>
-                                <button mat-icon-button
-                                    (click)="copyToClipboard(baseUrl + 'api/projects/' + project?.id + '/pipelines/' + selectedPipeline.id + '/pause')"
-                                    title="Copy to clipboard">
-                                    <mat-icon>content_copy</mat-icon>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -405,13 +357,9 @@
                                     <span class="agent-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
                                 </div>
                                 <div class="step-info">
-                                    <span class="step-category" *ngIf="step.agent?.category">{{ step.agent?.category }}</span>
-                                    <span class="step-namespace" *ngIf="step.script?.namespace">{{ step.script?.namespace }}</span>
+                                    <span class="step-category" *ngIf="step.agent?.namespace">{{ step.agent?.namespace }}</span>
+                                    <span class="step-category" *ngIf="step.script?.namespace">{{ step.script?.namespace }}</span>
                                     <span class="step-status" [ngClass]="step.status || 'pending'">{{ step.status || 'pending' }}</span>
-                                    <button class="icon-btn delete-step-btn" (click)="removeStep(step)"
-                                        title="Remove step">
-                                        <mat-icon>delete</mat-icon>
-                                    </button>
                                 </div>
                             </div>
                             <div class="step-io-buttons">

@@ -4,6 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa um Plugin no sistema.
+ * 
+ * Um plugin é uma extensão que adiciona funcionalidades
+ * ao sistema. Pode ter arquivos associados.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Plugin {

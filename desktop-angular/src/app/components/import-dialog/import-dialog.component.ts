@@ -6,11 +6,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 
+/**
+ * Interface para dados de entrada do diálogo de importação.
+ * Contém o estado de carregamento e o resultado da importação.
+ */
 export interface ImportDialogData {
   loading?: boolean;
   result?: ImportResult;
 }
 
+/**
+ * Interface que representa o resultado de uma operação de importação.
+ */
 export interface ImportResult {
   success: boolean;
   imported: number;
@@ -19,6 +26,9 @@ export interface ImportResult {
   details: ImportDetail[];
 }
 
+/**
+ * Interface que representa o detalhe de um item importado.
+ */
 export interface ImportDetail {
   type: string;
   name: string;
@@ -26,6 +36,13 @@ export interface ImportDetail {
   message: string;
 }
 
+/**
+ * Componente de diálogo para importação de dados do projeto.
+ * Permite fazer upload de um arquivo .sql e visualizar o resultado da importação.
+ * 
+ * @componentName ImportDialogComponent
+ * @selector app-import-dialog
+ */
 @Component({
   selector: 'app-import-dialog',
   standalone: true,
@@ -373,6 +390,12 @@ export class ImportDialogComponent {
     }
   }
 
+  /**
+   * Manipula o evento de seleção de arquivo.
+   * Atualiza o arquivo selecionado e o nome exibido.
+   * 
+   * @param event - Evento de mudança do input de arquivo
+   */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -381,10 +404,17 @@ export class ImportDialogComponent {
     }
   }
 
+  /**
+   * Cancela a importação e fecha o diálogo.
+   */
   onCancel(): void {
     this.dialogRef.close();
   }
 
+  /**
+   * Executa a importação do arquivo selecionado.
+   * Prepara o FormData e fecha o diálogo para processamento externo.
+   */
   onImport(): void {
     if (!this.selectedFile) return;
     

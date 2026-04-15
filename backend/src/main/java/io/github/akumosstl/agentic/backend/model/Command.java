@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidade que representa um Comando no sistema.
+ * 
+ * Um comando é uma instrução executável que pode ser associada a projetos.
+ * Possui information, namespace, caminho e o comando propriamente dito.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Command {
@@ -29,10 +38,7 @@ public class Command {
     
     @Column(length = 5000)
     private String command;
-    
-    @Column(nullable = false)
-    private String scope;
-    
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -56,12 +62,11 @@ public class Command {
     
     public Command() {}
     
-    public Command(String name, String namespace, String description, String command, String scope, String path) {
+    public Command(String name, String namespace, String description, String command, String path) {
         this.name = name;
         this.namespace = namespace;
         this.description = description;
         this.command = command;
-        this.scope = scope;
         this.path = path;
     }
     
@@ -85,9 +90,6 @@ public class Command {
     
     public String getCommand() { return command; }
     public void setCommand(String command) { this.command = command; }
-    
-    public String getScope() { return scope; }
-    public void setScope(String scope) { this.scope = scope; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -13,10 +13,22 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Instruction } from '../../services/api.service';
 import { SelectionModel } from '@angular/cdk/collections';
 
+/**
+ * Interface de dados para o diálogo de seleção de instruções.
+ * @property projectId - ID do projeto ao qual as instruções serão adicionadas.
+ */
 export interface SelectInstructionDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de instruções.
+ * Permite buscar e selecionar instruções para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla usando SelectionModel do CDK.
+ * 
+ * @componentName SelectInstructionDialog
+ * @selector app-select-instruction-dialog
+ */
 @Component({
   selector: 'app-select-instruction-dialog',
   standalone: true,
@@ -436,6 +448,10 @@ export class SelectInstructionDialogComponent {
   }
 
   loadInstructions(): void {
+    /**
+     * Carrega a lista de instruções do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     const searchOrList = this.searchTerm 
       ? this.apiService.searchInstructions(this.searchTerm, '', this.currentPage, this.pageSize)
@@ -457,27 +473,45 @@ export class SelectInstructionDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de instruções resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadInstructions();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de instruções.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadInstructions();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadInstructions();
   }
 
   toggleRow(row: Instruction): void {
+    /**
+     * Alterna a seleção de uma instrução específica.
+     * @param row - Instrução a ser selecionada ou desmarcada.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todas as instruções visíveis na tabela.
+     * Se todas estiverem selecionadas, desmarca todas.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -490,10 +524,18 @@ export class SelectInstructionDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todas as instruções visíveis estão selecionadas.
+     * @returns true se todas as instruções estão selecionadas.
+     */
     return this.instructions.length > 0 && this.instructions.every(instruction => this.selection.isSelected(instruction));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona as instruções selecionadas ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const instructionIds = this.selection.selected
         .filter(i => i.id)
@@ -513,6 +555,9 @@ export class SelectInstructionDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

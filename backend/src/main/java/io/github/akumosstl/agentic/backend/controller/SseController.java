@@ -11,6 +11,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 
+/**
+ * Controlador REST para Server-Sent Events (SSE).
+ * 
+ * Fornece endpoint para streaming em tempo real de eventos
+ * do pipeline para o cliente.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
@@ -27,6 +36,21 @@ public class SseController {
             emitter.send(SseEmitter.event()
                 .name("connected")
                 .data("{\"message\":\"Connected to pipeline " + pipelineId + "\"}"));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+        }
+        
+        return emitter;
+    }
+    
+    @GetMapping("/pipeline-runs/{runId}/stream")
+    public SseEmitter streamPipelineRun(@PathVariable Long runId) {
+        SseEmitter emitter = sseService.addRunEmitter(runId);
+        
+        try {
+            emitter.send(SseEmitter.event()
+                .name("connected")
+                .data("{\"message\":\"Connected to pipeline run " + runId + "\",\"runId\":" + runId + "}"));
         } catch (IOException e) {
             emitter.completeWithError(e);
         }

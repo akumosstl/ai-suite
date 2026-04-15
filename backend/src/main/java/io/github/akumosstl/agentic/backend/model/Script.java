@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidade que representa um Script no sistema.
+ * 
+ * Um script é um código executável que pode ser usado em etapas de pipeline.
+ * Pode ter escopo global ou específico de projeto.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Script {

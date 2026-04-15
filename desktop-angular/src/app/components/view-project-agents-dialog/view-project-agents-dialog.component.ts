@@ -54,7 +54,7 @@ export interface ViewProjectAgentsDialogData {
           <ng-container matColumnDef="category">
             <th mat-header-cell *matHeaderCellDef>Category</th>
             <td mat-cell *matCellDef="let agent">
-              <span class="category-badge">{{ agent.category }}</span>
+              <span class="category-badge">{{ agent.namespace }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="level">

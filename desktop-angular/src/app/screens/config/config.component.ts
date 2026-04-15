@@ -13,6 +13,14 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService, Target } from '../../services/api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
+/**
+ * Componente de configuração para gerenciamento de targets.
+ * Permite criar, editar, excluir e visualizar targets que definem
+ * os caminhos para diferentes recursos do projeto.
+ * 
+ * @componentName ConfigComponent
+ * @selector app-config
+ */
 @Component({
   selector: 'app-config',
   standalone: true,
@@ -634,6 +642,14 @@ export class ConfigComponent implements OnInit {
     this.loadTargets();
   }
 
+  /**
+   * Carrega todos os targets do servidor via API.
+   * Se não houver targets, cria um target padrão.
+   */
+  /**
+   * Carrega todos os targets do servidor via API.
+   * Se não houver targets, cria um target padrão.
+   */
   loadTargets(): void {
     this.apiService.getTargets().subscribe({
       next: (targets) => {
@@ -651,6 +667,14 @@ export class ConfigComponent implements OnInit {
     });
   }
 
+  /**
+   * Cria um target padrão com caminhos pré-definidos para recursos do projeto.
+   * Usado quando não existem targets cadastrados.
+   */
+  /**
+   * Cria um target padrão com caminhos pré-definidos para recursos do projeto.
+   * Usado quando não existem targets cadastrados.
+   */
   createDefaultTarget(): void {
     const defaultTarget: Target = {
       name: 'opencode',
@@ -670,16 +694,36 @@ export class ConfigComponent implements OnInit {
     });
   }
 
+  /**
+   * Navega para a tela inicial (menu).
+   */
+  /**
+   * Navega para a tela inicial (menu).
+   */
   goHome(): void {
     this.router.navigate(['/menu']);
   }
 
+  /**
+   * Exibe a lista de targets e reseta o estado de edição.
+   */
+  /**
+   * Exibe a lista de targets e reseta o estado de edição.
+   */
   showTargetList(): void {
     this.selectedMenu = 'target';
     this.viewMode = 'list';
     this.selectedTarget = null;
   }
 
+  /**
+   * Seleciona um target para edição e preenche o formulário.
+   * @param target - Target a ser editado
+   */
+  /**
+   * Seleciona um target para edição e preenche o formulário.
+   * @param target - Target a ser editado
+   */
   selectTargetToEdit(target: Target): void {
     this.selectedTarget = target;
     this.isEditing = true;
@@ -696,6 +740,12 @@ export class ConfigComponent implements OnInit {
     };
   }
 
+  /**
+   * Abre o formulário para criar um novo target.
+   */
+  /**
+   * Abre o formulário para criar um novo target.
+   */
   addNewTarget(): void {
     this.selectedTarget = null;
     this.isEditing = false;
@@ -712,6 +762,12 @@ export class ConfigComponent implements OnInit {
     };
   }
 
+  /**
+   * Fecha o formulário e limpa os dados.
+   */
+  /**
+   * Fecha o formulário e limpa os dados.
+   */
   closeForm(): void {
     this.viewMode = 'list';
     this.selectedTarget = null;
@@ -727,6 +783,16 @@ export class ConfigComponent implements OnInit {
     };
   }
 
+  /**
+   * Exibe um diálogo de confirmação e deleta o target se confirmado.
+   * @param target - Target a ser deletado
+   * @param event - Evento do clique para stopPropagation
+   */
+  /**
+   * Exibe um diálogo de confirmação e deleta o target se confirmado.
+   * @param target - Target a ser deletado
+   * @param event - Evento do clique para stopPropagation
+   */
   deleteTarget(target: Target, event: Event): void {
     event.stopPropagation();
     
@@ -759,12 +825,19 @@ export class ConfigComponent implements OnInit {
     });
   }
 
+  /**
+   * Deleta o target atualmente selecionado.
+   */
   cancelTarget(): void {
     if (this.selectedTarget?.id) {
       this.deleteTarget(this.selectedTarget, new Event('click'));
     }
   }
 
+  /**
+   * Salva o target (cria novo ou atualiza existente).
+   * Se estiver editando, atualiza o target existente; caso contrário, cria um novo.
+   */
   saveTarget(): void {
     const target: Target = {
       name: this.targetForm.name,

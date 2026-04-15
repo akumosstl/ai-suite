@@ -2,6 +2,15 @@ package io.github.akumosstl.agentic.backend.model;
 
 import jakarta.persistence.*;
 
+/**
+ * Entidade que representa um Evento no sistema.
+ * 
+ * Um evento pode modificar o estado do projeto durante a execução,
+ * alterando moral, progresso e orçamento. Armazena escolhas como JSON.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 public class Event {
     @Id

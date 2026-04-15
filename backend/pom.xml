@@ -13,7 +13,7 @@
     <artifactId>backend</artifactId>
     <packaging>jar</packaging>
 
-    <name>Systems Design: The Challenge - Backend</name>
+    <name>Agentic by akumosstl</name>
 
     <dependencies>
         <dependency>

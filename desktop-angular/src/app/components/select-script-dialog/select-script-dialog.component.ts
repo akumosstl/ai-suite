@@ -12,10 +12,22 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService, Script } from '../../services/api.service';
 
+/**
+ * Interface de dados para o diálogo de seleção de scripts.
+ * @property projectId - ID do projeto ao qual os scripts serão adicionados.
+ */
 export interface SelectScriptDialogData {
   projectId: number;
 }
 
+/**
+ * Componente de diálogo para seleção de scripts.
+ * Permite buscar e selecionar scripts para adicionar a um projeto.
+ * Suporta pesquisa paginada e seleção múltipla.
+ * 
+ * @componentName SelectScriptDialog
+ * @selector app-select-script-dialog
+ */
 @Component({
   selector: 'app-select-script-dialog',
   standalone: true,
@@ -494,6 +506,10 @@ export class SelectScriptDialogComponent {
   }
 
   loadScripts(): void {
+    /**
+     * Carrega a lista de scripts do backend.
+     * Utiliza pesquisa se houver termo de busca, caso contrário carrega todos.
+     */
     this.loading = true;
     if (this.searchTerm.trim()) {
       this.apiService.searchScripts(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({
@@ -533,27 +549,45 @@ export class SelectScriptDialogComponent {
   }
 
   search(): void {
+    /**
+     * Executa a pesquisa de scripts resetando para a primeira página.
+     */
     this.currentPage = 0;
     this.loadScripts();
   }
 
   clearSearch(): void {
+    /**
+     * Limpa o termo de pesquisa e recarrega a lista de scripts.
+     */
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadScripts();
   }
 
   onPageChange(event: PageEvent): void {
+    /**
+     * Manipula a mudança de página na paginação.
+     * @param event - Evento de mudança de página contendo índice e tamanho.
+     */
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadScripts();
   }
 
   toggleRow(row: Script): void {
+    /**
+     * Alterna a seleção de um script específico.
+     * @param row - Script a ser selecionado ou desmarcado.
+     */
     this.selection.toggle(row);
   }
 
   toggleAllRows(): void {
+    /**
+     * Alterna a seleção de todos os scripts visíveis na tabela.
+     * Se todos estiverem selecionados, desmarca todos.
+     */
     if (this.isAllSelected()) {
       this.selection.clear();
     } else {
@@ -566,10 +600,18 @@ export class SelectScriptDialogComponent {
   }
 
   isAllSelected(): boolean {
+    /**
+     * Verifica se todos os scripts visíveis estão selecionados.
+     * @returns true se todos os scripts estão selecionados.
+     */
     return this.scripts.length > 0 && this.scripts.every(script => this.selection.isSelected(script));
   }
 
   onSelect(): void {
+    /**
+     * Confirma a seleção e fecha o diálogo.
+     * Adiciona os scripts selecionados ao projeto via API.
+     */
     if (this.selection.selected.length > 0 && this.data.projectId) {
       const scriptIds = this.selection.selected
         .filter(s => s.id)
@@ -591,6 +633,9 @@ export class SelectScriptDialogComponent {
   }
 
   onCancel(): void {
+    /**
+     * Cancela a operação e fecha o diálogo sem selecionar nada.
+     */
     this.dialogRef.close();
   }
 }

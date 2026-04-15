@@ -13,10 +13,21 @@ import { ApiService, Project } from '../../services/api.service';
 import { Router } from '@angular/router';
 import { PipelineResultDialogComponent } from '../pipeline-result-dialog.component';
 
+/**
+ * Interface para dados de entrada do diálogo de abertura de projeto.
+ * Pode ser utilizada para passar parâmetros iniciais como termo de busca.
+ */
 export interface OpenProjectDialogData {
   // Could pass something like initial search term if needed
 }
 
+/**
+ * Componente de diálogo para abertura de projetos existentes.
+ * Permite listar, buscar, selecionar e excluir projetos.
+ * 
+ * @componentName OpenProjectDialogComponent
+ * @selector app-open-project-dialog
+ */
 @Component({
   selector: 'app-open-project-dialog',
   standalone: true,
@@ -430,6 +441,10 @@ export class OpenProjectDialogComponent {
     this.loadProjects();
   }
 
+  /**
+   * Carrega a lista de projetos do servidor.
+   * Utiliza busca por termo se searchTerm estiver definido, caso contrário carrega todos.
+   */
   loadProjects(): void {
     console.log('Loading projects...');
     this.loading = true;
@@ -460,6 +475,12 @@ export class OpenProjectDialogComponent {
     }
   }
 
+  /**
+   * Processa a resposta da API de projetos e atualiza o estado do componente.
+   * Extrai a lista de projetos e informações de paginação.
+   * 
+   * @param response - Resposta da API contendo projetos e metadados de paginação
+   */
   handleResponse(response: any): void {
     if (response && Array.isArray(response.projects)) {
       this.projects = response.projects;
@@ -475,27 +496,51 @@ export class OpenProjectDialogComponent {
     this.cdr.detectChanges();
   }
 
+  /**
+   * Executa a busca de projetos com o termo atual.
+   * Reinicia a paginação para a primeira página antes de buscar.
+   */
   search(): void {
     this.currentPage = 0;
     this.loadProjects();
   }
 
+  /**
+   * Limpa o termo de busca e recarrega todos os projetos.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.currentPage = 0;
     this.loadProjects();
   }
 
+  /**
+   * Manipula o evento de mudança de página do paginador.
+   * Atualiza a página atual e o tamanho da página, então recarrega os projetos.
+   * 
+   * @param event - Evento de mudança de página do Angular Material
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadProjects();
   }
 
+  /**
+   * Seleciona um projeto da lista.
+   * 
+   * @param project - Projeto a ser selecionado
+   */
   selectProject(project: Project): void {
     this.selectedProject = project;
   }
 
+  /**
+   * Abre um projeto ao dar duplo clique na linha.
+   *Fecha o diálogo e navega para a página do projeto.
+   * 
+   * @param project - Projeto a ser aberto
+   */
   onOpenProject(project: Project): void {
     this.selectedProject = project;
     this.cdr.detectChanges();
@@ -509,6 +554,10 @@ export class OpenProjectDialogComponent {
     });
   }
 
+  /**
+   * Abre o projeto selecionado no momento.
+   * Requer que um projeto esteja selecionado.
+   */
   onOpen(): void {
     if (this.selectedProject) {
       this.cdr.detectChanges();
@@ -523,10 +572,20 @@ export class OpenProjectDialogComponent {
     }
   }
 
+  /**
+   * Cancela a operação e fecha o diálogo.
+   */
   onCancel(): void {
     this.dialogRef.close();
   }
 
+  /**
+   * Exclui um projeto após confirmação do usuário.
+   * Abre um diálogo de confirmação antes de chamar a API de exclusão.
+   * 
+   * @param event - Evento do clique para impedir propagação
+   * @param project - Projeto a ser excluído
+   */
   onDeleteProject(event: Event, project: Project): void {
     event.stopPropagation();
     if (!project.id) {

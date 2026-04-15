@@ -10,6 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador REST para gerenciamento de Plugins.
+ * 
+ * Fornece endpoints para criar, listar, atualizar e excluir plugins.
+ * Suporta paginação, busca e filtragem por categoria.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/plugins")
 @CrossOrigin(origins = "*")

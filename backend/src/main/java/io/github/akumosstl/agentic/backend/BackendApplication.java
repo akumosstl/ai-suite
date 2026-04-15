@@ -16,6 +16,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.boot.SpringBootConfiguration;
 import io.github.akumosstl.agentic.backend.controller.ExitController;
 
+/**
+ * Classe principal da aplicação Spring Boot.
+ * 
+ * Inicializa o servidor backend, cria diretórios necessários
+ * e abre o navegador automaticamente após a inicialização.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @SpringBootApplication
 @SpringBootConfiguration
 public class BackendApplication {

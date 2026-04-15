@@ -8,16 +8,30 @@ import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../services/api.service';
 
+/**
+ * Interface para dados de entrada do diálogo de exportação.
+ * Contém o estado de carregamento da operação.
+ */
 export interface ExportDialogData {
   loading?: boolean;
 }
 
+/**
+ * Interface que representa um item selecionável para exportação.
+ */
 interface ExportItem {
   key: string;
   label: string;
   selected: boolean;
 }
 
+/**
+ * Componente de diálogo para exportação de dados do projeto.
+ * Permite selecionar quais tipos de dados exportar (agents, skills, etc.).
+ * 
+ * @componentName ExportDialogComponent
+ * @selector app-export-dialog
+ */
 @Component({
   selector: 'app-export-dialog',
   standalone: true,
@@ -229,14 +243,26 @@ export class ExportDialogComponent {
     }
   }
 
+  /**
+   * Verifica se pelo menos um item está selecionado para exportação.
+   * 
+   * @returns true se houver pelo menos uma seleção, false caso contrário
+   */
   hasSelection(): boolean {
     return this.exportItems.some(item => item.selected);
   }
 
+  /**
+   * Cancela a exportação e fecha o diálogo.
+   */
   onCancel(): void {
     this.dialogRef.close();
   }
 
+  /**
+   * Executa a exportação dos dados selecionados.
+   * Chama a API para gerar o arquivo e faz o download automático.
+   */
   onExport(): void {
     const selectedTypes = this.exportItems
       .filter(item => item.selected)

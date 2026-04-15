@@ -4,11 +4,22 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+/**
+ * Interface para dados de entrada do diálogo de confirmação.
+ * Define o título e a mensagem a serem exibidos.
+ */
 export interface ConfirmDialogData {
   title: string;
   message: string;
 }
 
+/**
+ * Componente de diálogo para confirmação de ações.
+ * Exibe um título, mensagem e botões de confirmar/cancelar.
+ * 
+ * @componentName ConfirmDialogComponent
+ * @selector app-confirm-dialog
+ */
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
@@ -131,10 +142,16 @@ export class ConfirmDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData
   ) {}
 
+  /**
+   * Cancela a ação e fecha o diálogo retornando false.
+   */
   onCancel(): void {
     this.dialogRef.close(false);
   }
 
+  /**
+   * Confirma a ação e fecha o diálogo retornando true.
+   */
   onConfirm(): void {
     this.dialogRef.close(true);
   }

@@ -4,22 +4,15 @@
             <mat-icon>play_circle</mat-icon>
             <span>{{ pipeline?.name || 'Running Pipeline' }}</span>
             <span class="step-progress"
-                *ngIf="pipelineSteps.length > 0 && !isPaused && currentStepIndex < pipelineSteps.length">
+                *ngIf="pipelineSteps.length > 0 && currentStepIndex < pipelineSteps.length">
                 Step {{ currentStepIndex + 1 }} of {{ pipelineSteps.length }}
             </span>
-            <span class="step-progress paused" *ngIf="pipelineSteps.length > 0 && isPaused">
-                Paused - Step {{ currentStepIndex + 1 }}
-            </span>
             <span class="step-progress"
-                *ngIf="pipelineSteps.length > 0 && !isPaused && currentStepIndex >= pipelineSteps.length">
+                *ngIf="pipelineSteps.length > 0 && currentStepIndex >= pipelineSteps.length">
                 Completed
             </span>
         </div>
         <div class="menu-actions">
-            <button class="action-btn continue-btn" (click)="continuePipeline()" title="Continue pipeline"
-                *ngIf="isPaused">
-                <mat-icon>play_arrow</mat-icon>
-            </button>
             <button class="action-btn" (click)="stopPipeline()" title="Stop pipeline"
                 [disabled]="isStopping || isPipelineFinished()">
                 <mat-icon>stop</mat-icon>
@@ -74,7 +67,8 @@
                             [class.running]="step.status === 'running'"
                             [class.pending]="step.status === 'pending' || !step.status"
                             [class.ready]="step.status === 'ready'"
-                            [class.failed]="step.status === 'failed'" [class.selected]="selectedStep?.id === step.id"
+                            [class.failed]="step.status === 'failed'"
+                            [class.selected]="selectedStep?.id === step.id"
                             (click)="selectStep(step)">
                             <div class="step-number">{{ i + 1 }}</div>
                             <div class="step-icon">
@@ -83,9 +77,9 @@
                             </div>
                             <div class="step-info">
                                 <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
-                                <span class="step-category" *ngIf="step.agent?.category">{{ step.agent?.category
+                                <span class="step-category" *ngIf="step.agent?.namespace">{{ step.agent?.namespace
                                     }}</span>
-                                <span class="step-namespace" *ngIf="step.script?.namespace">{{ step.script?.namespace
+                                <span class="step-category" *ngIf="step.script?.namespace">{{ step.script?.namespace
                                     }}</span>
                             </div>
                         </div>
@@ -124,6 +118,10 @@
                         (click)="openConsoleOutput(selectedStep)" title="View Console Output">
                         <mat-icon>terminal</mat-icon>
                         <span>Console Output</span>
+                    </button>
+                    <button class="io-action-btn copy-btn" (click)="copyOutput()" title="Copy to clipboard">
+                        <mat-icon>content_copy</mat-icon>
+                        <span>Copy</span>
                     </button>
                 </div>
             </div>

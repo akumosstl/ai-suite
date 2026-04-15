@@ -8,6 +8,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Componente de configuração que carrega dados iniciais de Targets.
+ * 
+ * Cria os targets padrão (opencode, copilot, claude) ao iniciar a aplicação
+ * caso não existam no banco de dados.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Component
 public class TargetSeedLoader {
 

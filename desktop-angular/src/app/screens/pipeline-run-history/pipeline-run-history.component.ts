@@ -7,6 +7,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
 
+/**
+ * Componente para visualização do histórico de execuções de pipelines.
+ * Exibe uma lista de execuções passadas e permite visualizar os detalhes de cada execução,
+ * incluindo os passos executados e seus respectivos dados de entrada e saída.
+ * 
+ * @component
+ * @componentName PipelineRunHistoryComponent
+ * @selector app-pipeline-run-history
+ */
 @Component({
   selector: 'app-pipeline-run-history',
   standalone: true,
@@ -99,7 +108,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                   </div>
                   <div class="step-info">
                     <span class="step-name">{{ step.agentName || step.scriptName || 'Unknown' }}</span>
-                    <span class="step-category">{{ step.agentCategory || step.scriptCategory || '' }}</span>
+                    <span class="step-category">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
                   </div>
                 </div>
                 <div class="step-connector" *ngIf="i < selectedRun.steps!.length - 1">
@@ -132,6 +141,9 @@ import { ProjectContextService } from '../../services/project-context.service';
               <div class="console-header">
                 <mat-icon>terminal</mat-icon>
                 <span>{{ showInput ? 'Input' : showOutput ? 'Output' : 'Console Output' }}</span>
+                <button class="copy-btn" (click)="copyOutput()" title="Copy to clipboard">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
               </div>
               <div class="console-content">
                 <pre *ngIf="showInput">{{ selectedStep.inputContent || 'No input' }}</pre>
@@ -711,8 +723,34 @@ import { ProjectContextService } from '../../services/project-context.service';
     .console-header span {
       font-size: 0.85rem;
       color: #888;
+      flex: 1;
     }
-    
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+    }
+
+    .copy-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
     .console-content {
       flex: 1;
       padding: 12px;
@@ -781,6 +819,10 @@ export class PipelineRunHistoryComponent implements OnInit {
     });
   }
   
+  /**
+   * Carrega as execuções do pipeline com paginação.
+   * @param page O número da página a ser carregada.
+   */
   loadRuns(page = 0) {
     if (!this.projectId) return;
 
@@ -803,6 +845,10 @@ export class PipelineRunHistoryComponent implements OnInit {
     });
   }
   
+  /**
+   * Navega para uma página específica do histórico.
+   * @param page O número da página.
+   */
   goToPage(page: number) {
     if (page >= 0 && page < this.totalPages) {
       this.selectedRun = null;
@@ -811,14 +857,24 @@ export class PipelineRunHistoryComponent implements OnInit {
     }
   }
   
+  /**
+   * Navega para a próxima página do histórico.
+   */
   nextPage() {
     this.goToPage(this.currentPage + 1);
   }
   
+  /**
+   * Navega para a página anterior do histórico.
+   */
   prevPage() {
     this.goToPage(this.currentPage - 1);
   }
   
+  /**
+   * Seleciona uma execução para visualização detalhada.
+   * @param run A execução do pipeline a ser selecionada.
+   */
   selectRun(run: PipelineRun) {
     this.selectedRun = run;
     this.selectedStep = null;
@@ -830,16 +886,28 @@ export class PipelineRunHistoryComponent implements OnInit {
     }
   }
   
+  /**
+   * Seleciona um passo para visualização detalhada.
+   * @param step O passo a ser selecionado.
+   */
   selectStep(step: PipelineRunStep) {
     this.selectedStep = step;
   }
   
+  /**
+   * Formata uma data para exibição no formato local.
+   * @param dateStr A string de data a ser formatada.
+   * @returns A data formatada como string.
+   */
   formatDate(dateStr?: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleString();
   }
   
+/**
+    * Navega de volta para a página do projeto.
+    */
   goBack() {
     if (this.projectId) {
       this.router.navigate(['/project', this.projectId], {
@@ -847,6 +915,18 @@ export class PipelineRunHistoryComponent implements OnInit {
       });
     } else {
       this.router.navigate(['/project']);
+    }
+  }
+
+  /**
+   * Copia o conteúdo do output para a área de transferência.
+   */
+  copyOutput() {
+    const content = this.showInput ? this.selectedStep?.inputContent : this.selectedStep?.outputContent;
+    if (content) {
+      navigator.clipboard.writeText(content).catch(err => {
+        console.error('Failed to copy:', err);
+      });
     }
   }
 }

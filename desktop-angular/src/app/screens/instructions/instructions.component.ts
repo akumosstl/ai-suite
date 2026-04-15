@@ -1,3 +1,10 @@
+/**
+ * Componente para gerenciamento de Instructions (Instruções).
+ * Permite criar, editar, listar, buscar e excluir instruções do sistema.
+ * 
+ * @Component InstructionsComponent
+ * selector: app-instructions
+ */
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -619,6 +626,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
@@ -628,6 +636,14 @@ import { ProjectContextService } from '../../services/project-context.service';
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
       opacity: 0.9;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     .prompt-field-container:hover {
@@ -932,10 +948,16 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Navega para a tela inicial (menu).
+   */
   goHome() {
     this.router.navigate(['/menu'])
   }
 
+  /**
+   * Alterna a visibilidade do painel lateral esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
@@ -950,6 +972,9 @@ export class InstructionsComponent implements OnInit {
     };
   }
 
+  /**
+   * Carrega a lista de namespaces disponíveis para instruções.
+   */
   loadNamespaces(): void {
     this.apiService.getInstructionNamespaces().subscribe({
       next: (namespaces) => {
@@ -967,6 +992,10 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Filtra os namespaces disponíveis com base no valor digitado no campo de namespace.
+   * @param value - Valor digitado pelo usuário para filtrar namespaces
+   */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
@@ -977,6 +1006,10 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Filtra os namespaces disponíveis para o campo de busca.
+   * @param value - Valor digitado pelo usuário para filtrar namespaces
+   */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
@@ -987,6 +1020,9 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Abre o diálogo para adicionar um novo arquivo à instrução.
+   */
   openAddFileDialog(): void {
     const dialogRef = this.dialog.open(AddInstructionFileDialogComponent, {
       width: '500px',
@@ -1008,6 +1044,10 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Remove um arquivo da lista de arquivos da instrução.
+   * @param index - Índice do arquivo a ser removido
+   */
   removeFile(index: number): void {
     this.ngZone.run(() => {
       this.formInstructionFiles.splice(index, 1);
@@ -1015,12 +1055,18 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Inicializa o componente carregando namespaces e instruções.
+   */
   ngOnInit(): void {
     console.log('InstructionsComponent ngOnInit');
     this.loadNamespaces();
     this.loadInstructions();
   }
 
+  /**
+   * Carrega a lista de instruções do servidor.
+   */
   loadInstructions(): void {
     console.log('Loading instructions...');
     this.loading = true;
@@ -1058,6 +1104,9 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Busca instruções pelo termo de busca e namespace.
+   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -1091,6 +1140,9 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Limpa os filtros de busca e recarrega a lista de instruções.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -1098,6 +1150,10 @@ export class InstructionsComponent implements OnInit {
     this.loadInstructions();
   }
 
+  /**
+   * Trata a mudança de página na paginação.
+   * @param event - Evento de mudança de página
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -1108,6 +1164,10 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Seleciona uma instrução e carrega seus dados no formulário.
+   * @param instruction - Instrução a ser selecionada
+   */
   selectInstruction(instruction: Instruction): void {
     this.cdr.markForCheck();
     this.selectedInstruction = { ...instruction };
@@ -1127,6 +1187,9 @@ export class InstructionsComponent implements OnInit {
     this.statusMessage = `Instruction selected: ${instruction.name}`;
   }
 
+  /**
+   * Salva a instrução (cria nova ou atualiza existente).
+   */
   saveInstruction(): void {
     if (!this.formInstruction.name) {
       this.statusMessage = 'Error: Name is required';
@@ -1188,6 +1251,9 @@ export class InstructionsComponent implements OnInit {
     }
   }
 
+  /**
+   * Exclui a instrução selecionada.
+   */
   deleteInstruction(): void {
     if (!this.selectedInstruction?.id) {
       this.statusMessage = 'No instruction selected to delete';
@@ -1213,6 +1279,11 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Exclui uma instrução diretamente da lista (sem necessidade de seleção).
+   * @param instruction - Instrução a ser excluída
+   * @param event - Evento do clique para stopPropagation
+   */
   deleteInstructionInline(instruction: Instruction, event: Event): void {
     event.stopPropagation();
     
@@ -1266,6 +1337,9 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
+  /**
+   * Limpa o formulário e reseta o estado.
+   */
   clearForm(): void {
     this.selectedInstruction = null;
     this.formInstruction = this.getEmptyInstruction();
@@ -1273,6 +1347,10 @@ export class InstructionsComponent implements OnInit {
     this.statusMessage = 'Form cleared - ready for new instruction';
   }
 
+  /**
+   * Retorna a classe CSS para estilização da mensagem de status.
+   * @returns Classe CSS based message status type
+   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -1280,6 +1358,11 @@ export class InstructionsComponent implements OnInit {
     return 'info';
   }
 
+  /**
+   * Gera uma prévia do conteúdo das instruções para display no campo de preview.
+   * @param prompt - Conteúdo completo das instruções
+   * @returns Prévia truncada das instruções
+   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -1287,6 +1370,9 @@ export class InstructionsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
+  /**
+   * Abre o editor modal para edição das instruções.
+   */
   openInstructionsEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',

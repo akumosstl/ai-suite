@@ -10,12 +10,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Serviço para gerenciamento de Pipelines.
+ * 
+ * Realiza operações de CRUD, execução de pipelines e gerenciamento deRunDirs.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Service
 public class PipelineService {
     
@@ -70,12 +79,7 @@ public class PipelineService {
     public List<Pipeline> getPipelinesByProjectAndStatus(Long projectId, String status) {
         return pipelineRepository.findByProject_IdAndStatus(projectId, status);
     }
-    
-    public long countPipelinesByProject(Long projectId) {
-        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
-        return pipelineRepository.findByProject_IdOrderByCreatedAtDesc(projectId, pageable).getTotalElements();
-    }
-    
+
     public List<Pipeline> getAllPipelines() {
         return pipelineRepository.findAll();
     }
@@ -87,28 +91,45 @@ public class PipelineService {
     private SseService sseService;
     
     public void runPipeline(Long pipelineId) {
-        Pipeline pipeline = getPipelineById(pipelineId);
+        PipelineRun run = pipelineRunService.createRun(pipelineId);
+        runPipelineDirect(pipelineId, run.getId());
+    }
+    
+    public void runPipelineDirect(Long pipelineId, Long runId) {
+        Long actualPipelineId = pipelineRunService.getPipelineIdByRunId(runId);
+        System.out.println("DEBUG: runPipelineDirect - runId=" + runId + ", received pipelineId=" + pipelineId + ", actual pipelineId=" + actualPipelineId);
+        
+        final Long finalPipelineId = !pipelineId.equals(actualPipelineId) ? actualPipelineId : pipelineId;
+        
+Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
+                .orElseThrow(() -> new RuntimeException("Pipeline not found with id: " + finalPipelineId));
+        
+        String projectPath = null;
+        Long projectIdVal = null;
+        if (pipeline.getProject() != null) {
+            projectIdVal = pipeline.getProject().getId();
+            projectPath = pipeline.getProject().getPath();
+        }
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            String userHome = System.getProperty("user.home");
+            projectPath = userHome + File.separator + ".agentic";
+        }
+        
+        final Long projectIdFinal = projectIdVal;
+        final String workingDir = projectPath;
+        final String pipelineNameStr = pipeline.getName() != null ? pipeline.getName().replaceAll("\\s+", "") : "pipeline";
+        
         pipeline.setStatus("running");
         pipelineRepository.save(pipeline);
         
-        PipelineRun run = pipelineRunService.createRun(pipelineId);
-        
-        Project project = pipeline.getProject();
-        String workingDir = project.getPath();
-        
-        if (workingDir == null || workingDir.isEmpty()) {
-            String userHome = System.getProperty("user.home");
-            workingDir = userHome + File.separator + ".agentic";
-        }
-        
-        String pipelinesBaseDir = workingDir + File.separator + ".agentic" + File.separator + "pipelines";
+        String pipelinesBaseDir = projectPath + File.separator + ".agentic" + File.separator + "pipelines";
         File pipelinesDir = new File(pipelinesBaseDir);
         if (!pipelinesDir.exists()) {
             pipelinesDir.mkdirs();
         }
         
-        String pipelineName = pipeline.getName() != null ? pipeline.getName().replaceAll("\\s+", "") : "pipeline";
-        String pipelineDirPath = pipelinesBaseDir + File.separator + pipelineName;
+        String pipelineDirPath = pipelinesBaseDir + File.separator + pipelineNameStr;
         File pipelineDir = new File(pipelineDirPath);
         if (!pipelineDir.exists()) {
             pipelineDir.mkdirs();
@@ -124,37 +145,40 @@ public class PipelineService {
         
         String outputExtension = pipeline.getOutputExtension() != null ? pipeline.getOutputExtension() : "txt";
         
-        final String workDir = workingDir;
         final String runDirFinal = runDirPath;
-        
-        final Long runId = run.getId();
+        final Long finalRunId = runId;
+        final Long finalPipelineIdUsed = finalPipelineId;
         
         System.out.println("DEBUG: Pipeline run directory: " + runDirPath);
         
         new Thread(() -> {
             try {
-                pipelineStepService.executePipeline(pipelineId, workDir, runDirFinal, outputExtension);
+                pipelineStepService.executePipeline(finalPipelineIdUsed, finalRunId, workingDir, runDirFinal, outputExtension);
                 
-                Pipeline p = getPipelineById(pipelineId);
+                Pipeline p = getPipelineById(finalPipelineIdUsed);
                 if (!p.getStatus().equals("stopped")) {
                     p.setStatus("completed");
                     pipelineRepository.save(p);
-                    pipelineRunService.completeRun(runId, "completed");
-                    sseService.sendPipelineComplete(pipelineId, "completed");
+                    pipelineRunService.completeRun(finalRunId, "completed");
+                    sseService.sendPipelineComplete(finalPipelineIdUsed, "completed");
+                    sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "completed");
                 } else {
-                    pipelineRunService.completeRun(runId, "stopped");
-                    sseService.sendPipelineComplete(pipelineId, "stopped");
+                    pipelineRunService.completeRun(finalRunId, "stopped");
+                    sseService.sendPipelineComplete(finalPipelineIdUsed, "stopped");
+                    sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "stopped");
                 }
             } catch (Exception e) {
-                Pipeline p = getPipelineById(pipelineId);
+                Pipeline p = getPipelineById(finalPipelineIdUsed);
                 if (!p.getStatus().equals("stopped")) {
                     p.setStatus("failed");
                     pipelineRepository.save(p);
-                    pipelineRunService.completeRun(runId, "failed");
-                    sseService.sendPipelineComplete(pipelineId, "failed");
+                    pipelineRunService.completeRun(finalRunId, "failed");
+                    sseService.sendPipelineComplete(finalPipelineIdUsed, "failed");
+                    sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "failed");
                 } else {
-                    pipelineRunService.completeRun(runId, "stopped");
-                    sseService.sendPipelineComplete(pipelineId, "stopped");
+                    pipelineRunService.completeRun(finalRunId, "stopped");
+                    sseService.sendPipelineComplete(finalPipelineIdUsed, "stopped");
+                    sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "stopped");
                 }
             }
         }).start();

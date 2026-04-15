@@ -10,6 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador REST para gerenciamento de Comandos.
+ * 
+ * Fornece endpoints para criar, listar, atualizar e excluir comandos.
+ * Suporta paginação, busca e filtragem por categoria e escopo.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/commands")
 @CrossOrigin(origins = "*")
@@ -68,12 +77,7 @@ public class CommandController {
     public List<Command> getCommandsByCategory(@PathVariable String category) {
         return commandService.getCommandsByCategory(category);
     }
-    
-    @GetMapping("/scope/{scope}")
-    public List<Command> getCommandsByScope(@PathVariable String scope) {
-        return commandService.getCommandsByScope(scope);
-    }
-    
+
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchCommands(
             @RequestParam(required = false) String term,

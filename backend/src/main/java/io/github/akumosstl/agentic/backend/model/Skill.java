@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidade que representa uma Habilidade (Skill) no sistema.
+ * 
+ * Uma skill é uma coleção de instruções e arquivos que definem
+ * capacidades que podem ser atribuídas a agentes ou projetos.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Skill {
@@ -20,6 +29,7 @@ public class Skill {
     @Column(nullable = false)
     private String namespace;
     
+    /** Categoria da skill */
     private String category;
     
     private String path;

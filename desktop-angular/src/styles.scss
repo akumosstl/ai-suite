@@ -192,3 +192,9 @@ body {
     max-height: none;
   }
 }
+
+.custom-dialog {
+  .mat-mdc-dialog-surface {
+    overflow: hidden !important;
+  }
+}

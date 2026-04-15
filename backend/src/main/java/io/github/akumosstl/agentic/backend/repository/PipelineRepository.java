@@ -8,6 +8,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repositório JPA para a entidade Pipeline.
+ * 
+ * Fornece métodos de acesso ao banco de dados para a entidade Pipeline,
+ * incluindo buscas por projeto e status.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Repository
 public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
     

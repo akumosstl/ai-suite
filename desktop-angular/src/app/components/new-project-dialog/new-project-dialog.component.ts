@@ -11,6 +11,13 @@ import { Router } from '@angular/router';
 import { ApiService, Project, Target } from '../../services/api.service';
 import { PathInfoDialogComponent } from '../path-info-dialog/path-info-dialog.component';
 
+/**
+ * Componente de diálogo para criação de um novo projeto.
+ * Permite ao usuário definir nome, descrição, localização e target do projeto.
+ * 
+ * @componentName NewProjectDialogComponent
+ * @selector app-new-project-dialog
+ */
 @Component({
   selector: 'app-new-project-dialog',
   standalone: true,
@@ -271,6 +278,10 @@ export class NewProjectDialogComponent implements OnInit {
     this.loadTargets();
   }
 
+  /**
+   * Carrega a lista de targets disponíveis do servidor.
+   * Define o primeiro target como padrão ao carregar.
+   */
   loadTargets(): void {
     this.apiService.getTargets().subscribe({
       next: (targets) => {
@@ -285,6 +296,10 @@ export class NewProjectDialogComponent implements OnInit {
     });
   }
 
+  /**
+   * Abre o diálogo de informações sobre caminhos de arquivo.
+   * Explica a limitação de segurança dos navegadores quanto ao acesso ao sistema de arquivos.
+   */
   showPathInfo(): void {
     this.dialog.open(PathInfoDialogComponent, {
       data: {
@@ -295,10 +310,17 @@ export class NewProjectDialogComponent implements OnInit {
     });
   }
 
+  /**
+   * Cancela a operação e fecha o diálogo sem criar o projeto.
+   */
   onCancel(): void {
     this.dialogRef.close();
   }
 
+  /**
+   * Salva o novo projeto e navega para a página do projeto.
+   * Requer que o nome do projeto esteja preenchido.
+   */
   onSave(): void {
     if (this.project.name) {
       this.dialogRef.close(this.project);

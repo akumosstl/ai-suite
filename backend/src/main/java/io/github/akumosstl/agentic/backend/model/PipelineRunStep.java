@@ -5,6 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidade que representa uma etapa executada dentro de um PipelineRun.
+ * 
+ * Armazena os dados de execução de uma etapa específica, incluindo
+ * entrada, saída, agente/script utilizado e status.
+ * 
+ * @author Sistema Agentic
+ * @version 1.0
+ */
 @Entity
 @Table(name = "pipeline_run_step")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -24,14 +33,14 @@ public class PipelineRunStep {
     @Column(name = "agent_name")
     private String agentName;
     
-    @Column(name = "agent_category")
-    private String agentCategory;
+    @Column(name = "agent_namespace")
+    private String agentNamespace;
     
     @Column(name = "script_name")
     private String scriptName;
     
-    @Column(name = "script_category")
-    private String scriptCategory;
+    @Column(name = "script_namespace")
+    private String scriptNamespace;
     
     @Column(name = "status")
     private String status;
@@ -83,14 +92,14 @@ public class PipelineRunStep {
     public String getAgentName() { return agentName; }
     public void setAgentName(String agentName) { this.agentName = agentName; }
     
-    public String getAgentCategory() { return agentCategory; }
-    public void setAgentCategory(String agentCategory) { this.agentCategory = agentCategory; }
+    public String getAgentNamespace() { return agentNamespace; }
+    public void setAgentNamespace(String agentNamespace) { this.agentNamespace = agentNamespace; }
     
     public String getScriptName() { return scriptName; }
     public void setScriptName(String scriptName) { this.scriptName = scriptName; }
     
-    public String getScriptCategory() { return scriptCategory; }
-    public void setScriptCategory(String scriptCategory) { this.scriptCategory = scriptCategory; }
+    public String getScriptNamespace() { return scriptNamespace; }
+    public void setScriptNamespace(String scriptNamespace) { this.scriptNamespace = scriptNamespace; }
     
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -112,4 +121,7 @@ public class PipelineRunStep {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public String getAgentCategory() { return agentNamespace; }
+    public String getScriptCategory() { return scriptNamespace; }
 }

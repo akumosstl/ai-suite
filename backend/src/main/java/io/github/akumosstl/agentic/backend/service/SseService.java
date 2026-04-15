@@ -13,6 +13,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SseService {
     
     private final Map<Long, List<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    private final Map<Long, List<SseEmitter>> runEmitters = new ConcurrentHashMap<>();
+    private final Map<Long, Long> pipelineToRunMap = new ConcurrentHashMap<>();
     
     public SseEmitter addEmitter(Long pipelineId) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -25,6 +27,24 @@ public class SseService {
         return emitter;
     }
     
+    public SseEmitter addRunEmitter(Long runId) {
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        runEmitters.computeIfAbsent(runId, k -> new CopyOnWriteArrayList<>()).add(emitter);
+        
+        emitter.onCompletion(() -> removeRunEmitter(runId, emitter));
+        emitter.onTimeout(() -> removeRunEmitter(runId, emitter));
+        emitter.onError(e -> removeRunEmitter(runId, emitter));
+        
+        return emitter;
+    }
+    
+    private void removeRunEmitter(Long runId, SseEmitter emitter) {
+        List<SseEmitter> list = runEmitters.get(runId);
+        if (list != null) {
+            list.remove(emitter);
+        }
+    }
+    
     private void removeEmitter(Long pipelineId, SseEmitter emitter) {
         List<SseEmitter> list = emitters.get(pipelineId);
         if (list != null) {
@@ -33,6 +53,39 @@ public class SseService {
     }
     
     public void sendStepOutput(Long pipelineId, Long stepId, Integer stepOrder, String output, String status) {
+        sendStepOutputToPipeline(pipelineId, stepId, stepOrder, output, status);
+    }
+    
+    public void sendStepOutputToRun(Long runId, Long pipelineId, Long stepId, Integer stepOrder, String output, String status) {
+        List<SseEmitter> list = runEmitters.get(runId);
+        if (list == null) return;
+        
+        long timestamp = System.currentTimeMillis();
+        
+        StringBuilder data = new StringBuilder();
+        data.append("{\"runId\":").append(runId);
+        data.append(",\"pipelineId\":").append(pipelineId);
+        data.append(",\"stepId\":").append(stepId);
+        if (stepOrder != null) {
+            data.append(",\"stepOrder\":").append(stepOrder);
+        }
+        data.append(",\"output\":\"").append(escapeJson(output)).append("\"");
+        data.append(",\"status\":\"").append(status).append("\"");
+        data.append(",\"timestamp\":").append(timestamp).append("}");
+        
+        for (SseEmitter emitter : list) {
+            try {
+                System.out.println(data.toString());
+                emitter.send(SseEmitter.event()
+                    .name("step-output")
+                    .data(data.toString()));
+            } catch (IOException e) {
+                removeRunEmitter(runId, emitter);
+            }
+        }
+    }
+    
+    private void sendStepOutputToPipeline(Long pipelineId, Long stepId, Integer stepOrder, String output, String status) {
         List<SseEmitter> list = emitters.get(pipelineId);
         if (list == null) return;
         
@@ -60,6 +113,26 @@ public class SseService {
     }
     
     public void sendPipelineComplete(Long pipelineId, String status) {
+        sendPipelineCompleteToPipeline(pipelineId, status);
+    }
+    
+    public void sendPipelineCompleteToRun(Long runId, Long pipelineId, String status) {
+        List<SseEmitter> list = runEmitters.get(runId);
+        if (list == null) return;
+        
+        for (SseEmitter emitter : list) {
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("pipeline-complete")
+                    .data("{\"runId\":" + runId + ",\"pipelineId\":" + pipelineId + ",\"status\":\"" + status + "\"}"));
+            } catch (IOException e) {
+                removeRunEmitter(runId, emitter);
+            }
+        }
+        runEmitters.remove(runId);
+    }
+    
+    private void sendPipelineCompleteToPipeline(Long pipelineId, String status) {
         List<SseEmitter> list = emitters.get(pipelineId);
         if (list == null) return;
         
@@ -75,22 +148,37 @@ public class SseService {
         emitters.remove(pipelineId);
     }
     
-    public void sendPipelinePaused(Long pipelineId, int completedStepOrder, int nextStepOrder) {
-        List<SseEmitter> list = emitters.get(pipelineId);
+    public void sendStepError(Long pipelineId, Long stepId, String error, String stackTrace) {
+        sendStepErrorToPipeline(pipelineId, stepId, error, stackTrace);
+    }
+    
+    public void sendStepErrorToRun(Long runId, Long pipelineId, Long stepId, String error, String stackTrace) {
+        List<SseEmitter> list = runEmitters.get(runId);
         if (list == null) return;
+        
+        StringBuilder data = new StringBuilder();
+        data.append("{\"runId\":").append(runId);
+        data.append(",\"pipelineId\":").append(pipelineId);
+        data.append(",\"stepId\":").append(stepId);
+        data.append(",\"error\":\"").append(escapeJson(error)).append("\"");
+        if (stackTrace != null && !stackTrace.isEmpty()) {
+            data.append(",\"stackTrace\":\"").append(escapeJson(stackTrace)).append("\"");
+        }
+        data.append("}");
         
         for (SseEmitter emitter : list) {
             try {
+                System.out.println(data.toString());
                 emitter.send(SseEmitter.event()
-                    .name("pipeline-paused")
-                    .data("{\"completedStepOrder\":" + completedStepOrder + ",\"nextStepOrder\":" + nextStepOrder + "}"));
+                    .name("step-error")
+                    .data(data.toString()));
             } catch (IOException e) {
-                removeEmitter(pipelineId, emitter);
+                removeRunEmitter(runId, emitter);
             }
         }
     }
     
-    public void sendStepError(Long pipelineId, Long stepId, String error, String stackTrace) {
+    private void sendStepErrorToPipeline(Long pipelineId, Long stepId, String error, String stackTrace) {
         List<SseEmitter> list = emitters.get(pipelineId);
         if (list == null) return;
         

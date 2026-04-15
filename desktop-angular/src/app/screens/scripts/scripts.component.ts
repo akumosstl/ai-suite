@@ -19,6 +19,15 @@ import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 
+/**
+ * Componente de Gerenciamento de Scripts.
+ * Permite criar, editar, buscar e excluir scripts do sistema.
+ * Fornece interface para visualização de lista paginada e formulário de detalhes.
+ * 
+ * @component
+ * @name ScriptsComponent
+ * @selector app-scripts
+ */
 @Component({
   selector: 'app-scripts',
   standalone: true,
@@ -581,6 +590,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     ::ng-deep .prompt-field-container .mat-form-field {
@@ -590,6 +600,14 @@ import { ProjectContextService } from '../../services/project-context.service';
 
     ::ng-deep .prompt-field-container .mat-form-field:hover {
       opacity: 0.9;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field .mat-mdc-text-field-wrapper {
+      height: 54px !important;
+    }
+
+    ::ng-deep .prompt-field-container .mat-form-field input {
+      height: 20px !important;
     }
 
     .prompt-field-container:hover {
@@ -759,6 +777,15 @@ import { ProjectContextService } from '../../services/project-context.service';
     }
   `]
 })
+/**
+ * Tela de gerenciamento de scripts customizados.
+ * Permite visualizar, criar e editar scripts do sistema.
+ *
+ * @author Seu Nome
+ * @since 2024
+ * @component
+ * @description Componente de tela para operações com scripts customizados.
+ */
 export class ScriptsComponent implements OnInit {
   scripts: Script[] = [];
   selectedScript: Script | null = null;
@@ -785,6 +812,10 @@ export class ScriptsComponent implements OnInit {
     private projectContext: ProjectContextService
   ) {}
 
+  /**
+   * Retorna um objeto Script vazio com valores padrão.
+   * @returns Objeto Script com propriedades vazias
+   */
   private getEmptyScript(): Script {
     return {
       name: '',
@@ -796,6 +827,9 @@ export class ScriptsComponent implements OnInit {
     };
   }
 
+  /**
+   * Carrega a lista de namespaces de scripts disponíveis.
+   */
   loadNamespaces(): void {
     this.apiService.getScriptNamespaces().subscribe({
       next: (namespaces) => {
@@ -813,6 +847,10 @@ export class ScriptsComponent implements OnInit {
     });
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
+   * @param value - Valor digitado pelo usuário
+   */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
@@ -823,6 +861,10 @@ export class ScriptsComponent implements OnInit {
     }
   }
 
+  /**
+   * Filtra namespaces disponíveis no autocomplete de busca.
+   * @param value - Valor digitado pelo usuário
+   */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
@@ -833,16 +875,25 @@ export class ScriptsComponent implements OnInit {
     }
   }
 
+  /**
+   * Inicializa o componente carregando namespaces e lista de scripts.
+   */
   ngOnInit(): void {
     console.log('ScriptsComponent ngOnInit');
     this.loadNamespaces();
     this.loadScripts();
   }
 
+  /**
+   * Alterna a visibilidade do painel lateral esquerdo.
+   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  /**
+   * Carrega a lista de scripts do backend com paginação.
+   */
   loadScripts(): void {
     console.log('Loading scripts...');
     this.loading = true;
@@ -880,6 +931,9 @@ export class ScriptsComponent implements OnInit {
     });
   }
 
+  /**
+   * Busca scripts por nome e/ou namespace.
+   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -913,6 +967,9 @@ export class ScriptsComponent implements OnInit {
     }
   }
 
+  /**
+   * Limpa os filtros de busca e recarrega a lista completa de scripts.
+   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -920,6 +977,10 @@ export class ScriptsComponent implements OnInit {
     this.loadScripts();
   }
 
+  /**
+   * Manipula mudança de página no componente de paginação.
+   * @param event - Evento de mudança de página
+   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -930,6 +991,10 @@ export class ScriptsComponent implements OnInit {
     }
   }
 
+  /**
+   * Seleciona um script da lista e preenche o formulário com seus dados.
+   * @param script - Script selecionado
+   */
   selectScript(script: Script): void {
     this.cdr.markForCheck();
     this.selectedScript = { ...script };
@@ -937,6 +1002,9 @@ export class ScriptsComponent implements OnInit {
     this.statusMessage = `Script selected: ${script.name}`;
   }
 
+  /**
+   * Salva (cria ou atualiza) um script no backend.
+   */
   saveScript(): void {
     if (!this.formScript.name) {
       this.statusMessage = 'Error: Name is required';
@@ -982,6 +1050,9 @@ export class ScriptsComponent implements OnInit {
     }
   }
 
+  /**
+   * Exclui o script atualmente selecionado.
+   */
   deleteScript(): void {
     if (!this.selectedScript?.id) {
       this.statusMessage = 'No script selected to delete';
@@ -1007,6 +1078,11 @@ export class ScriptsComponent implements OnInit {
     });
   }
 
+  /**
+   * Exclui um script da lista (modo inline com confirmação).
+   * @param script - Script a ser excluído
+   * @param event - Evento do clique para stopPropagation
+   */
   deleteScriptInline(script: Script, event: Event): void {
     event.stopPropagation();
     
@@ -1060,12 +1136,19 @@ export class ScriptsComponent implements OnInit {
     });
   }
 
+  /**
+   * Limpa o formulário, resetando para um novo script vazio.
+   */
   clearForm(): void {
     this.selectedScript = null;
     this.formScript = this.getEmptyScript();
     this.statusMessage = 'Form cleared - ready for new script';
   }
 
+  /**
+   * Retorna a classe CSS para estilização da mensagem de status.
+   * @returns Classe CSS ('success', 'error' ou 'info')
+   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -1073,6 +1156,11 @@ export class ScriptsComponent implements OnInit {
     return 'info';
   }
 
+  /**
+   * Gera uma prévia do conteúdo com até 15 palavras.
+   * @param prompt - Texto completo do conteúdo
+   * @returns Preview truncado
+   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -1080,6 +1168,9 @@ export class ScriptsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
+  /**
+   * Abre o editor de conteúdo em um modal para edição do script.
+   */
   openContentEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',

@@ -96,39 +96,16 @@ class PipelineExecutionTest {
 
         testPipeline.setType("step_by_step");
         assertEquals("step_by_step", testPipeline.getType());
-    }
-
-    @Test
-    void testPauseResumeMechanism() {
-        Long pipelineId = 1L;
-
-        pipelineStepService.pausePipeline(pipelineId);
-        assertTrue(pipelineStepService.isPipelinePaused(pipelineId));
-
-        pipelineStepService.resumePipeline(pipelineId);
-        assertFalse(pipelineStepService.isPipelinePaused(pipelineId));
-    }
-
-    @Test
+}
+    
+@Test
     void testStopPipeline() {
         Long pipelineId = 1L;
-
-        pipelineStepService.pausePipeline(pipelineId);
-        assertTrue(pipelineStepService.isPipelinePaused(pipelineId));
-
+        
         pipelineStepService.stopPipelineExecution(pipelineId);
         assertTrue(pipelineStepService.isPipelineStopped(pipelineId));
     }
-
-    @Test
-    void testPendingStepOrderTracking() {
-        Long pipelineId = 1L;
-        int stepOrder = 3;
-
-        pipelineStepService.setPendingStepOrder(pipelineId, stepOrder);
-        assertEquals(stepOrder, pipelineStepService.getPendingStepOrder(pipelineId));
-    }
-
+    
     @Test
     void testPipelineLock() {
         Long pipelineId = 1L;
@@ -147,7 +124,6 @@ class PipelineExecutionTest {
         assertNotNull(emitter);
 
         sseService.sendStepOutput(pipelineId, 1L, 1, "Test output", "running");
-        sseService.sendPipelinePaused(pipelineId, 1, 2);
         sseService.sendPipelineComplete(pipelineId, "completed");
     }
 
