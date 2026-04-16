@@ -940,9 +940,6 @@ export class CommandsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.commands.length > 0 && !this.selectedCommand) {
-            this.selectCommand(this.commands[0]);
-          }
         });
       },
       error: (err) => {
@@ -1151,7 +1148,7 @@ export class CommandsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir comando. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir comando. Tente novamente.'
                 }
               });
             });

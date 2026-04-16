@@ -1,6 +1,10 @@
 package io.github.akumosstl.agentic.backend.service;
 
+import io.github.akumosstl.agentic.backend.model.Project;
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +20,12 @@ public class ScriptService {
 
     @Autowired
     private ScriptRepository scriptRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private PipelineStepRepository pipelineStepRepository;
 
     public List<Script> getRecentScripts(int page, int size) {
         return scriptRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending())).getContent();
@@ -45,6 +55,24 @@ public class ScriptService {
     }
 
     public void deleteScript(Long id) {
+        Script script = getScriptById(id);
+
+        // Check if script has project relations
+        List<Project> projectsWithScript = projectRepository.findAll();
+        for (Project project : projectsWithScript) {
+            if (project.getScripts().contains(script)) {
+                throw new RuntimeException("Cannot delete script because it is associated with project: " + project.getName());
+            }
+        }
+
+        // Check if script has pipeline relations
+        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByScript_Id(id);
+        if (!pipelineSteps.isEmpty()) {
+            PipelineStep step = pipelineSteps.get(0);
+            String pipelineName = step.getPipeline() != null ? step.getPipeline().getName() : "Unknown";
+            throw new RuntimeException("Cannot delete script because it is associated with pipeline: " + pipelineName);
+        }
+
         scriptRepository.deleteById(id);
     }
 

@@ -931,6 +931,7 @@ export class PluginsComponent implements OnInit {
   filteredSearchNamespaces: string[] = [];
   formPlugin: Plugin = this.getEmptyPlugin();
   formPluginFiles: PluginFile[] = [];
+  originalPluginFiles: PluginFile[] = [];
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -1062,10 +1063,17 @@ export class PluginsComponent implements OnInit {
    * @param index - Índice do arquivo a remover
    */
   removeFile(index: number): void {
+    const fileToRemove = this.formPluginFiles[index];
     this.ngZone.run(() => {
       this.formPluginFiles.splice(index, 1);
       this.cdr.detectChanges();
     });
+    if (fileToRemove?.id) {
+      this.apiService.deletePluginFile(fileToRemove.id).subscribe({
+        next: () => console.log('File deleted from backend:', fileToRemove.id),
+        error: (err) => console.error('Error deleting file:', err)
+      });
+    }
   }
 
   /**
@@ -1101,9 +1109,6 @@ export class PluginsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.plugins.length > 0 && !this.selectedPlugin) {
-            this.selectPlugin(this.plugins[0]);
-          }
         });
       },
       error: (err) => {
@@ -1186,11 +1191,15 @@ export class PluginsComponent implements OnInit {
     this.selectedPlugin = { ...plugin };
     this.formPlugin = { ...plugin };
     this.formPluginFiles = [];
+    this.originalPluginFiles = [];
     if (plugin.id) {
+      console.log('Loading files for plugin:', plugin.id);
       this.apiService.getPluginFiles(plugin.id).subscribe({
         next: (files) => {
+          console.log('Loaded files:', files);
           this.ngZone.run(() => {
             this.formPluginFiles = files;
+            this.originalPluginFiles = files;
             this.cdr.detectChanges();
           });
         },
@@ -1209,23 +1218,62 @@ export class PluginsComponent implements OnInit {
       return;
     }
 
-    const saveFiles = (pluginId: number) => {
-      if (this.formPluginFiles.length > 0) {
-        const filePromises = this.formPluginFiles.map(file => 
-          new Promise<void>((resolve) => {
-            this.apiService.addPluginFile(pluginId, file.path, file.fileName, file.content).subscribe({
-              next: () => resolve(),
-              error: () => resolve()
+    const syncPluginFiles = (pluginId: number, isNew: boolean) => {
+      const currentIds = this.formPluginFiles.filter(f => f.id).map(f => f.id);
+      
+      const filesToDelete = this.originalPluginFiles.filter(f => f.id && !currentIds.includes(f.id));
+      const filesToAdd = this.formPluginFiles.filter(f => !f.id);
+
+      console.log('Sync files - Original:', this.originalPluginFiles);
+      console.log('Sync files - Current:', this.formPluginFiles);
+      console.log('Sync files - To delete:', filesToDelete);
+      console.log('Sync files - To add:', filesToAdd);
+
+      const deletePromises = filesToDelete.map(file => 
+        new Promise<void>((resolve) => {
+          if (file.id) {
+            console.log('Deleting file:', file.id, file.fileName);
+            this.apiService.deletePluginFile(file.id).subscribe({
+              next: () => { console.log('Deleted file:', file.id); resolve(); },
+              error: (err) => { console.error('Error deleting file:', err); resolve(); }
             });
-          })
-        );
-        Promise.all(filePromises).then(() => {
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      const addPromises = filesToAdd.map(file => 
+        new Promise<void>((resolve) => {
+          this.apiService.addPluginFile(pluginId, file.path, file.fileName, file.content).subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        })
+      );
+
+      Promise.all([...deletePromises, ...addPromises]).then(() => {
+        this.originalPluginFiles = [];
+        if (isNew) {
           this.formPluginFiles = [];
-          setTimeout(() => this.loadPlugins(), 0);
-        });
-      } else {
-        setTimeout(() => this.loadPlugins(), 0);
-      }
+          this.loadPlugins();
+        } else {
+          loadPluginFiles(pluginId);
+        }
+      });
+    };
+
+    const loadPluginFiles = (pluginId: number) => {
+      this.apiService.getPluginFiles(pluginId).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formPluginFiles = files;
+            this.originalPluginFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error reloading plugin files:', err)
+      });
     };
 
     if (this.formPlugin.id) {
@@ -1234,7 +1282,7 @@ export class PluginsComponent implements OnInit {
           this.ngZone.run(() => {
             this.statusMessage = `Plugin '${updated.name}' updated successfully`;
             this.selectedPlugin = { ...updated };
-            saveFiles(updated.id!);
+            syncPluginFiles(updated.id!, false);
           });
         },
         error: (err) => {
@@ -1251,7 +1299,7 @@ export class PluginsComponent implements OnInit {
             this.selectedPlugin = { ...created };
             this.formPlugin = { ...created };
             if (created.id) {
-              saveFiles(created.id);
+              syncPluginFiles(created.id, true);
             }
           });
         },
@@ -1340,7 +1388,7 @@ export class PluginsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir plugin. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir plugin. Tente novamente.'
                 }
               });
             });
@@ -1357,6 +1405,7 @@ export class PluginsComponent implements OnInit {
     this.selectedPlugin = null;
     this.formPlugin = this.getEmptyPlugin();
     this.formPluginFiles = [];
+    this.originalPluginFiles = [];
     this.statusMessage = 'Form cleared - ready for new plugin';
   }
 

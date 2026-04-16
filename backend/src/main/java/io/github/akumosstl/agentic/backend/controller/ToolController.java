@@ -65,12 +65,18 @@ public class ToolController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteTool(@PathVariable Long id) {
-        toolService.deleteTool(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Tool deleted successfully");
-        
-        return ResponseEntity.ok(response);
+        try {
+            toolService.deleteTool(id);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Tool deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping("/category/{category}")

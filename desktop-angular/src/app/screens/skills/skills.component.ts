@@ -936,6 +936,7 @@ export class SkillsComponent implements OnInit {
   filteredSearchNamespaces: string[] = [];
   formSkill: Skill = this.getEmptySkill();
   formSkillFiles: SkillFile[] = [];
+  originalSkillFiles: SkillFile[] = [];
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -1067,10 +1068,17 @@ export class SkillsComponent implements OnInit {
    * @param index - Índice do arquivo a ser removido
    */
   removeFile(index: number): void {
+    const fileToRemove = this.formSkillFiles[index];
     this.ngZone.run(() => {
       this.formSkillFiles.splice(index, 1);
       this.cdr.detectChanges();
     });
+    if (fileToRemove?.id) {
+      this.apiService.deleteSkillFile(fileToRemove.id).subscribe({
+        next: () => console.log('File deleted from backend:', fileToRemove.id),
+        error: (err) => console.error('Error deleting file:', err)
+      });
+    }
   }
 
   /**
@@ -1107,9 +1115,6 @@ export class SkillsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.skills.length > 0 && !this.selectedSkill) {
-            this.selectSkill(this.skills[0]);
-          }
         });
       },
       error: (err) => {
@@ -1191,6 +1196,22 @@ export class SkillsComponent implements OnInit {
     this.cdr.markForCheck();
     this.selectedSkill = { ...skill };
     this.formSkill = { ...skill };
+    this.formSkillFiles = [];
+    this.originalSkillFiles = [];
+    if (skill.id) {
+      console.log('Loading files for skill:', skill.id);
+      this.apiService.getSkillFiles(skill.id).subscribe({
+        next: (files) => {
+          console.log('Loaded files:', files);
+          this.ngZone.run(() => {
+            this.formSkillFiles = files;
+            this.originalSkillFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error loading skill files:', err)
+      });
+    }
     this.statusMessage = `Skill selected: ${skill.name}`;
   }
 
@@ -1203,33 +1224,72 @@ export class SkillsComponent implements OnInit {
       return;
     }
 
-    const saveFiles = (skillId: number) => {
-      if (this.formSkillFiles.length > 0) {
-        const filePromises = this.formSkillFiles.map(file => 
-          new Promise<void>((resolve) => {
-            this.apiService.addSkillFile(skillId, file.path, file.fileName, file.content).subscribe({
-              next: () => resolve(),
-              error: () => resolve()
+    const syncSkillFiles = (skillId: number, isNew: boolean) => {
+      const originalIds = this.originalSkillFiles.filter(f => f.id).map(f => f.id);
+      const currentIds = this.formSkillFiles.filter(f => f.id).map(f => f.id);
+      
+      const filesToDelete = this.originalSkillFiles.filter(f => f.id && !currentIds.includes(f.id));
+      const filesToAdd = this.formSkillFiles.filter(f => !f.id);
+
+      console.log('Sync files - Original:', this.originalSkillFiles);
+      console.log('Sync files - Current:', this.formSkillFiles);
+      console.log('Sync files - To delete:', filesToDelete);
+      console.log('Sync files - To add:', filesToAdd);
+
+      const deletePromises = filesToDelete.map(file => 
+        new Promise<void>((resolve) => {
+          if (file.id) {
+            console.log('Deleting file:', file.id, file.fileName);
+            this.apiService.deleteSkillFile(file.id).subscribe({
+              next: () => { console.log('Deleted file:', file.id); resolve(); },
+              error: (err) => { console.error('Error deleting file:', err); resolve(); }
             });
-          })
-        );
-        Promise.all(filePromises).then(() => {
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      const addPromises = filesToAdd.map(file => 
+        new Promise<void>((resolve) => {
+          this.apiService.addSkillFile(skillId, file.path, file.fileName, file.content).subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        })
+      );
+
+      Promise.all([...deletePromises, ...addPromises]).then(() => {
+        this.originalSkillFiles = [];
+        if (isNew) {
           this.formSkillFiles = [];
-          setTimeout(() => this.loadSkills(), 0);
-        });
-      } else {
-        setTimeout(() => this.loadSkills(), 0);
-      }
+          this.loadSkills();
+        } else {
+          loadSkillFiles(skillId);
+        }
+      });
+    };
+
+    const loadSkillFiles = (skillId: number) => {
+      this.apiService.getSkillFiles(skillId).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formSkillFiles = files;
+            this.originalSkillFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error reloading skill files:', err)
+      });
     };
 
     if (this.formSkill.id) {
-      // Update existing skill
       this.apiService.updateSkill(this.formSkill.id, this.formSkill).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Skill '${updated.name}' updated successfully`;
             this.selectedSkill = { ...updated };
-            saveFiles(updated.id!);
+            syncSkillFiles(updated.id!, false);
           });
         },
         error: (err) => {
@@ -1239,15 +1299,14 @@ export class SkillsComponent implements OnInit {
         }
       });
     } else {
-      // Create new skill
       this.apiService.createSkill(this.formSkill).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
             this.statusMessage = `Skill '${created.name}' created successfully`;
             this.selectedSkill = { ...created };
             this.formSkill = { ...created };
-            if (created.id) {
-              saveFiles(created.id);
+              if (created.id) {
+              syncSkillFiles(created.id, true);
             }
           });
         },
@@ -1336,7 +1395,7 @@ export class SkillsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir skill. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir skill. Tente novamente.'
                 }
               });
             });
@@ -1353,6 +1412,7 @@ export class SkillsComponent implements OnInit {
     this.selectedSkill = null;
     this.formSkill = this.getEmptySkill();
     this.formSkillFiles = [];
+    this.originalSkillFiles = [];
     this.statusMessage = 'Form cleared - ready for new skill';
   }
 

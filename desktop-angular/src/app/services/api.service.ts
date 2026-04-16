@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 /**
@@ -193,7 +193,7 @@ export interface Template {
   name: string;
   description?: string;
   template?: string;
-  type: string; // "agents", "skills", "commands", "scripts"
+  type: string; // "agents", "skills", "commands", "scripts", "instructions", "plugins", "tools"
   createdAt?: string;
   updatedAt?: string;
 }
@@ -209,6 +209,7 @@ export interface SkillFile {
   fileName: string;
   content: string;
   skillId?: number;
+  isDeleted?: boolean;
 }
 
 /**
@@ -237,6 +238,7 @@ export interface InstructionFile {
   fileName: string;
   content: string;
   instructionId?: number;
+  isDeleted?: boolean;
 }
 
 /**
@@ -265,6 +267,7 @@ export interface PluginFile {
   fileName: string;
   content: string;
   pluginId?: number;
+  isDeleted?: boolean;
 }
 
 /**
@@ -293,6 +296,7 @@ export interface ToolFile {
   fileName: string;
   content: string;
   toolId?: number;
+  isDeleted?: boolean;
 }
 
 /**
@@ -1370,8 +1374,12 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
 
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-      return of(result as T);
+      console.error(`${operation} failed:`, error);
+      const errorMessage = error.error?.error || error.error?.message || error.message || 'Unknown error';
+      const customError = new Error(errorMessage);
+      (customError as any).status = error.status;
+      (customError as any).error = errorMessage;
+      return throwError(() => customError);
     };
   }
 

@@ -1,6 +1,8 @@
 package io.github.akumosstl.agentic.backend.service;
 
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Tool;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.ToolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +19,12 @@ public class ToolService {
     @Autowired
     private ToolRepository toolRepository;
     
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private ToolFileService toolFileService;
+
     public List<Tool> getRecentTools(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Tool> toolPage = toolRepository.findAll(pageable);
@@ -40,6 +48,7 @@ public class ToolService {
         Tool tool = getToolById(id);
         tool.setName(toolDetails.getName());
         tool.setNamespace(toolDetails.getNamespace());
+        tool.setCategory(toolDetails.getCategory());
         tool.setPath(toolDetails.getPath());
         tool.setDescription(toolDetails.getDescription());
         tool.setInstructions(toolDetails.getInstructions());
@@ -48,6 +57,18 @@ public class ToolService {
     
     public void deleteTool(Long id) {
         Tool tool = getToolById(id);
+
+        // Check if tool has project relations
+        List<Project> projectsWithTool = projectRepository.findAll();
+        for (Project project : projectsWithTool) {
+            if (project.getTools().contains(tool)) {
+                throw new RuntimeException("Cannot delete tool because it is associated with project: " + project.getName());
+            }
+        }
+
+        // Delete all associated files
+        toolFileService.deleteFilesByToolId(id);
+
         toolRepository.deleteById(id);
     }
     

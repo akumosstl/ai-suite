@@ -18,6 +18,8 @@ public interface PipelineStepRepository extends JpaRepository<PipelineStep, Long
     
     List<PipelineStep> findByAgent_Id(Long agentId);
     
+    List<PipelineStep> findByScript_Id(Long scriptId);
+
     void deleteByPipeline_Id(Long pipelineId);
     
     long countByPipeline_Id(Long pipelineId);

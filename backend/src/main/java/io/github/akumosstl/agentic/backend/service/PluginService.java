@@ -1,7 +1,9 @@
 package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Plugin;
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.PluginRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +19,12 @@ public class PluginService {
     @Autowired
     private PluginRepository pluginRepository;
     
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private PluginFileService pluginFileService;
+
     public List<Plugin> getRecentPlugins(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Plugin> pluginPage = pluginRepository.findAll(pageable);
@@ -40,6 +48,7 @@ public class PluginService {
         Plugin plugin = getPluginById(id);
         plugin.setName(pluginDetails.getName());
         plugin.setNamespace(pluginDetails.getNamespace());
+        plugin.setCategory(pluginDetails.getCategory());
         plugin.setPath(pluginDetails.getPath());
         plugin.setDescription(pluginDetails.getDescription());
         plugin.setInstructions(pluginDetails.getInstructions());
@@ -48,6 +57,18 @@ public class PluginService {
     
     public void deletePlugin(Long id) {
         Plugin plugin = getPluginById(id);
+
+        // Check if plugin has project relations
+        List<Project> projectsWithPlugin = projectRepository.findAll();
+        for (Project project : projectsWithPlugin) {
+            if (project.getPlugins().contains(plugin)) {
+                throw new RuntimeException("Cannot delete plugin because it is associated with project: " + project.getName());
+            }
+        }
+
+        // Delete all associated files
+        pluginFileService.deleteFilesByPluginId(id);
+
         pluginRepository.deleteById(id);
     }
     

@@ -1,8 +1,11 @@
 package io.github.akumosstl.agentic.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entidade que representa uma Ferramenta (Tool) no sistema.
@@ -41,6 +44,10 @@ public class Tool {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @ManyToMany(mappedBy = "tools")
+    @JsonIgnore
+    private List<Project> projects = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -89,4 +96,7 @@ public class Tool {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public List<Project> getProjects() { return projects; }
+    public void setProjects(List<Project> projects) { this.projects = projects; }
 }

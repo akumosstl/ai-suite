@@ -915,6 +915,7 @@ export class ToolsComponent implements OnInit {
   filteredSearchNamespaces: string[] = [];
   formTool: Tool = this.getEmptyTool();
   formToolFiles: ToolFile[] = [];
+  originalToolFiles: ToolFile[] = [];
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -1018,10 +1019,17 @@ export class ToolsComponent implements OnInit {
   }
 
   removeFile(index: number): void {
+    const fileToRemove = this.formToolFiles[index];
     this.ngZone.run(() => {
       this.formToolFiles.splice(index, 1);
       this.cdr.detectChanges();
     });
+    if (fileToRemove?.id) {
+      this.apiService.deleteToolFile(fileToRemove.id).subscribe({
+        next: () => console.log('File deleted from backend:', fileToRemove.id),
+        error: (err) => console.error('Error deleting file:', err)
+      });
+    }
   }
 
   ngOnInit(): void {
@@ -1051,9 +1059,6 @@ export class ToolsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.tools.length > 0 && !this.selectedTool) {
-            this.selectTool(this.tools[0]);
-          }
         });
       },
       error: (err) => {
@@ -1122,11 +1127,15 @@ export class ToolsComponent implements OnInit {
     this.selectedTool = { ...tool };
     this.formTool = { ...tool };
     this.formToolFiles = [];
+    this.originalToolFiles = [];
     if (tool.id) {
+      console.log('Loading files for tool:', tool.id);
       this.apiService.getToolFiles(tool.id).subscribe({
         next: (files) => {
+          console.log('Loaded files:', files);
           this.ngZone.run(() => {
             this.formToolFiles = files;
+            this.originalToolFiles = files;
             this.cdr.detectChanges();
           });
         },
@@ -1142,23 +1151,62 @@ export class ToolsComponent implements OnInit {
       return;
     }
 
-    const saveFiles = (toolId: number) => {
-      if (this.formToolFiles.length > 0) {
-        const filePromises = this.formToolFiles.map(file => 
-          new Promise<void>((resolve) => {
-            this.apiService.addToolFile(toolId, file.path, file.fileName, file.content).subscribe({
-              next: () => resolve(),
-              error: () => resolve()
+    const syncToolFiles = (toolId: number, isNew: boolean) => {
+      const currentIds = this.formToolFiles.filter(f => f.id).map(f => f.id);
+      
+      const filesToDelete = this.originalToolFiles.filter(f => f.id && !currentIds.includes(f.id));
+      const filesToAdd = this.formToolFiles.filter(f => !f.id);
+
+      console.log('Sync files - Original:', this.originalToolFiles);
+      console.log('Sync files - Current:', this.formToolFiles);
+      console.log('Sync files - To delete:', filesToDelete);
+      console.log('Sync files - To add:', filesToAdd);
+
+      const deletePromises = filesToDelete.map(file => 
+        new Promise<void>((resolve) => {
+          if (file.id) {
+            console.log('Deleting file:', file.id, file.fileName);
+            this.apiService.deleteToolFile(file.id).subscribe({
+              next: () => { console.log('Deleted file:', file.id); resolve(); },
+              error: (err) => { console.error('Error deleting file:', err); resolve(); }
             });
-          })
-        );
-        Promise.all(filePromises).then(() => {
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      const addPromises = filesToAdd.map(file => 
+        new Promise<void>((resolve) => {
+          this.apiService.addToolFile(toolId, file.path, file.fileName, file.content).subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        })
+      );
+
+      Promise.all([...deletePromises, ...addPromises]).then(() => {
+        this.originalToolFiles = [];
+        if (isNew) {
           this.formToolFiles = [];
-          setTimeout(() => this.loadTools(), 0);
-        });
-      } else {
-        setTimeout(() => this.loadTools(), 0);
-      }
+          this.loadTools();
+        } else {
+          loadToolFiles(toolId);
+        }
+      });
+    };
+
+    const loadToolFiles = (toolId: number) => {
+      this.apiService.getToolFiles(toolId).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formToolFiles = files;
+            this.originalToolFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error reloading tool files:', err)
+      });
     };
 
     if (this.formTool.id) {
@@ -1167,7 +1215,7 @@ export class ToolsComponent implements OnInit {
           this.ngZone.run(() => {
             this.statusMessage = `Tool '${updated.name}' updated successfully`;
             this.selectedTool = { ...updated };
-            saveFiles(updated.id!);
+            syncToolFiles(updated.id!, false);
           });
         },
         error: (err) => {
@@ -1184,7 +1232,7 @@ export class ToolsComponent implements OnInit {
             this.selectedTool = { ...created };
             this.formTool = { ...created };
             if (created.id) {
-              saveFiles(created.id);
+              syncToolFiles(created.id, true);
             }
           });
         },
@@ -1265,7 +1313,7 @@ export class ToolsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir tool. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir tool. Tente novamente.'
                 }
               });
             });
@@ -1279,6 +1327,7 @@ export class ToolsComponent implements OnInit {
     this.selectedTool = null;
     this.formTool = this.getEmptyTool();
     this.formToolFiles = [];
+    this.originalToolFiles = [];
     this.statusMessage = 'Form cleared - ready for new tool';
   }
 

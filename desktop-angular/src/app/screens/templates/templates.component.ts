@@ -172,7 +172,7 @@ import { ApiService, Template } from '../../services/api.service';
             </mat-form-field>
             
             <div class="button-row">
-              <button class="btn btn-primary" (click)="saveTemplate()" [disabled]="!formTemplate.name || !selectedType">
+              <button class="btn btn-primary" (click)="saveTemplate()" [disabled]="!formTemplate.name || !formTemplate.template || !selectedType">
                 <mat-icon>save</mat-icon>
                 {{ formTemplate.id ? 'Update Template' : 'Create Template' }}
               </button>
@@ -180,11 +180,6 @@ import { ApiService, Template } from '../../services/api.service';
                 <mat-icon>refresh</mat-icon>
                 Clear Form
               </button>
-            </div>
-            
-            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-              {{ statusMessage }}
             </div>
           </div>
         </div>
@@ -764,6 +759,7 @@ export class TemplatesComponent implements OnInit {
     this.formTemplate.type = type;
     this.selectedTemplate = null;
     this.currentPage = 0;
+    this.clearForm();
     this.loadTemplates();
   }
 
@@ -796,7 +792,12 @@ export class TemplatesComponent implements OnInit {
       error: (err) => {
         this.ngZone.run(() => {
           console.error('API error:', err);
-          this.statusMessage = 'Error loading templates: ' + err.message;
+          this.dialog.open(PipelineResultDialogComponent, {
+            data: {
+              success: false,
+              message: 'Error loading templates: ' + err.message
+            }
+          });
           this.loading = false;
           this.cdr.detectChanges();
         });
@@ -826,7 +827,12 @@ export class TemplatesComponent implements OnInit {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.statusMessage = 'Error searching templates: ' + err.message;
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: false,
+                message: 'Error searching templates: ' + err.message
+              }
+            });
             this.loading = false;
             this.cdr.detectChanges();
           });
@@ -857,12 +863,13 @@ export class TemplatesComponent implements OnInit {
     this.cdr.markForCheck();
     this.selectedTemplate = { ...template };
     this.formTemplate = { ...template };
-    this.statusMessage = `Template selected: ${template.name}`;
   }
 
   saveTemplate(): void {
     if (!this.formTemplate.name) {
-      this.statusMessage = 'Error: Name is required';
+      this.dialog.open(PipelineResultDialogComponent, {
+        data: { success: false, message: 'Error: Name is required' }
+      });
       return;
     }
 
@@ -870,33 +877,72 @@ export class TemplatesComponent implements OnInit {
       this.apiService.updateTemplate(this.formTemplate.id, this.formTemplate).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
-            this.statusMessage = `Template '${updated.name}' updated successfully`;
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: { success: true, message: `Template '${updated.name}' updated successfully` }
+            });
             this.selectedTemplate = { ...updated };
             this.cdr.detectChanges();
-            setTimeout(() => this.loadTemplates(), 0);
+            this.loadTemplates();
           });
         },
         error: (err) => {
+          console.error('Update template error:', err);
+          const errorMessage = err.error?.message || err.error?.error || err.message || 'Unknown error';
           this.ngZone.run(() => {
-            this.statusMessage = 'Error: ' + err.message;
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: { success: false, message: 'Error updating template: ' + errorMessage }
+            });
             this.cdr.detectChanges();
           });
         }
       });
     } else {
-      this.apiService.createTemplate(this.formTemplate).subscribe({
+      // Validate required fields
+      if (!this.formTemplate.name.trim()) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: { success: false, message: 'Error: Template name is required' }
+        });
+        return;
+      }
+      if (!this.formTemplate.template || !this.formTemplate.template.trim()) {
+        this.dialog.open(PipelineResultDialogComponent, {
+          data: { success: false, message: 'Error: Template content is required' }
+        });
+        return;
+      }
+
+      // Create a clean template object without id for creation
+      const templateToCreate: any = {
+        name: this.formTemplate.name.trim(),
+        template: this.formTemplate.template.trim(),
+        type: this.formTemplate.type
+      };
+      
+      // Only include description if it has content
+      if (this.formTemplate.description && this.formTemplate.description.trim()) {
+        templateToCreate.description = this.formTemplate.description.trim();
+      }
+      
+      console.log('Creating template with data:', templateToCreate);
+      this.apiService.createTemplate(templateToCreate).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
-            this.statusMessage = `Template '${created.name}' created successfully`;
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: { success: true, message: `Template '${created.name}' created successfully` }
+            });
             this.selectedTemplate = { ...created };
             this.formTemplate = { ...created };
             this.cdr.detectChanges();
-            setTimeout(() => this.loadTemplates(), 0);
+            this.loadTemplates();
           });
         },
         error: (err) => {
+          console.error('Create template error:', err);
+          const errorMessage = err.error?.message || err.error?.error || err.message || 'Unknown error';
           this.ngZone.run(() => {
-            this.statusMessage = 'Error: ' + err.message;
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: { success: false, message: 'Error creating template: ' + errorMessage }
+            });
             this.cdr.detectChanges();
           });
         }
@@ -906,7 +952,9 @@ export class TemplatesComponent implements OnInit {
 
   deleteTemplate(): void {
     if (!this.selectedTemplate?.id) {
-      this.statusMessage = 'No template selected to delete';
+      this.dialog.open(PipelineResultDialogComponent, {
+        data: { success: false, message: 'No template selected to delete' }
+      });
       return;
     }
     const id = this.selectedTemplate.id;
@@ -916,13 +964,16 @@ export class TemplatesComponent implements OnInit {
         this.ngZone.run(() => {
           this.statusMessage = `Template '${name}' deleted successfully`;
           this.selectedTemplate = null;
+          this.clearForm();
           this.cdr.detectChanges();
-          setTimeout(() => this.loadTemplates(), 0);
+          this.loadTemplates();
         });
       },
       error: (err) => {
         this.ngZone.run(() => {
-          this.statusMessage = 'Error: ' + err.message;
+          this.dialog.open(PipelineResultDialogComponent, {
+            data: { success: false, message: 'Error: ' + err.message }
+          });
           this.cdr.detectChanges();
         });
       }
@@ -952,19 +1003,10 @@ export class TemplatesComponent implements OnInit {
         this.apiService.deleteTemplate(templateId).subscribe({
           next: () => {
             this.ngZone.run(() => {
-              this.dialog.open(PipelineResultDialogComponent, {
-                data: {
-                  success: true,
-                  message: `Template "${templateName}" excluído com sucesso!`
-                }
-              }).afterClosed().subscribe(() => {
-                setTimeout(() => {
-                  if (this.selectedTemplate?.id === templateId) {
-                    this.selectedTemplate = null;
-                  }
-                  this.loadTemplates();
-                }, 0);
-              });
+              this.selectedTemplate = null;
+              this.clearForm();
+              this.loadTemplates();
+              this.cdr.detectChanges();
             });
           },
           error: (err) => {
@@ -985,7 +1027,6 @@ export class TemplatesComponent implements OnInit {
   clearForm(): void {
     this.selectedTemplate = null;
     this.formTemplate = this.getEmptyTemplate();
-    this.statusMessage = 'Form cleared - ready for new template';
   }
 
   getStatusClass(): string {

@@ -1,9 +1,12 @@
 package io.github.akumosstl.agentic.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entidade que representa uma Instrução no sistema.
@@ -42,6 +45,10 @@ public class Instruction {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @ManyToMany(mappedBy = "instructions")
+    @JsonIgnore
+    private List<Project> projects = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -90,4 +97,7 @@ public class Instruction {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public List<Project> getProjects() { return projects; }
+    public void setProjects(List<Project> projects) { this.projects = projects; }
 }

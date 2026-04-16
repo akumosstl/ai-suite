@@ -915,9 +915,6 @@ export class ScriptsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.scripts.length > 0 && !this.selectedScript) {
-            this.selectScript(this.scripts[0]);
-          }
         });
       },
       error: (err) => {
@@ -1126,7 +1123,7 @@ export class ScriptsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir script. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir script. Tente novamente.'
                 }
               });
             });

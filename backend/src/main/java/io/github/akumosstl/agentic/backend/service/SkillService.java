@@ -15,13 +15,16 @@ import java.util.List;
 
 @Service
 public class SkillService {
-    
+     
     @Autowired
     private SkillRepository skillRepository;
     
     @Autowired
     private ProjectRepository projectRepository;
     
+    @Autowired
+    private SkillFileService skillFileService;
+
     public List<Skill> getRecentSkills(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Skill> skillPage = skillRepository.findAll(pageable);
@@ -45,6 +48,7 @@ public class SkillService {
         Skill skill = getSkillById(id);
         skill.setName(skillDetails.getName());
         skill.setNamespace(skillDetails.getNamespace());
+        skill.setCategory(skillDetails.getCategory());
         skill.setPath(skillDetails.getPath());
         skill.setDescription(skillDetails.getDescription());
         skill.setInstructions(skillDetails.getInstructions());
@@ -53,13 +57,17 @@ public class SkillService {
     
     public void deleteSkill(Long id) {
         Skill skill = getSkillById(id);
-        List<Project> projects = projectRepository.findAll();
-        for (Project project : projects) {
+
+        // Check if skill has project relations FIRST - before any deletion
+        List<Project> projectsWithSkill = projectRepository.findAll();
+        for (Project project : projectsWithSkill) {
             if (project.getSkills().contains(skill)) {
-                project.getSkills().remove(skill);
-                projectRepository.save(project);
+                throw new RuntimeException("Cannot delete skill because it is associated with project: " + project.getName());
             }
         }
+
+        // Only delete files and skill if no associations exist
+        skillFileService.deleteFilesBySkillId(id);
         skillRepository.deleteById(id);
     }
     

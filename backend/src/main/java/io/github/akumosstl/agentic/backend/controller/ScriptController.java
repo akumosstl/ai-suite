@@ -60,12 +60,18 @@ public class ScriptController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteScript(@PathVariable Long id) {
-        scriptService.deleteScript(id);
+        try {
+            scriptService.deleteScript(id);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Script deleted successfully");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Script deleted successfully");
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @GetMapping("/search")

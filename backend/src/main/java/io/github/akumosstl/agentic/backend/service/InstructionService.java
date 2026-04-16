@@ -1,7 +1,9 @@
 package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Instruction;
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.InstructionRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +19,12 @@ public class InstructionService {
     @Autowired
     private InstructionRepository instructionRepository;
     
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private InstructionFileService instructionFileService;
+
     public List<Instruction> getRecentInstructions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Instruction> instructionPage = instructionRepository.findAll(pageable);
@@ -40,6 +48,7 @@ public class InstructionService {
         Instruction instruction = getInstructionById(id);
         instruction.setName(instructionDetails.getName());
         instruction.setNamespace(instructionDetails.getNamespace());
+        instruction.setCategory(instructionDetails.getCategory());
         instruction.setPath(instructionDetails.getPath());
         instruction.setDescription(instructionDetails.getDescription());
         instruction.setInstructions(instructionDetails.getInstructions());
@@ -48,6 +57,18 @@ public class InstructionService {
     
     public void deleteInstruction(Long id) {
         Instruction instruction = getInstructionById(id);
+
+        // Check if instruction has project relations
+        List<Project> projectsWithInstruction = projectRepository.findAll();
+        for (Project project : projectsWithInstruction) {
+            if (project.getInstructions().contains(instruction)) {
+                throw new RuntimeException("Cannot delete instruction because it is associated with project: " + project.getName());
+            }
+        }
+
+        // Delete all associated files
+        instructionFileService.deleteFilesByInstructionId(id);
+
         instructionRepository.deleteById(id);
     }
     

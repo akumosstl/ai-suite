@@ -148,7 +148,7 @@ export interface PromptEditorResult {
       align-items: center;
       justify-content: center;
     }
-    
+
     .full-width {
       width: 100%;
     }

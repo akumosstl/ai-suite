@@ -97,16 +97,22 @@ public class AgentController {
      * Exclui um agente.
      * 
      * @param id ID do agente
-     * @return Response com mensagem de sucesso
+     * @return Response com mensagem de sucesso ou erro
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteAgent(@PathVariable Long id) {
-        agentService.deleteAgent(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Agent deleted successfully");
-        
-        return ResponseEntity.ok(response);
+        try {
+            agentService.deleteAgent(id);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Agent deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     /**

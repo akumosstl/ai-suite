@@ -922,6 +922,7 @@ export class InstructionsComponent implements OnInit {
   filteredSearchNamespaces: string[] = [];
   formInstruction: Instruction = this.getEmptyInstruction();
   formInstructionFiles: InstructionFile[] = [];
+  originalInstructionFiles: InstructionFile[] = [];
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -1049,10 +1050,17 @@ export class InstructionsComponent implements OnInit {
    * @param index - Índice do arquivo a ser removido
    */
   removeFile(index: number): void {
+    const fileToRemove = this.formInstructionFiles[index];
     this.ngZone.run(() => {
       this.formInstructionFiles.splice(index, 1);
       this.cdr.detectChanges();
     });
+    if (fileToRemove?.id) {
+      this.apiService.deleteInstructionFile(fileToRemove.id).subscribe({
+        next: () => console.log('File deleted from backend:', fileToRemove.id),
+        error: (err) => console.error('Error deleting file:', err)
+      });
+    }
   }
 
   /**
@@ -1088,9 +1096,6 @@ export class InstructionsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.instructions.length > 0 && !this.selectedInstruction) {
-            this.selectInstruction(this.instructions[0]);
-          }
         });
       },
       error: (err) => {
@@ -1173,11 +1178,15 @@ export class InstructionsComponent implements OnInit {
     this.selectedInstruction = { ...instruction };
     this.formInstruction = { ...instruction };
     this.formInstructionFiles = [];
+    this.originalInstructionFiles = [];
     if (instruction.id) {
+      console.log('Loading files for instruction:', instruction.id);
       this.apiService.getInstructionFiles(instruction.id).subscribe({
         next: (files) => {
+          console.log('Loaded files:', files);
           this.ngZone.run(() => {
             this.formInstructionFiles = files;
+            this.originalInstructionFiles = files;
             this.cdr.detectChanges();
           });
         },
@@ -1196,23 +1205,63 @@ export class InstructionsComponent implements OnInit {
       return;
     }
 
-    const saveFiles = (instructionId: number) => {
-      if (this.formInstructionFiles.length > 0) {
-        const filePromises = this.formInstructionFiles.map(file => 
-          new Promise<void>((resolve) => {
-            this.apiService.addInstructionFile(instructionId, file.path, file.fileName, file.content).subscribe({
-              next: () => resolve(),
-              error: () => resolve()
+    const syncInstructionFiles = (instructionId: number, isNew: boolean) => {
+      const originalIds = this.originalInstructionFiles.filter(f => f.id).map(f => f.id);
+      const currentIds = this.formInstructionFiles.filter(f => f.id).map(f => f.id);
+      
+      const filesToDelete = this.originalInstructionFiles.filter(f => f.id && !currentIds.includes(f.id));
+      const filesToAdd = this.formInstructionFiles.filter(f => !f.id);
+
+      console.log('Sync files - Original:', this.originalInstructionFiles);
+      console.log('Sync files - Current:', this.formInstructionFiles);
+      console.log('Sync files - To delete:', filesToDelete);
+      console.log('Sync files - To add:', filesToAdd);
+
+      const deletePromises = filesToDelete.map(file => 
+        new Promise<void>((resolve) => {
+          if (file.id) {
+            console.log('Deleting file:', file.id, file.fileName);
+            this.apiService.deleteInstructionFile(file.id).subscribe({
+              next: () => { console.log('Deleted file:', file.id); resolve(); },
+              error: (err) => { console.error('Error deleting file:', err); resolve(); }
             });
-          })
-        );
-        Promise.all(filePromises).then(() => {
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      const addPromises = filesToAdd.map(file => 
+        new Promise<void>((resolve) => {
+          this.apiService.addInstructionFile(instructionId, file.path, file.fileName, file.content).subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        })
+      );
+
+      Promise.all([...deletePromises, ...addPromises]).then(() => {
+        this.originalInstructionFiles = [];
+        if (isNew) {
           this.formInstructionFiles = [];
-          setTimeout(() => this.loadInstructions(), 0);
-        });
-      } else {
-        setTimeout(() => this.loadInstructions(), 0);
-      }
+          this.loadInstructions();
+        } else {
+          loadInstructionFiles(instructionId);
+        }
+      });
+    };
+
+    const loadInstructionFiles = (instructionId: number) => {
+      this.apiService.getInstructionFiles(instructionId).subscribe({
+        next: (files) => {
+          this.ngZone.run(() => {
+            this.formInstructionFiles = files;
+            this.originalInstructionFiles = files;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => console.error('Error reloading instruction files:', err)
+      });
     };
 
     if (this.formInstruction.id) {
@@ -1221,7 +1270,7 @@ export class InstructionsComponent implements OnInit {
           this.ngZone.run(() => {
             this.statusMessage = `Instruction '${updated.name}' updated successfully`;
             this.selectedInstruction = { ...updated };
-            saveFiles(updated.id!);
+            syncInstructionFiles(updated.id!, false);
           });
         },
         error: (err) => {
@@ -1237,8 +1286,8 @@ export class InstructionsComponent implements OnInit {
             this.statusMessage = `Instruction '${created.name}' created successfully`;
             this.selectedInstruction = { ...created };
             this.formInstruction = { ...created };
-            if (created.id) {
-              saveFiles(created.id);
+              if (created.id) {
+              syncInstructionFiles(created.id, true);
             }
           });
         },
@@ -1327,7 +1376,7 @@ export class InstructionsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir instruction. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir instruction. Tente novamente.'
                 }
               });
             });
@@ -1344,6 +1393,7 @@ export class InstructionsComponent implements OnInit {
     this.selectedInstruction = null;
     this.formInstruction = this.getEmptyInstruction();
     this.formInstructionFiles = [];
+    this.originalInstructionFiles = [];
     this.statusMessage = 'Form cleared - ready for new instruction';
   }
 

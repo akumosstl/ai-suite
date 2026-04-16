@@ -65,12 +65,18 @@ public class CommandController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCommand(@PathVariable Long id) {
-        commandService.deleteCommand(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Command deleted successfully");
-        
-        return ResponseEntity.ok(response);
+        try {
+            commandService.deleteCommand(id);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Command deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping("/category/{category}")

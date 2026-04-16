@@ -65,12 +65,18 @@ public class SkillController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteSkill(@PathVariable Long id) {
-        skillService.deleteSkill(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Skill deleted successfully");
-        
-        return ResponseEntity.ok(response);
+        try {
+            skillService.deleteSkill(id);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Skill deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping("/category/{category}")

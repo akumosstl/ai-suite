@@ -65,12 +65,18 @@ public class InstructionController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteInstruction(@PathVariable Long id) {
-        instructionService.deleteInstruction(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Instruction deleted successfully");
-        
-        return ResponseEntity.ok(response);
+        try {
+            instructionService.deleteInstruction(id);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Instruction deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @GetMapping("/category/{category}")

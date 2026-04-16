@@ -1,7 +1,9 @@
 package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Command;
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.CommandRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,9 @@ public class CommandService {
     
     @Autowired
     private CommandRepository commandRepository;
+    
+    @Autowired
+    private ProjectRepository projectRepository;
     
     public List<Command> getRecentCommands(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -47,6 +52,16 @@ public class CommandService {
     }
     
     public void deleteCommand(Long id) {
+        Command command = getCommandById(id);
+        
+        // Check if command has project relations
+        List<Project> projectsWithCommand = projectRepository.findAll();
+        for (Project project : projectsWithCommand) {
+            if (project.getCommands().contains(command)) {
+                throw new RuntimeException("Cannot delete command because it is associated with project: " + project.getName());
+            }
+        }
+        
         commandRepository.deleteById(id);
     }
     

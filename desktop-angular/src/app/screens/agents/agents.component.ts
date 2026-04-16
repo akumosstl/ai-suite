@@ -216,9 +216,6 @@ export class AgentsComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           console.log('Loading set to false');
-          if (this.agents.length > 0 && !this.selectedAgent) {
-            this.selectAgent(this.agents[0]);
-          }
         });
       },
       error: (err) => {
@@ -429,7 +426,7 @@ export class AgentsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: false,
-                  message: 'Falha ao excluir agente. Tente novamente.'
+                  message: err.error?.message || err.message || 'Falha ao excluir agente. Tente novamente.'
                 }
               });
             });
