@@ -12,7 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { ApiService, Script } from '../../services/api.service';
+import { ApiService, Script, Template } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -189,22 +189,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <div class="prompt-field-container" (click)="openContentEditor()">
-              <mat-form-field class="full-width script-content-field" appearance="outline">
-                <mat-label>Script Content</mat-label>
-                <input matInput 
-                       [value]="getPromptPreview(formScript.content)" 
-                       disabled
-                       class="prompt-preview-input">
-                <mat-icon matPrefix>code</mat-icon>
-              </mat-form-field>
-              <button mat-icon-button 
-                      type="button"
-                      class="prompt-edit-btn" 
-                      title="Edit script content">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Template</mat-label>
+              <mat-select (selectionChange)="onTemplateSelect($event)">
+                <mat-option [value]="null">-- Select a template --</mat-option>
+                <mat-option *ngFor="let template of templates" [value]="template.id">
+                  {{ template.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+            
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Script Content</mat-label>
+              <textarea matInput [(ngModel)]="formScript.content" rows="10" placeholder="Enter the script content"></textarea>
+              <mat-icon matPrefix>code</mat-icon>
+            </mat-form-field>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveScript()" [disabled]="!formScript.name">
@@ -802,6 +802,8 @@ export class ScriptsComponent implements OnInit {
   totalPages = 0;
   statusMessage = '';
   leftPanelCollapsed = false;
+  templates: Template[] = [];
+  loadingTemplates = false;
 
   constructor(
     private router: Router,
@@ -882,6 +884,35 @@ export class ScriptsComponent implements OnInit {
     console.log('ScriptsComponent ngOnInit');
     this.loadNamespaces();
     this.loadScripts();
+    this.loadTemplates();
+  }
+
+  loadTemplates(): void {
+    this.loadingTemplates = true;
+    this.apiService.getTemplatesByType('scripts').subscribe({
+      next: (templates) => {
+        this.templates = templates;
+        this.loadingTemplates = false;
+      },
+      error: () => {
+        this.templates = [];
+        this.loadingTemplates = false;
+      }
+    });
+  }
+
+  onTemplateSelect(event: any): void {
+    const templateId = event.value;
+    if (templateId) {
+      const template = this.templates.find(t => t.id === templateId);
+      if (template && template.template) {
+        if (this.formScript.content) {
+          this.formScript.content = this.formScript.content + '\n\n' + template.template;
+        } else {
+          this.formScript.content = template.template;
+        }
+      }
+    }
   }
 
   /**

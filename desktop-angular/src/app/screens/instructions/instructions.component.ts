@@ -20,7 +20,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ApiService, Instruction, InstructionFile, Project } from '../../services/api.service';
+import { ApiService, Instruction, InstructionFile, Project, Template } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddInstructionFileDialogComponent, InstructionFileData } from '../../components/add-instruction-file-dialog/add-instruction-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
@@ -194,22 +194,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <div class="prompt-field-container" (click)="openInstructionsEditor()">
-              <mat-form-field class="full-width instructions-field" appearance="outline">
-                <mat-label>Instructions</mat-label>
-                <input matInput 
-                       [value]="getPromptPreview(formInstruction.instructions)" 
-                       disabled
-                       class="prompt-preview-input">
-                <mat-icon matPrefix>code</mat-icon>
-              </mat-form-field>
-              <button mat-icon-button 
-                      type="button"
-                      class="prompt-edit-btn" 
-                      title="Edit instructions">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Template</mat-label>
+              <mat-select (selectionChange)="onTemplateSelect($event)">
+                <mat-option [value]="null">-- Select a template --</mat-option>
+                <mat-option *ngFor="let template of templates" [value]="template.id">
+                  {{ template.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+            
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Instructions</mat-label>
+              <textarea matInput [(ngModel)]="formInstruction.instructions" rows="10" placeholder="Enter the instructions content"></textarea>
+              <mat-icon matPrefix>code</mat-icon>
+            </mat-form-field>
             
             <div class="files-section">
               <div class="section-header">
@@ -932,6 +932,8 @@ export class InstructionsComponent implements OnInit {
   totalPages = 0;
   statusMessage = '';
   leftPanelCollapsed = false;
+  templates: Template[] = [];
+  loadingTemplates = false;
 
   constructor(
     private router: Router,
@@ -1070,6 +1072,35 @@ export class InstructionsComponent implements OnInit {
     console.log('InstructionsComponent ngOnInit');
     this.loadNamespaces();
     this.loadInstructions();
+    this.loadTemplates();
+  }
+
+  loadTemplates(): void {
+    this.loadingTemplates = true;
+    this.apiService.getTemplatesByType('instructions').subscribe({
+      next: (templates) => {
+        this.templates = templates;
+        this.loadingTemplates = false;
+      },
+      error: () => {
+        this.templates = [];
+        this.loadingTemplates = false;
+      }
+    });
+  }
+
+  onTemplateSelect(event: any): void {
+    const templateId = event.value;
+    if (templateId) {
+      const template = this.templates.find(t => t.id === templateId);
+      if (template && template.template) {
+        if (this.formInstruction.instructions) {
+          this.formInstruction.instructions = this.formInstruction.instructions + '\n\n' + template.template;
+        } else {
+          this.formInstruction.instructions = template.template;
+        }
+      }
+    }
   }
 
   /**

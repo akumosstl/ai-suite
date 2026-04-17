@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ApiService, Command, Project } from '../../services/api.service';
+import { ApiService, Command, Project, Template } from '../../services/api.service';
 import { NewProjectDialogComponent } from '../../components/new-project-dialog/new-project-dialog.component';
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
@@ -197,22 +197,22 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <div class="prompt-field-container" (click)="openCommandEditor()">
-              <mat-form-field class="full-width command-field" appearance="outline">
-                <mat-label>Command</mat-label>
-                <input matInput 
-                       [value]="getPromptPreview(formCommand.command)" 
-                       disabled
-                       class="prompt-preview-input">
-                <mat-icon matPrefix>code</mat-icon>
-              </mat-form-field>
-              <button mat-icon-button 
-                      type="button"
-                      class="prompt-edit-btn" 
-                      title="Edit command">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Template</mat-label>
+              <mat-select (selectionChange)="onTemplateSelect($event)">
+                <mat-option [value]="null">-- Select a template --</mat-option>
+                <mat-option *ngFor="let template of templates" [value]="template.id">
+                  {{ template.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+            
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Command</mat-label>
+              <textarea matInput [(ngModel)]="formCommand.command" rows="10" placeholder="Enter the command content"></textarea>
+              <mat-icon matPrefix>code</mat-icon>
+            </mat-form-field>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveCommand()" [disabled]="!formCommand.name">
@@ -813,6 +813,8 @@ export class CommandsComponent implements OnInit {
   totalPages = 0;
   statusMessage = '';
   leftPanelCollapsed = false;
+  templates: Template[] = [];
+  loadingTemplates = false;
 
   constructor(
     private router: Router,
@@ -914,6 +916,35 @@ export class CommandsComponent implements OnInit {
     console.log('CommandsComponent ngOnInit');
     this.loadNamespaces();
     this.loadCommands();
+    this.loadTemplates();
+  }
+
+  loadTemplates(): void {
+    this.loadingTemplates = true;
+    this.apiService.getTemplatesByType('commands').subscribe({
+      next: (templates) => {
+        this.templates = templates;
+        this.loadingTemplates = false;
+      },
+      error: () => {
+        this.templates = [];
+        this.loadingTemplates = false;
+      }
+    });
+  }
+
+  onTemplateSelect(event: any): void {
+    const templateId = event.value;
+    if (templateId) {
+      const template = this.templates.find(t => t.id === templateId);
+      if (template && template.template) {
+        if (this.formCommand.command) {
+          this.formCommand.command = this.formCommand.command + '\n\n' + template.template;
+        } else {
+          this.formCommand.command = template.template;
+        }
+      }
+    }
   }
 
   /**

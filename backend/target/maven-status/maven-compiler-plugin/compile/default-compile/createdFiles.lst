@@ -79,6 +79,7 @@ io\github\akumosstl\agentic\backend\repository\SkillFileRepository.class
 io\github\akumosstl\agentic\backend\service\ImportResult$ImportDetail.class
 io\github\akumosstl\agentic\backend\controller\TemplateController.class
 io\github\akumosstl\agentic\backend\controller\ToolFileController.class
+io\github\akumosstl\agentic\backend\controller\TargetController$ErrorResponse.class
 io\github\akumosstl\agentic\backend\controller\NamespaceController$ClearResult.class
 io\github\akumosstl\agentic\backend\controller\PluginFileController.class
 io\github\akumosstl\agentic\backend\model\Tool.class

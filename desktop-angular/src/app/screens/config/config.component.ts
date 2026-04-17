@@ -817,8 +817,9 @@ export class ConfigComponent implements OnInit {
             this.cdr.detectChanges();
             this.snackBar.open('Target deleted successfully', 'Close', { duration: 3000 });
           },
-          error: () => {
-            this.snackBar.open('Failed to delete target', 'Close', { duration: 3000 });
+          error: (err) => {
+            const message = err.error?.message || 'Failed to delete target';
+            this.snackBar.open(message, 'Close', { duration: 5000 });
           }
         });
       }

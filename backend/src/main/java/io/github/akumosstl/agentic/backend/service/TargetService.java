@@ -1,6 +1,8 @@
 package io.github.akumosstl.agentic.backend.service;
 
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Target;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,9 +13,11 @@ import java.util.List;
 public class TargetService {
 
     private final TargetRepository targetRepository;
+    private final ProjectRepository projectRepository;
 
-    public TargetService(TargetRepository targetRepository) {
+    public TargetService(TargetRepository targetRepository, ProjectRepository projectRepository) {
         this.targetRepository = targetRepository;
+        this.projectRepository = projectRepository;
     }
 
     public List<Target> getAllTargets() {
@@ -43,11 +47,31 @@ public class TargetService {
         target.setCommandsPath(targetDetails.getCommandsPath());
         target.setScriptsPath(targetDetails.getScriptsPath());
         target.setAgentsPath(targetDetails.getAgentsPath());
+        target.setInstructionsPath(targetDetails.getInstructionsPath());
+        target.setPluginsPath(targetDetails.getPluginsPath());
+        target.setToolsPath(targetDetails.getToolsPath());
         return targetRepository.save(target);
+    }
+
+    public boolean isTargetLinkedToProjects(Long id) {
+        List<Project> projects = projectRepository.findByTargetId(id);
+        return !projects.isEmpty();
+    }
+
+    public List<Project> getProjectsUsingTarget(Long id) {
+        return projectRepository.findByTargetId(id);
     }
 
     @Transactional
     public void deleteTarget(Long id) {
+        if (isTargetLinkedToProjects(id)) {
+            List<Project> projects = getProjectsUsingTarget(id);
+            String projectNames = projects.stream()
+                    .map(Project::getName)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("unknown");
+            throw new RuntimeException("Cannot delete target. It is being used by project(s): " + projectNames);
+        }
         Target target = getTargetById(id);
         targetRepository.delete(target);
     }

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { LoaderComponent } from './screens/loader/loader.component';
 import { MenuComponent } from './screens/menu/menu.component';
 import { AgentsComponent } from './screens/agents/agents.component';
 import { ScriptsComponent } from './screens/scripts/scripts.component';
@@ -21,6 +22,7 @@ import { PipelinesComponent } from './screens/pipelines/pipelines.component';
  * 
  * @description
  * Mapeamento de URLs para componentes da aplicação:
+ * - /: Loader que opens new window and redirects to menu
  * - /menu: Tela inicial com menu de navegação
  * - /agents: Gerenciamento de agentes
  * - /scripts: Gerenciamento de scripts
@@ -41,7 +43,7 @@ import { PipelinesComponent } from './screens/pipelines/pipelines.component';
  * @type {Routes}
  */
 export const routes: Routes = [
-  { path: '', redirectTo: '/menu', pathMatch: 'full' },
+  { path: '', component: LoaderComponent },
   { path: 'menu', component: MenuComponent },
   { path: 'agents', component: AgentsComponent },
   { path: 'scripts', component: ScriptsComponent },

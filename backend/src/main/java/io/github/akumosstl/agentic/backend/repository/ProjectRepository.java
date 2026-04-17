@@ -29,4 +29,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Page<Project> searchProjects(String searchTerm, Pageable pageable);
     
     List<Project> findByStatus(String status);
+    
+    List<Project> findByTargetId(Long targetId);
 }

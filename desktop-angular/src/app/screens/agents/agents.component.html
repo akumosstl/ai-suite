@@ -126,17 +126,23 @@
                     <mat-icon matPrefix>description</mat-icon>
                 </mat-form-field>
 
-                <div class="prompt-field-container" (click)="openPromptEditor()">
-                    <mat-form-field class="full-width prompt-field" appearance="outline">
-                        <mat-label>Prompt</mat-label>
-                        <input matInput [value]="getPromptPreview(formAgent.prompt)" disabled
-                            class="prompt-preview-input">
-                        <mat-icon matPrefix>code</mat-icon>
-                    </mat-form-field>
-                    <button mat-icon-button type="button" class="prompt-edit-btn" title="Edit prompt">
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                </div>
+                <mat-form-field class="full-width" appearance="outline">
+                    <mat-label>Template</mat-label>
+                    <mat-select (selectionChange)="onTemplateSelect($event)">
+                        <mat-option [value]="null">-- Select a template --</mat-option>
+                        <mat-option *ngFor="let template of templates" [value]="template.id">
+                            {{ template.name }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>description</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                    <mat-label>Prompt</mat-label>
+                    <textarea matInput [(ngModel)]="formAgent.prompt" rows="10"
+                        placeholder="Enter the prompt content"></textarea>
+                    <mat-icon matPrefix>code</mat-icon>
+                </mat-form-field>
 
                 <div class="button-row">
                     <button class="btn btn-primary" (click)="saveAgent()" [disabled]="!formAgent.name">

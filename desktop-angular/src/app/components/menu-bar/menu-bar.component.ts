@@ -40,8 +40,8 @@ import { ApiService } from '../../services/api.service'
       
       <div class="menu-items">
         <button class="menu-button back-button" *ngIf="showBackButton" (click)="goBack()">
-          <mat-icon>reply</mat-icon>
-          <span>Back</span>
+          <mat-icon>folder</mat-icon>
+          <span>Project</span>
         </button>
 
         <ng-container *ngIf="!isProjectPage() && showProjectMenu">

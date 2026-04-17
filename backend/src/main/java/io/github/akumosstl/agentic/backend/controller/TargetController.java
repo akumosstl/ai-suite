@@ -39,7 +39,17 @@ public class TargetController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTarget(@PathVariable Long id) {
-        targetService.deleteTarget(id);
-        return ResponseEntity.ok().build();
+        try {
+            targetService.deleteTarget(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    public static class ErrorResponse {
+        private String message;
+        public ErrorResponse(String message) { this.message = message; }
+        public String getMessage() { return message; }
     }
 }
