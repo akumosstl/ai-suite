@@ -94,6 +94,18 @@ interface ClearResult {
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
+            <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
+              <mat-icon>description</mat-icon>
+              <span>Instructions</span>
+            </button>
+            <button class="type-btn" [class.active]="selectedType === 'plugins'" (click)="selectType('plugins')">
+              <mat-icon>extension</mat-icon>
+              <span>Plugins</span>
+            </button>
+            <button class="type-btn" [class.active]="selectedType === 'tools'" (click)="selectType('tools')">
+              <mat-icon>build</mat-icon>
+              <span>Tools</span>
+            </button>
           </div>
           
           <div class="search-section">
@@ -765,7 +777,10 @@ export class NamespacesComponent implements OnInit {
       'agents': 'Agents',
       'skills': 'Skills',
       'commands': 'Commands',
-      'scripts': 'Scripts'
+      'scripts': 'Scripts',
+      'instructions': 'Instructions',
+      'plugins': 'Plugins',
+      'tools': 'Tools'
     };
     return labels[this.selectedType] || 'Unknown';
   }

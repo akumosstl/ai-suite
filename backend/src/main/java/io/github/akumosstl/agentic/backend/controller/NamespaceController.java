@@ -28,6 +28,15 @@ public class NamespaceController {
     private CommandService commandService;
 
     @Autowired
+    private InstructionService instructionService;
+
+    @Autowired
+    private PluginService pluginService;
+
+    @Autowired
+    private ToolService toolService;
+
+    @Autowired
     private PipelineService pipelineService;
 
     @Autowired
@@ -38,7 +47,7 @@ public class NamespaceController {
 
     @GetMapping("/types")
     public ResponseEntity<List<String>> getTypes() {
-        return ResponseEntity.ok(Arrays.asList("agents", "skills", "commands", "scripts"));
+        return ResponseEntity.ok(Arrays.asList("agents", "skills", "commands", "scripts", "instructions", "plugins", "tools"));
     }
 
     @GetMapping("/namespaces/{type}")
@@ -69,6 +78,24 @@ public class NamespaceController {
                     namespaces = scriptService.getDistinctCategories();
                 }
                 break;
+            case "instructions":
+                namespaces = instructionService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = instructionService.getDistinctCategories();
+                }
+                break;
+            case "plugins":
+                namespaces = pluginService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = pluginService.getDistinctCategories();
+                }
+                break;
+            case "tools":
+                namespaces = toolService.getDistinctNamespaces();
+                if (namespaces.isEmpty()) {
+                    namespaces = toolService.getDistinctCategories();
+                }
+                break;
             default:
                 return ResponseEntity.badRequest().build();
         }
@@ -82,6 +109,9 @@ public class NamespaceController {
         result.put("skills", skillService.getDistinctNamespaces());
         result.put("commands", commandService.getDistinctNamespaces());
         result.put("scripts", scriptService.getDistinctNamespaces());
+        result.put("instructions", instructionService.getDistinctNamespaces());
+        result.put("plugins", pluginService.getDistinctNamespaces());
+        result.put("tools", toolService.getDistinctNamespaces());
         return ResponseEntity.ok(result);
     }
 
@@ -106,6 +136,15 @@ public class NamespaceController {
                 break;
             case "scripts":
                 items = scriptService.getScriptsByNamespace(namespace);
+                break;
+            case "instructions":
+                items = instructionService.getInstructionsByNamespace(namespace);
+                break;
+            case "plugins":
+                items = pluginService.getPluginsByNamespace(namespace);
+                break;
+            case "tools":
+                items = toolService.getToolsByNamespace(namespace);
                 break;
             default:
                 return ResponseEntity.badRequest().build();
@@ -174,7 +213,7 @@ public class NamespaceController {
                             .anyMatch(c -> itemIds.contains(c.getId()));
                     }
                     break;
-                case "scripts":
+case "scripts":
                     if (project.getScripts() != null) {
                         referencesNamespace = project.getScripts().stream()
                             .anyMatch(s -> itemIds.contains(s.getId()));
@@ -186,13 +225,31 @@ public class NamespaceController {
                             .anyMatch(a -> itemIds.contains(a.getId()));
                     }
                     break;
+                case "instructions":
+                    if (project.getInstructions() != null) {
+                        referencesNamespace = project.getInstructions().stream()
+                            .anyMatch(i -> itemIds.contains(i.getId()));
+                    }
+                    break;
+                case "plugins":
+                    if (project.getPlugins() != null) {
+                        referencesNamespace = project.getPlugins().stream()
+                            .anyMatch(p -> itemIds.contains(p.getId()));
+                    }
+                    break;
+                case "tools":
+                    if (project.getTools() != null) {
+                        referencesNamespace = project.getTools().stream()
+                            .anyMatch(t -> itemIds.contains(t.getId()));
+                    }
+                    break;
             }
             
             if (referencesNamespace) {
                 referencedProjects.add(project);
             }
         }
-
+        
         return ResponseEntity.ok(referencedProjects);
     }
 
