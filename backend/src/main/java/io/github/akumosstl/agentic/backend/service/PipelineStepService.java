@@ -562,6 +562,12 @@ public class PipelineStepService {
     }
     
     private void executeStep(PipelineStep step, Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension, String previousOutputFile) {
+        System.out.println("DEBUG: === executeStep START === for pipeline " + pipelineId + ", runId " + runId + ", step " + step.getStepOrder());
+        System.out.println("DEBUG: step.getId() = " + step.getId());
+        System.out.println("DEBUG: step.getType() = " + step.getType());
+        System.out.println("DEBUG: step.getAgent() = " + (step.getAgent() != null ? step.getAgent().getName() : "null"));
+        System.out.println("DEBUG: step.getScript() = " + (step.getScript() != null ? step.getScript().getName() : "null"));
+        
         if (isPipelineStopped(pipelineId)) {
             step.setStatus("failed");
             step.setOutputContent("Pipeline was stopped by user");
@@ -589,15 +595,21 @@ public class PipelineStepService {
             String output = "";
             
             String stepType = step.getType();
-            System.out.println("DEBUG: Step type: " + stepType);
+            System.out.println("DEBUG: Step type: '" + stepType + "' (length=" + (stepType != null ? stepType.length() : 0) + ")");
+            System.out.println("DEBUG: stepType == null: " + (stepType == null));
+            System.out.println("DEBUG: stepType.equals('script'): " + (stepType != null && stepType.equals("script")));
             System.out.println("DEBUG: Step agent: " + (step.getAgent() != null ? step.getAgent().getName() : "null"));
             System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
             
             if ("script".equals(stepType)) {
+                System.out.println("DEBUG: BRANCH: executing script");
                 output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+                System.out.println("DEBUG: Script execution completed");
             } else if (step.getAgent() != null) {
+                System.out.println("DEBUG: BRANCH: executing agent");
                 output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
             } else if (step.getScript() != null) {
+                System.out.println("DEBUG: BRANCH: fallback script execution (type not set)");
                 output = "Script execution not implemented yet";
             } else {
                 System.out.println("DEBUG: WARNING - No agent or script found for step!");
@@ -854,6 +866,10 @@ public class PipelineStepService {
     }
     
     private String executeScriptStep(PipelineStep step, Long pipelineId, Long runId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
+        System.out.println("DEBUG: === executeScriptStep START ===");
+        System.out.println("DEBUG: step.getId() = " + stepId);
+        System.out.println("DEBUG: step.getScript() = " + (step.getScript() != null ? step.getScript().getName() : "null"));
+        
         Script script = step.getScript();
         String scriptContent = script.getContent();
         

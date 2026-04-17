@@ -119,8 +119,11 @@ public class PipelineRunService {
         pipelineRunRepository.deleteAll(runs);
     }
     
-    public Page<PipelineRun> getAllRuns(int page, int size) {
+    public Page<PipelineRun> getAllRuns(int page, int size, String projectName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        if (projectName != null && !projectName.isEmpty()) {
+            return pipelineRunRepository.findByPipeline_Project_NameContainingIgnoreCase(projectName, pageable);
+        }
         return pipelineRunRepository.findAll(pageable);
     }
     

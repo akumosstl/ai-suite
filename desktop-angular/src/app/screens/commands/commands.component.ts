@@ -213,6 +213,11 @@ import { ProjectContextService } from '../../services/project-context.service';
               <textarea matInput [(ngModel)]="formCommand.command" rows="10" placeholder="Enter the command content"></textarea>
               <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
+              
+            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+              {{ statusMessage }}
+            </div>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveCommand()" [disabled]="!formCommand.name">
@@ -224,11 +229,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                 Clear Form
               </button>
             </div>
-            
-            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-              {{ statusMessage }}
-            </div>
+          
           </div>
         </div>
       </div>

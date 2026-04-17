@@ -205,6 +205,10 @@ import { ProjectContextService } from '../../services/project-context.service';
               <textarea matInput [(ngModel)]="formScript.content" rows="10" placeholder="Enter the script content"></textarea>
               <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
+            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+              {{ statusMessage }}
+            </div>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveScript()" [disabled]="!formScript.name">
@@ -217,10 +221,6 @@ import { ProjectContextService } from '../../services/project-context.service';
               </button>
             </div>
             
-            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-              {{ statusMessage }}
-            </div>
           </div>
         </div>
       </div>

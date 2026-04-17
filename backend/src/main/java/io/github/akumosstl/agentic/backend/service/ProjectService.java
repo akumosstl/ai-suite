@@ -214,11 +214,7 @@ public class ProjectService {
             Path skillPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(skillPathObj);
-                String skillName = skill.getName();
-                if (skillName.toLowerCase().endsWith(".md")) {
-                    skillName = skillName.substring(0, skillName.length() - 3);
-                }
-                String fileName = skillName + ".md";
+                String fileName = skill.getName();
                 Path filePath = skillPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
                 String content = skill.getInstructions() != null ? skill.getInstructions() : "";
@@ -282,11 +278,7 @@ public class ProjectService {
             
             Path skillPathObj = Paths.get(fullPath);
             try {
-                String skillName = skillToRemove.getName();
-                if (skillName.toLowerCase().endsWith(".md")) {
-                    skillName = skillName.substring(0, skillName.length() - 3);
-                }
-                String fileName = skillName + ".md";
+                String fileName = skillToRemove.getName();
                 Path filePath = skillPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
 
@@ -368,11 +360,7 @@ public class ProjectService {
             Path commandPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(commandPathObj);
-                String commandName = command.getName();
-                if (commandName.toLowerCase().endsWith(".md")) {
-                    commandName = commandName.substring(0, commandName.length() - 3);
-                }
-                String fileName = commandName + ".md";
+                String fileName = command.getName();
                 Path filePath = commandPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
                 String content = command.getCommand() != null ? command.getCommand() : "";
@@ -420,11 +408,7 @@ public class ProjectService {
             
             Path commandPathObj = Paths.get(fullPath);
             try {
-                String commandName = commandToRemove.getName();
-                if (commandName.toLowerCase().endsWith(".md")) {
-                    commandName = commandName.substring(0, commandName.length() - 3);
-                }
-                String fileName = commandName + ".md";
+                String fileName = commandToRemove.getName();
                 Path filePath = commandPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
 
@@ -599,28 +583,19 @@ public class ProjectService {
                     .orElseThrow(() -> new RuntimeException("Agent not found: " + agentId));
             
             String fullPath = project.getPath() + File.separator + targetAgentsPath;
+            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + agent.getPath();
+            }
             
             Path agentPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(agentPathObj);
                 
-                String fileName = agent.getName() + ".md";
+                String fileName = agent.getName();
                 Path filePath = agentPathObj.resolve(fileName);
-                
-                StringBuilder content = new StringBuilder();
-                content.append("# ").append(agent.getName()).append("\n\n");
-                if (agent.getDescription() != null && !agent.getDescription().isEmpty()) {
-                    content.append(agent.getDescription()).append("\n\n");
-                }
-                if (agent.getPrompt() != null && !agent.getPrompt().isEmpty()) {
-                    content.append("## System Prompt\n\n").append(agent.getPrompt()).append("\n");
-                }
-                
-                Files.write(filePath, content.toString().getBytes());
-                
-                String agentRelativePath = fileName;
-                agent.setPath(agentRelativePath);
-                agentRepository.save(agent);
+                Files.deleteIfExists(filePath);
+                String content = agent.getPrompt() != null ? agent.getPrompt() : "";
+                Files.write(filePath, content.getBytes());
                 
                 if (!project.getAgents().contains(agent)) {
                     project.addAgent(agent);
@@ -636,8 +611,12 @@ public class ProjectService {
     public Project removeAgentFromProject(Long projectId, Long agentId) {
         Project project = getProjectById(projectId);
         
-        Agent agent = agentRepository.findById(agentId).orElse(null);
-        if (agent != null && agent.getPath() != null && !agent.getPath().isEmpty()) {
+        Agent agentToRemove = project.getAgents().stream()
+                .filter(agent -> agent.getId().equals(agentId))
+                .findFirst()
+                .orElse(null);
+        
+        if (agentToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
             String targetAgentsPath = "agents";
             Target target = null;
             if (project.getTargetId() != null) {
@@ -653,12 +632,26 @@ public class ProjectService {
                 targetAgentsPath = target.getAgentsPath();
             }
             
-            String fullPath = project.getPath() + File.separator + targetAgentsPath + File.separator + agent.getPath();
-            Path filePath = Paths.get(fullPath);
+            String fullPath = project.getPath() + File.separator + targetAgentsPath;
+            if (agentToRemove.getPath() != null && !agentToRemove.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + agentToRemove.getPath();
+            }
+            
+            Path agentPathObj = Paths.get(fullPath);
             try {
+                String fileName = agentToRemove.getName();
+                Path filePath = agentPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
+
+                File agentDir = agentPathObj.toFile();
+                if (agentDir.exists() && agentDir.isDirectory()) {
+                    File[] files = agentDir.listFiles();
+                    if (files != null && files.length == 0) {
+                        Files.delete(agentDir.toPath());
+                    }
+                }
             } catch (IOException e) {
-                // Log but don't fail - file might not exist
+                throw new RuntimeException("Failed to delete agent file: " + e.getMessage(), e);
             }
         }
         
@@ -708,11 +701,7 @@ public class ProjectService {
             Path instructionPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(instructionPathObj);
-                String instructionName = instruction.getName();
-                if (instructionName.toLowerCase().endsWith(".md")) {
-                    instructionName = instructionName.substring(0, instructionName.length() - 3);
-                }
-                String fileName = instructionName + ".md";
+                String fileName = instruction.getName();
                 Path filePath = instructionPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
                 String content = instruction.getInstructions() != null ? instruction.getInstructions() : "";
@@ -776,11 +765,7 @@ public class ProjectService {
             
             Path instructionPathObj = Paths.get(fullPath);
             try {
-                String instructionName = instructionToRemove.getName();
-                if (instructionName.toLowerCase().endsWith(".md")) {
-                    instructionName = instructionName.substring(0, instructionName.length() - 3);
-                }
-                String fileName = instructionName + ".md";
+                String fileName = instructionToRemove.getName();
                 Path filePath = instructionPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
 
@@ -862,11 +847,7 @@ public class ProjectService {
             Path pluginPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(pluginPathObj);
-                String pluginName = plugin.getName();
-                if (pluginName.toLowerCase().endsWith(".md")) {
-                    pluginName = pluginName.substring(0, pluginName.length() - 3);
-                }
-                String fileName = pluginName + ".md";
+                String fileName = plugin.getName();
                 Path filePath = pluginPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
                 String content = plugin.getInstructions() != null ? plugin.getInstructions() : "";
@@ -930,11 +911,7 @@ public class ProjectService {
             
             Path pluginPathObj = Paths.get(fullPath);
             try {
-                String pluginName = pluginToRemove.getName();
-                if (pluginName.toLowerCase().endsWith(".md")) {
-                    pluginName = pluginName.substring(0, pluginName.length() - 3);
-                }
-                String fileName = pluginName + ".md";
+                String fileName = pluginToRemove.getName();
                 Path filePath = pluginPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
 
@@ -1016,11 +993,7 @@ public class ProjectService {
             Path toolPathObj = Paths.get(fullPath);
             try {
                 Files.createDirectories(toolPathObj);
-                String toolName = tool.getName();
-                if (toolName.toLowerCase().endsWith(".md")) {
-                    toolName = toolName.substring(0, toolName.length() - 3);
-                }
-                String fileName = toolName + ".md";
+                String fileName = tool.getName();
                 Path filePath = toolPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
                 String content = tool.getInstructions() != null ? tool.getInstructions() : "";
@@ -1084,11 +1057,7 @@ public class ProjectService {
             
             Path toolPathObj = Paths.get(fullPath);
             try {
-                String toolName = toolToRemove.getName();
-                if (toolName.toLowerCase().endsWith(".md")) {
-                    toolName = toolName.substring(0, toolName.length() - 3);
-                }
-                String fileName = toolName + ".md";
+                String fileName = toolToRemove.getName();
                 Path filePath = toolPathObj.resolve(fileName);
                 Files.deleteIfExists(filePath);
 

@@ -143,6 +143,10 @@
                         placeholder="Enter the prompt content"></textarea>
                     <mat-icon matPrefix>code</mat-icon>
                 </mat-form-field>
+                <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+                    <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+                    {{ statusMessage }}
+                </div>
 
                 <div class="button-row">
                     <button class="btn btn-primary" (click)="saveAgent()" [disabled]="!formAgent.name">
@@ -153,11 +157,6 @@
                         <mat-icon>refresh</mat-icon>
                         Clear Form
                     </button>
-                </div>
-
-                <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-                    <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-                    {{ statusMessage }}
                 </div>
             </div>
         </div>

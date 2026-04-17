@@ -24,4 +24,6 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, Long> 
     List<PipelineRun> findByStatus(String status);
     
     List<PipelineRun> findByStatusNot(String status);
+
+    Page<PipelineRun> findByPipeline_Project_NameContainingIgnoreCase(String projectName, Pageable pageable);
 }

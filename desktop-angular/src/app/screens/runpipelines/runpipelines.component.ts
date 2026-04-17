@@ -83,6 +83,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   showLoading = false;
   projectId: number | null = null;
   currentRunId: number | null = null;
+  runStatus: string = '';
   
   private eventSource?: EventSource;
   private pollingInterval: any;
@@ -241,6 +242,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
     this.apiService.getLatestPipelineRun(this.pipeline.id).subscribe({
       next: (run) => {
         console.log('Polling - run status:', run?.status, 'steps:', run?.steps?.length);
+        this.runStatus = run?.status || this.runStatus;
         if (run) {
           if (run.status === 'completed' || run.status === 'failed' || run.status === 'stopped') {
             this.isRunning = false;
@@ -253,6 +255,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
             let updated = false;
             run.steps.forEach((stepData: any) => {
               const step = this.pipelineSteps.find(s => s.stepOrder === stepData.stepOrder);
+              console.log('Polling step ' + stepData.stepOrder + ': server status = ' + stepData.status + ', current status = ' + step?.status);
               if (step) {
                 if (stepData.status === 'running') {
                   const prevStep = this.pipelineSteps.find(s => s.stepOrder === stepData.stepOrder - 1);
@@ -310,6 +313,8 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
       this.showLoading = false;
       this.isRunning = false;
     }
+    
+    console.log('SSE step-update: step ' + data.stepOrder + ' status = ' + data.status);
     
     if (this.currentRunId && step.stepOrder) {
       this.apiService.updatePipelineRunStep(
@@ -369,6 +374,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
           next: (run) => {
             if (run && (run.status === 'running' || run.status === 'pending')) {
               this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
               this.isRunning = true;
               this.showLoading = true;
               this.cdr.markForCheck();
@@ -379,12 +385,14 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
               this.startPolling();
             } else if (run && run.status === 'completed') {
               this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
               this.isRunning = false;
               this.showLoading = false;
               this.cdr.markForCheck();
               this.loadPipelineSteps(true, false);
             } else if (run && run.status === 'failed') {
               this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
               this.isRunning = false;
               this.showLoading = false;
               this.cdr.markForCheck();
@@ -422,9 +430,14 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
     
     this.apiService.createPipelineRun(pipelineId).pipe(
       switchMap((run) => {
+        console.log('createPipelineRun response:', run);
+        console.log('createPipelineRun run.steps:', run.steps);
         this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
         if (run.steps && run.steps.length > 0) {
+            console.log('First step data:', JSON.stringify(run.steps[0], null, 2));
             this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
             this.pipelineSteps = run.steps.map((step: any, index: number) => ({
               id: step.id,
               stepOrder: step.stepOrder,
@@ -512,6 +525,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
         next: (run) => {
           if (run && run.steps && run.steps.length > 0) {
             this.currentRunId = run.id || null;
+        this.runStatus = run.status || 'running';
             this.pipelineSteps = run.steps.map((step: any, index: number) => ({
               id: step.id,
               stepOrder: step.stepOrder,

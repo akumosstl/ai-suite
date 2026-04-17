@@ -219,8 +219,9 @@ public class PipelineRunController {
     @GetMapping("/all-pipeline-runs")
     public ResponseEntity<Map<String, Object>> getAllRuns(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        Page<PipelineRun> runPage = pipelineRunService.getAllRuns(page, size);
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String projectName) {
+        Page<PipelineRun> runPage = pipelineRunService.getAllRuns(page, size, projectName);
         
         Map<String, Object> response = new HashMap<>();
         response.put("runs", runPage.getContent());

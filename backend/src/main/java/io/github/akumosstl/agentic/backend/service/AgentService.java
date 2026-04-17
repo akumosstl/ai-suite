@@ -104,11 +104,14 @@ public class AgentService {
             }
             
             String fullPath = project.getPath() + File.separator + targetAgentsPath;
+            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + agent.getPath();
+            }
             
             Path agentPathObj = Paths.get(fullPath);
             Files.createDirectories(agentPathObj);
             
-            String fileName = agent.getName() + ".md";
+            String fileName = agent.getName();
             Path filePath = agentPathObj.resolve(fileName);
             
             StringBuilder content = new StringBuilder();
@@ -123,7 +126,9 @@ public class AgentService {
             Files.write(filePath, content.toString().getBytes());
             
             String agentRelativePath = fileName;
-            agent.setPath(agentRelativePath);
+            if (agent.getPath() == null || agent.getPath().isEmpty()) {
+                agent.setPath(agentRelativePath);
+            }
             agentRepository.save(agent);
             
         } catch (IOException e) {

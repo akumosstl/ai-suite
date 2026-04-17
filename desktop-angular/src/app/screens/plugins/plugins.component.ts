@@ -242,6 +242,10 @@ import { ProjectContextService } from '../../services/project-context.service';
               </div>
             </div>
             
+            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+              {{ statusMessage }}
+            </div>
             <div class="button-row">
               <button class="btn btn-primary" (click)="savePlugin()" [disabled]="!formPlugin.name">
                 <mat-icon>save</mat-icon>
@@ -253,10 +257,6 @@ import { ProjectContextService } from '../../services/project-context.service';
               </button>
             </div>
             
-            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-              {{ statusMessage }}
-            </div>
           </div>
         </div>
       </div>

@@ -4,18 +4,11 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
+import { OutputDialogComponent } from '../../components/output-dialog/output-dialog.component';
 
-/**
- * Componente para visualização do histórico de execuções de pipelines.
- * Exibe uma lista de execuções passadas e permite visualizar os detalhes de cada execução,
- * incluindo os passos executados e seus respectivos dados de entrada e saída.
- * 
- * @component
- * @componentName PipelineRunHistoryComponent
- * @selector app-pipeline-run-history
- */
 @Component({
   selector: 'app-pipeline-run-history',
   standalone: true,
@@ -23,7 +16,8 @@ import { ProjectContextService } from '../../services/project-context.service';
     CommonModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule
   ],
   template: `
     <div class="history-screen">
@@ -127,29 +121,10 @@ import { ProjectContextService } from '../../services/project-context.service';
             </div>
             
             <div class="details-actions">
-              <button class="io-action-btn" (click)="showInput = true; showOutput = false" [class.active]="showInput">
-                <mat-icon>input</mat-icon>
-                <span>Input</span>
-              </button>
-              <button class="io-action-btn" (click)="showOutput = true; showInput = false" [class.active]="showOutput">
+              <button class="output-btn" (click)="openOutputModal()">
                 <mat-icon>output</mat-icon>
                 <span>Output</span>
               </button>
-            </div>
-            
-            <div class="console-output">
-              <div class="console-header">
-                <mat-icon>terminal</mat-icon>
-                <span>{{ showInput ? 'Input' : showOutput ? 'Output' : 'Console Output' }}</span>
-                <button class="copy-btn" (click)="copyOutput()" title="Copy to clipboard">
-                  <mat-icon>content_copy</mat-icon>
-                </button>
-              </div>
-              <div class="console-content">
-                <pre *ngIf="showInput">{{ selectedStep.inputContent || 'No input' }}</pre>
-                <pre *ngIf="showOutput">{{ selectedStep.outputContent || 'No output yet...' }}</pre>
-                <pre *ngIf="!showInput && !showOutput">{{ selectedStep.outputContent || 'No output yet...' }}</pre>
-              </div>
             </div>
           </div>
           
@@ -663,7 +638,7 @@ import { ProjectContextService } from '../../services/project-context.service';
       margin-bottom: 16px;
     }
     
-    .io-action-btn {
+    .output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -676,17 +651,12 @@ import { ProjectContextService } from '../../services/project-context.service';
       transition: all 0.2s ease;
     }
     
-    .io-action-btn:hover {
+    .output-btn:hover {
       background: #3a3a3a;
       border-color: #4fc3f7;
     }
     
-    .io-action-btn.active {
-      background: rgba(79, 195, 247, 0.2);
-      border-color: #4fc3f7;
-    }
-    
-    .io-action-btn mat-icon {
+    .output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
@@ -792,8 +762,6 @@ export class PipelineRunHistoryComponent implements OnInit {
   selectedStep: PipelineRunStep | null = null;
   projectId: number | null = null;
   pipelineId: number | null = null;
-  showInput = false;
-  showOutput = false;
   
   currentPage = 0;
   totalPages = 0;
@@ -805,7 +773,8 @@ export class PipelineRunHistoryComponent implements OnInit {
     private route: ActivatedRoute,
     private apiService: ApiService,
     private projectContext: ProjectContextService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit() {
@@ -878,8 +847,6 @@ export class PipelineRunHistoryComponent implements OnInit {
   selectRun(run: PipelineRun) {
     this.selectedRun = run;
     this.selectedStep = null;
-    this.showInput = false;
-    this.showOutput = false;
     
     if (run.steps && run.steps.length > 0) {
       this.selectStep(run.steps[0]);
@@ -894,11 +861,21 @@ export class PipelineRunHistoryComponent implements OnInit {
     this.selectedStep = step;
   }
   
-  /**
-   * Formata uma data para exibição no formato local.
-   * @param dateStr A string de data a ser formatada.
-   * @returns A data formatada como string.
-   */
+  openOutputModal() {
+    if (this.selectedStep) {
+      this.dialog.open(OutputDialogComponent, {
+        width: '80vw',
+        height: '70vh',
+        maxWidth: '900px',
+        data: {
+          step: this.selectedStep,
+          type: 'output'
+        },
+        panelClass: 'output-dialog-panel'
+      });
+    }
+  }
+  
   formatDate(dateStr?: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -915,18 +892,6 @@ export class PipelineRunHistoryComponent implements OnInit {
       });
     } else {
       this.router.navigate(['/project']);
-    }
-  }
-
-  /**
-   * Copia o conteúdo do output para a área de transferência.
-   */
-  copyOutput() {
-    const content = this.showInput ? this.selectedStep?.inputContent : this.selectedStep?.outputContent;
-    if (content) {
-      navigator.clipboard.writeText(content).catch(err => {
-        console.error('Failed to copy:', err);
-      });
     }
   }
 }

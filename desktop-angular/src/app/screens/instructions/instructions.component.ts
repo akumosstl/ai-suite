@@ -241,6 +241,11 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <span>No files added yet. Click "Add File" to upload reference files.</span>
               </div>
             </div>
+
+            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+              {{ statusMessage }}
+            </div>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveInstruction()" [disabled]="!formInstruction.name">
@@ -253,10 +258,6 @@ import { ProjectContextService } from '../../services/project-context.service';
               </button>
             </div>
             
-            <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-              <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-              {{ statusMessage }}
-            </div>
           </div>
         </div>
       </div>

@@ -153,9 +153,12 @@ Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
         
         new Thread(() -> {
             try {
+                System.out.println("DEBUG: Pipeline thread starting for pipelineId=" + finalPipelineIdUsed + ", runId=" + finalRunId);
                 pipelineStepService.executePipeline(finalPipelineIdUsed, finalRunId, workingDir, runDirFinal, outputExtension);
+                System.out.println("DEBUG: executePipeline completed, checking status...");
                 
                 Pipeline p = getPipelineById(finalPipelineIdUsed);
+                System.out.println("DEBUG: Pipeline status after execution: " + p.getStatus());
                 if (!p.getStatus().equals("stopped")) {
                     p.setStatus("completed");
                     pipelineRepository.save(p);

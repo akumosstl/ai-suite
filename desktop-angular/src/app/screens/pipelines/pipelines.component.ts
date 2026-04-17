@@ -1,24 +1,32 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
+import { OutputDialogComponent } from '../../components/output-dialog/output-dialog.component';
 
 @Component({
   selector: 'app-pipelines',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
     MatDialogModule,
-    ConfirmDialogComponent
+    MatInputModule,
+    MatFormFieldModule,
+    ConfirmDialogComponent,
+    OutputDialogComponent
   ],
   template: `
     <div class="pipelines-screen">
@@ -47,7 +55,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
           <div class="panel-header">
             <mat-icon>list</mat-icon>
             <h3>All Runs</h3>
-            <span class="run-count">{{ runs.length }}</span>
+            <span class="run-count">{{ totalElements }}</span>
+          </div>
+          
+          <div class="search-box">
+            <mat-icon>search</mat-icon>
+            <input 
+              type="text" 
+              placeholder="Search by Project name..." 
+              [(ngModel)]="searchProjectName"
+              (keyup.enter)="searchRuns()"
+            >
+            <button *ngIf="searchProjectName" class="clear-btn" (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
           
           <div class="runs-list">
@@ -88,11 +109,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
             </div>
           </div>
           
-          <div class="pagination" *ngIf="totalPages > 1">
+          <div class="pagination" *ngIf="totalPages > 0">
             <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 0">
               <mat-icon>chevron_left</mat-icon>
             </button>
-            <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
+            <div class="page-numbers">
+              <button 
+                *ngFor="let p of getPageNumbers()" 
+                class="page-num"
+                [class.active]="p === currentPage"
+                (click)="goToPage(p)"
+              >
+                {{ p + 1 }}
+              </button>
+            </div>
             <button class="page-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
               <mat-icon>chevron_right</mat-icon>
             </button>
@@ -141,29 +171,10 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
             </div>
             
             <div class="details-actions">
-              <button class="io-action-btn" (click)="showInput = true; showOutput = false" [class.active]="showInput">
-                <mat-icon>input</mat-icon>
-                <span>Input</span>
-              </button>
-              <button class="io-action-btn" (click)="showOutput = true; showInput = false" [class.active]="showOutput">
+              <button class="output-btn" (click)="openOutputModal()">
                 <mat-icon>output</mat-icon>
                 <span>Output</span>
               </button>
-            </div>
-            
-            <div class="console-output">
-              <div class="console-header">
-                <mat-icon>terminal</mat-icon>
-                <span>{{ showInput ? 'Input' : showOutput ? 'Output' : 'Console Output' }}</span>
-                <button class="copy-btn" (click)="copyOutput()" title="Copy to clipboard">
-                  <mat-icon>content_copy</mat-icon>
-                </button>
-              </div>
-              <div class="console-content">
-                <pre *ngIf="showInput">{{ selectedStep.inputContent || 'No input' }}</pre>
-                <pre *ngIf="showOutput">{{ selectedStep.outputContent || 'No output yet...' }}</pre>
-                <pre *ngIf="!showInput && !showOutput">{{ selectedStep.outputContent || 'No output yet...' }}</pre>
-              </div>
             </div>
           </div>
           
@@ -326,6 +337,62 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       border-radius: 12px;
       font-size: 0.8rem;
       color: #888;
+    }
+    
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      margin: 0 12px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+    }
+    
+    .search-box mat-icon {
+      color: #666;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+    }
+    
+    .search-box input::placeholder {
+      color: #666;
+    }
+    
+    .search-box .clear-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .search-box .clear-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+    }
+    
+    .search-box .clear-btn mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
     
     .runs-list {
@@ -528,6 +595,39 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     .page-info {
       font-size: 0.85rem;
       color: #888;
+    }
+    
+    .page-numbers {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .page-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 8px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .page-num:hover {
+      background: #3a3a3a;
+      border-color: #4fc3f7;
+    }
+    
+    .page-num.active {
+      background: #4fc3f7;
+      border-color: #4fc3f7;
+      color: #121212;
     }
     
     .right-panel {
@@ -761,7 +861,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       margin-bottom: 16px;
     }
     
-    .io-action-btn {
+    .output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -774,17 +874,12 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       transition: all 0.2s ease;
     }
     
-    .io-action-btn:hover {
+    .output-btn:hover {
       background: #3a3a3a;
       border-color: #4fc3f7;
     }
     
-    .io-action-btn.active {
-      background: rgba(79, 195, 247, 0.2);
-      border-color: #4fc3f7;
-    }
-    
-    .io-action-btn mat-icon {
+    .output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
@@ -888,9 +983,9 @@ export class PipelinesComponent implements OnInit {
   runs: PipelineRun[] = [];
   selectedRun: PipelineRun | null = null;
   selectedStep: PipelineRunStep | null = null;
-  showInput = false;
-  showOutput = false;
   cleaningUp = false;
+  
+  searchProjectName = '';
   
   currentPage = 0;
   totalPages = 0;
@@ -918,8 +1013,9 @@ export class PipelinesComponent implements OnInit {
     }
   }
   
-  loadRuns(page = 0) {
-    this.apiService.getAllPipelineRuns(page, this.pageSize).subscribe({
+  loadRuns(page = 0, projectName?: string) {
+    const searchName = projectName !== undefined ? projectName : (this.searchProjectName || undefined);
+    this.apiService.getAllPipelineRuns(page, this.pageSize, searchName).subscribe({
       next: (response: any) => {
         this.runs = response.runs || [];
         this.currentPage = response.currentPage || 0;
@@ -932,6 +1028,19 @@ export class PipelinesComponent implements OnInit {
       },
       error: (err) => console.error('Error loading runs:', err)
     });
+  }
+  
+  searchRuns() {
+    this.selectedRun = null;
+    this.selectedStep = null;
+    this.loadRuns(0, this.searchProjectName);
+  }
+  
+  clearSearch() {
+    this.searchProjectName = '';
+    this.selectedRun = null;
+    this.selectedStep = null;
+    this.loadRuns(0);
   }
   
   goToPage(page: number) {
@@ -950,11 +1059,25 @@ export class PipelinesComponent implements OnInit {
     this.goToPage(this.currentPage - 1);
   }
   
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(0, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages - 1, start + maxVisible - 1);
+    
+    if (end - start < maxVisible - 1) {
+      start = Math.max(0, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+  
   selectRun(run: PipelineRun) {
     this.selectedRun = run;
     this.selectedStep = null;
-    this.showInput = false;
-    this.showOutput = false;
     
     if (run.steps && run.steps.length > 0) {
       this.selectStep(run.steps[0]);
@@ -963,6 +1086,21 @@ export class PipelinesComponent implements OnInit {
   
   selectStep(step: PipelineRunStep) {
     this.selectedStep = step;
+  }
+  
+  openOutputModal() {
+    if (this.selectedStep) {
+      this.dialog.open(OutputDialogComponent, {
+        width: '80vw',
+        height: '70vh',
+        maxWidth: '900px',
+        data: {
+          step: this.selectedStep,
+          type: 'output'
+        },
+        panelClass: 'output-dialog-panel'
+      });
+    }
   }
   
   viewRunningPipeline(run: PipelineRun, event: Event) {
@@ -1007,14 +1145,5 @@ export class PipelinesComponent implements OnInit {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleString();
-  }
-  
-  copyOutput() {
-    const content = this.showInput ? this.selectedStep?.inputContent : this.selectedStep?.outputContent;
-    if (content) {
-      navigator.clipboard.writeText(content).catch(err => {
-        console.error('Failed to copy:', err);
-      });
-    }
   }
 }

@@ -779,11 +779,15 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  getAllPipelineRuns(page = 0, size = 10): Observable<any> {
+  getAllPipelineRuns(page = 0, size = 10, projectName?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (projectName) {
+      params = params.set('projectName', projectName);
+    }
     return this.http.get(`${this.baseUrl}/all-pipeline-runs`, {
-      params: new HttpParams()
-        .set('page', page.toString())
-        .set('size', size.toString())
+      params
     }).pipe(catchError(this.handleError('getAllPipelineRuns', { runs: [], totalElements: 0, totalPages: 0 })));
   }
 
