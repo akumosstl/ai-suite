@@ -37,6 +37,8 @@ import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-d
 import { StepCliDialogComponent } from '../../components/step-cli-dialog/step-cli-dialog.component';
 import { StepSettingsDialogComponent } from '../../components/step-settings-dialog/step-settings-dialog.component';
 import { CreateFileDialogComponent } from '../../components/create-file-dialog/create-file-dialog.component';
+import { EditPipelineDialogComponent } from '../../components/edit-pipeline-dialog/edit-pipeline-dialog.component';
+import { ProjectReadmeDialogComponent } from '../../components/project-readme-dialog/project-readme-dialog.component';
 
 /**
  * Componente principal de gerenciamento de projetos e pipelines.
@@ -49,7 +51,7 @@ import { CreateFileDialogComponent } from '../../components/create-file-dialog/c
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ProjectSkillsDialogComponent, ProjectCommandsDialogComponent, ProjectScriptsDialogComponent, ProjectAgentsDialogComponent, ProjectInstructionsDialogComponent, ProjectPluginsDialogComponent, ProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ProjectSkillsDialogComponent, ProjectCommandsDialogComponent, ProjectScriptsDialogComponent, ProjectAgentsDialogComponent, ProjectInstructionsDialogComponent, ProjectPluginsDialogComponent, ProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -83,10 +85,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
     outputExtension: 'json',
     type: 'sequential'
   };
-  
+
   outputExtensions = ['json', 'yml', 'text'];
   filteredOutputExtensions: string[] = [...this.outputExtensions];
-  
+
   isEditingProject = false;
   editProject: { name: string; description: string; path: string; target: string } = { name: '', description: '', path: '', target: '' };
   targets: Target[] = [];
@@ -96,7 +98,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   isReorderingSteps = false;
   isSavingProject = false;
   endpointsExpanded = false;
-  
+
   private runningCheckInterval: any;
 
   constructor(
@@ -106,7 +108,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
     private projectContext: ProjectContextService
-  ) {}
+  ) { }
 
   /**
    * Copia o texto para a área de transferência e exibe mensagem de sucesso.
@@ -143,7 +145,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
-  
+
 
   /**
    * Inicializa o componente carregando o projeto pelos parâmetros da rota
@@ -228,7 +230,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   /**
    * Ativa o modo de edição do projeto e carrega os targets.
    */
@@ -243,7 +245,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     };
     this.isEditingProject = true;
   }
-  
+
   /**
    * Cancela a edição do projeto sem salvar.
    */
@@ -251,18 +253,18 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.isEditingProject = false;
     this.editProject = { name: '', description: '', path: '', target: '' };
   }
-  
+
   /**
    * Salva as informações editadas do projeto.
    */
   saveProjectInfo() {
     if (!this.project) return;
-    
+
     const projectId = this.project.id;
     if (!projectId) return;
 
     this.isSavingProject = true;
-    
+
     const updatedProject = {
       ...this.project,
       name: this.editProject.name,
@@ -270,7 +272,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
       path: this.editProject.path,
       target: this.editProject.target
     };
-    
+
     this.apiService.updateProject(projectId, updatedProject).subscribe({
       next: (project) => {
         this.project = { ...this.project, ...project };
@@ -287,7 +289,34 @@ export class ProjectComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
+  /**
+   * Abre o diálogo para editar o README do projeto.
+   */
+  openReadmeDialog() {
+    if (!this.project?.id) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ProjectReadmeDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      height: '80vh',
+      data: {
+        projectId: this.project.id,
+        readme: this.project.readme || ''
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((updatedProject: Project | undefined) => {
+      if (updatedProject && this.project) {
+        this.project = { ...this.project, readme: updatedProject.readme };
+        this.showMessage('README saved successfully', 'success');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   /**
    * Exibe uma mensagem temporária na interface.
    * @param msg - Mensagem a ser exibida
@@ -307,11 +336,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   loadPipelines(projectId: number | undefined) {
     if (projectId === undefined) return;
-    
+
     this.apiService.getPipelinesByProject(projectId, 0, 100).subscribe({
       next: (response) => {
         this.pipelines = response.pipelines || [];
-        
+
         this.route.queryParams.subscribe(queryParams => {
           const pipelineId = queryParams['pipelineId'];
           if (pipelineId && this.pipelines.length > 0) {
@@ -321,7 +350,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
             }
           }
         });
-        
+
         this.restoreSelectedPipeline();
         this.cdr.detectChanges();
       },
@@ -456,21 +485,21 @@ export class ProjectComponent implements OnInit, OnDestroy {
       type: 'sequential'
     };
   }
-  
+
   /**
    * Filtra as extensões de saída disponíveis com base no valor digitado.
    * @param value - Valor digitado pelo usuário
    */
   onOutputExtensionChange(value: string): void {
     const filterValue = value.toLowerCase();
-    this.filteredOutputExtensions = this.outputExtensions.filter(ext => 
+    this.filteredOutputExtensions = this.outputExtensions.filter(ext =>
       ext.toLowerCase().startsWith(filterValue)
     );
     if (filterValue && !this.filteredOutputExtensions.includes(value)) {
       this.filteredOutputExtensions = [value, ...this.filteredOutputExtensions];
     }
   }
-  
+
   /**
    * Carrega os steps de uma pipeline específica.
    * @param pipelineId - ID da pipeline
@@ -484,6 +513,60 @@ export class ProjectComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading pipeline steps:', error);
         this.pipelineSteps = [];
+      }
+    });
+  }
+
+  /**
+   * Opens the edit pipeline dialog to modify pipeline name and description.
+   */
+  openEditPipelineDialog() {
+    if (!this.selectedPipeline || !this.project?.id) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(EditPipelineDialogComponent, {
+      width: '500px',
+      data: {
+        id: this.selectedPipeline.id,
+        name: this.selectedPipeline.name,
+        description: this.selectedPipeline.description || ''
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: { name: string; description: string } | undefined) => {
+      if (result && this.selectedPipeline && this.project?.id && this.selectedPipeline.id) {
+        const pipelineId = this.selectedPipeline.id;
+        const updatedPipeline: Pipeline = {
+          ...this.selectedPipeline,
+          name: result.name,
+          description: result.description
+        };
+
+        this.apiService.updatePipeline(this.project.id, pipelineId, updatedPipeline).subscribe({
+          next: (pipeline) => {
+            this.selectedPipeline = pipeline;
+            const index = this.pipelines.findIndex(p => p.id === pipeline.id);
+            if (index !== -1) {
+              this.pipelines[index] = pipeline;
+            }
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: true,
+                message: 'Pipeline updated successfully!'
+              }
+            });
+          },
+          error: (error) => {
+            console.error('Error updating pipeline:', error);
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: false,
+                message: 'Failed to update pipeline'
+              }
+            });
+          }
+        });
       }
     });
   }
@@ -869,22 +952,22 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
     console.log('DEBUG dropStep: prevIndex=', event.previousIndex, 'currIndex=', event.currentIndex);
     console.log('DEBUG dropStep: before swap =', this.pipelineSteps.map(s => s.id));
-    
+
     const temp = this.pipelineSteps[event.previousIndex];
     this.pipelineSteps[event.previousIndex] = this.pipelineSteps[event.currentIndex];
     this.pipelineSteps[event.currentIndex] = temp;
-    
+
     console.log('DEBUG dropStep: after swap =', this.pipelineSteps.map(s => s.id));
     console.log('DEBUG dropStep: selectedPipeline =', this.selectedPipeline?.id);
-    
+
     if (!this.selectedPipeline?.id) {
       console.log('DEBUG dropStep: early return - no pipeline selected');
       return;
     }
-    
+
     this.isReorderingSteps = true;
     const stepIdsInOrder = this.pipelineSteps.map(step => step.id!);
-    
+
     this.apiService.reorderPipelineSteps(this.selectedPipeline.id, stepIdsInOrder).subscribe({
       next: (updatedSteps) => {
         this.isReorderingSteps = false;
@@ -912,8 +995,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
     this.apiService.runPipeline(projectId, pipelineId).subscribe({
       next: () => {
-        const url = isStepByStep 
-          ? '/run-step-by-step' 
+        const url = isStepByStep
+          ? '/run-step-by-step'
           : '/runpipelines';
         const urlWithParams = url + `?pipelineId=${pipelineId}&projectId=${projectId}`;
         window.open(urlWithParams, '_blank');
@@ -932,7 +1015,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
       return;
     }
     const isStepByStep = this.selectedPipeline?.type === 'step_by_step';
-    const url = isStepByStep 
+    const url = isStepByStep
       ? `/run-step-by-step?pipelineId=${this.runningPipelineId}&projectId=${this.project.id}`
       : `/runpipelines?pipelineId=${this.runningPipelineId}&projectId=${this.project.id}`;
     window.open(url, '_blank');
@@ -979,7 +1062,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }
 
     this.router.navigate(['/pipeline-run-history'], {
-      queryParams: { 
+      queryParams: {
         projectId: this.project.id,
         pipelineId: this.selectedPipeline?.id
       }
@@ -988,14 +1071,14 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
   deletePipeline(pipeline: Pipeline, event: Event) {
     event.stopPropagation();
-    
+
     if (!pipeline.id || !this.project?.id) {
       return;
     }
 
     const pipelineName = pipeline.name;
     const projectId = this.project.id;
-    
+
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,

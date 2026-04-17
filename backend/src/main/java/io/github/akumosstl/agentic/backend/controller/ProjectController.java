@@ -185,6 +185,12 @@ public class ProjectController {
         return projectService.updateProject(id, projectDetails);
     }
     
+    @PutMapping("/{id}/readme")
+    public Project updateProjectReadme(@PathVariable Long id, @RequestBody Map<String, String> readmeData) {
+        String readmeContent = readmeData.get("content");
+        return projectService.updateProjectReadme(id, readmeContent);
+    }
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);

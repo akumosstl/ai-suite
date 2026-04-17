@@ -72,16 +72,7 @@ public class AgentService {
     }
     
     public Agent createAgent(Agent agent, Long projectId) {
-        Agent savedAgent = agentRepository.save(agent);
-        
-        if (projectId != null && (agent.getPath() == null || agent.getPath().isEmpty())) {
-            Project project = projectRepository.findById(projectId).orElse(null);
-            if (project != null && project.getPath() != null && !project.getPath().isEmpty()) {
-                saveAgentToProject(project, savedAgent);
-            }
-        }
-        
-        return savedAgent;
+        return agentRepository.save(agent);
     }
     
     private void saveAgentToProject(Project project, Agent agent) {

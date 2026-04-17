@@ -36,7 +36,7 @@ public class Command {
     @Column(length = 1000)
     private String description;
     
-    @Column(length = 5000)
+    @Column(length = 10000)
     private String command;
 
     @Column(name = "created_at")

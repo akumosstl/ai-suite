@@ -127,6 +127,9 @@
                     <mat-icon>dashboard</mat-icon>
                     <h2>Project Information</h2>
                     <div class="header-actions" *ngIf="project && !isEditingProject">
+                        <button class="icon-btn readme-btn" (click)="openReadmeDialog()" title="Edit README">
+                            <mat-icon>description</mat-icon>
+                        </button>
                         <button class="icon-btn edit-btn" (click)="editProjectInfo()" title="Edit project">
                             <mat-icon>edit</mat-icon>
                         </button>
@@ -239,6 +242,9 @@
                     <mat-icon>alt_route</mat-icon>
                     <h2>Pipeline Details</h2>
                     <div class="header-actions">
+                        <button class="icon-btn edit-btn" (click)="openEditPipelineDialog()" title="Edit pipeline">
+                            <mat-icon>edit</mat-icon>
+                        </button>
                         <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
                             [disabled]="pipelineSteps.length === 0 || isRunningPipeline" 
                             *ngIf="!isRunningPipeline">

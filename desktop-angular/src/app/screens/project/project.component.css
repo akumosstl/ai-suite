@@ -1053,6 +1053,17 @@
       border-color: #4fc3f7;
     }
     
+    .icon-btn.readme-btn {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      color: #81c784;
+    }
+    
+    .icon-btn.readme-btn:hover {
+      background: #3a3a3a;
+      border-color: #81c784;
+    }
+    
     .icon-btn.cancel-btn {
       background: #2a2a2a;
       border: 1px solid #3a3a3a;

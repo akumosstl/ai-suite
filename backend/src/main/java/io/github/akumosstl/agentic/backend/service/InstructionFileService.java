@@ -7,6 +7,10 @@ import io.github.akumosstl.agentic.backend.repository.InstructionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -30,7 +34,42 @@ public class InstructionFileService {
             .orElseThrow(() -> new RuntimeException("Instruction not found"));
         
         InstructionFile instructionFile = new InstructionFile(path, fileName, content, instruction);
-        return instructionFileRepository.save(instructionFile);
+        InstructionFile savedFile = instructionFileRepository.save(instructionFile);
+        
+        saveFileToFilesystem(instruction, path, fileName, content);
+        
+        return savedFile;
+    }
+    
+    private void saveFileToFilesystem(Instruction instruction, String filePath, String fileName, String content) {
+        try {
+            String projectPath = getProjectPath(instruction);
+            if (projectPath == null || projectPath.isEmpty()) {
+                System.out.println("No project path found for instruction: " + instruction.getName());
+                return;
+            }
+            
+            String fullPath = projectPath + "/.opencode/instructions/" + filePath + "/" + fileName;
+            Path file = Paths.get(fullPath);
+            
+            Path directory = file.getParent();
+            if (directory != null) {
+                Files.createDirectories(directory);
+            }
+            
+            Files.write(file, content.getBytes());
+            System.out.println("File saved to filesystem: " + fullPath);
+        } catch (IOException e) {
+            System.err.println("Error saving file to filesystem: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private String getProjectPath(Instruction instruction) {
+        if (instruction.getProjects() != null && !instruction.getProjects().isEmpty()) {
+            return instruction.getProjects().get(0).getPath();
+        }
+        return null;
     }
     
     @Transactional

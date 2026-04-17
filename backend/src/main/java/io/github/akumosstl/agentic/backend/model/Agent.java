@@ -4,27 +4,21 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * Entidade que representa um Agente no sistema.
- * 
- * Um agente é uma unidade autonomous que pode executar tarefas dentro de um pipeline.
- * Cada agente possui um nome, categoria, descrição, prompt de instruções
- * 
- * @author Sistema Agentic
- * @version 1.0
- */
 @Entity
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Table(name = "agent")
+@JsonIgnoreProperties({"createdAt", "updatedAt"})
 public class Agent {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    /** Nome único do agente */
-    @Column(nullable = false)
+    /** Nome do agente */
+    @Column(nullable = false, length = 255)
     private String name;
     
-    /** Namespace para organicação de agentes */
+    /** Namespace do agente */
+    @Column(length = 255)
     private String namespace;
     
     /** Categoria do agente */
@@ -35,7 +29,7 @@ public class Agent {
     private String description;
     
     /** Prompt de instruções do agente */
-    @Column(length = 5000)
+    @Column(length = 10000)
     private String prompt;
 
     /** Caminho do arquivo de definição do agente */

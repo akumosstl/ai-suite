@@ -17,6 +17,7 @@ export interface Project {
   target?: string;
   targetId?: number;
   status?: string;
+  readme?: string;
   createdAt?: string;
   updatedAt?: string;
   skills?: Skill[];
@@ -471,6 +472,12 @@ export class ApiService {
     );
   }
 
+  updateProjectReadme(projectId: number, content: string): Observable<Project> {
+    return this.http.put<Project>(`${this.baseUrl}/projects/${projectId}/readme`, { content }).pipe(
+      catchError(this.handleError('updateProjectReadme', {} as Project))
+    );
+  }
+
   deleteProject(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/projects/${id}`).pipe(
       catchError(this.handleError('deleteProject', undefined))
@@ -637,6 +644,12 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
   createPipeline(projectId: number, pipeline: Pipeline): Observable<Pipeline> {
     return this.http.post<Pipeline>(`${this.baseUrl}/projects/${projectId}/pipelines`, pipeline).pipe(
       catchError(this.handleError('createPipeline', pipeline))
+    );
+  }
+
+  updatePipeline(projectId: number, pipelineId: number, pipeline: Pipeline): Observable<Pipeline> {
+    return this.http.put<Pipeline>(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}`, pipeline).pipe(
+      catchError(this.handleError('updatePipeline', pipeline))
     );
   }
 

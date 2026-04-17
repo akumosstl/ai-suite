@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
@@ -137,7 +138,27 @@ public class ProjectService {
         project.setPath(projectDetails.getPath());
         project.setTarget(projectDetails.getTarget());
         project.setStatus(projectDetails.getStatus());
+        project.setReadme(projectDetails.getReadme());
         return projectRepository.save(project);
+    }
+    
+    @Transactional
+    public Project updateProjectReadme(Long projectId, String readmeContent) {
+        Project project = getProjectById(projectId);
+        project.setReadme(readmeContent);
+        project = projectRepository.save(project);
+        
+        String projectPath = project.getPath();
+        if (projectPath != null && !projectPath.isEmpty()) {
+            Path readmePath = Paths.get(projectPath, "README.md");
+            try {
+                Files.writeString(readmePath, readmeContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (Exception e) {
+                System.err.println("Error writing README.md file: " + e.getMessage());
+            }
+        }
+        
+        return project;
     }
     
     @Transactional

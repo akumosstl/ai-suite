@@ -48,6 +48,9 @@ public class Project {
     @Column(name = "status")
     private String status; // "active", "completed", "archived"
     
+    @Column(name = "readme", columnDefinition = "TEXT")
+    private String readme;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -157,6 +160,9 @@ public class Project {
     
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
+    public String getReadme() { return readme; }
+    public void setReadme(String readme) { this.readme = readme; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
