@@ -140,6 +140,16 @@
                     <div *ngIf="loadingTemplates" class="loading-spinner">
                         <mat-spinner diameter="20"></mat-spinner>
                     </div>
+                    <div class="textarea-actions">
+                        <button mat-icon-button type="button" (click)="copyToClipboard(formSkill.instructions)" 
+                            [disabled]="!formSkill.instructions" title="Copy to clipboard">
+                            <mat-icon>content_copy</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="openInstructionsEditor()" 
+                            title="Open in editor">
+                            <mat-icon>open_in_new</mat-icon>
+                        </button>
+                    </div>
                 </div>
 
                 <mat-form-field class="full-width prompt-field" appearance="outline">

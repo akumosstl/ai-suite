@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Inject, OnInit, ViewEncapsulation, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -296,6 +296,24 @@ export class PromptEditorModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadTemplates();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Tab' && !event.shiftKey) {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' && target.closest('.modal-container')) {
+        event.preventDefault();
+        const textarea = target as HTMLTextAreaElement;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        this.editedPrompt = value.substring(0, start) + '  ' + value.substring(end);
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 2;
+        }, 0);
+      }
+    }
   }
 
   loadTemplates(): void {

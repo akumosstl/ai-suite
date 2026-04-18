@@ -914,6 +914,25 @@ import { ProjectContextService } from '../../services/project-context.service';
       color: #ffb74d;
       border: 1px solid rgba(255, 152, 0, 0.3);
     }
+
+    .textarea-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .textarea-actions button {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+    }
+
+    .textarea-actions mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
   `]
 
 })
@@ -1477,7 +1496,7 @@ export class SkillsComponent implements OnInit {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
       maxWidth: '90vw',
-      maxHeight: '85vh',
+      maxHeight: '90vh',
       data: {
         prompt: this.formSkill.instructions,
         type: 'skills',
@@ -1491,6 +1510,20 @@ export class SkillsComponent implements OnInit {
         this.formSkill.instructions = result.prompt;
       }
     });
+  }
+
+  /**
+   * Copia o conteúdo das instruções para o clipboard.
+   */
+  async copyToClipboard(text: string | undefined): Promise<void> {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      this.statusMessage = 'Instructions copied to clipboard';
+      setTimeout(() => this.statusMessage = '', 3000);
+    } catch (err) {
+      this.statusMessage = 'Failed to copy to clipboard';
+    }
   }
 
   /**

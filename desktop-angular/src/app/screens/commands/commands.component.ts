@@ -207,6 +207,16 @@ import { ProjectContextService } from '../../services/project-context.service';
               </mat-select>
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
+            <div class="textarea-actions">
+              <button mat-icon-button type="button" (click)="copyToClipboard(formCommand.command)" 
+                [disabled]="!formCommand.command" title="Copy to clipboard">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="openCommandEditor()" 
+                title="Open in editor">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </div>
             
             <mat-form-field class="full-width" appearance="outline">
               <mat-label>Command</mat-label>
@@ -784,6 +794,25 @@ import { ProjectContextService } from '../../services/project-context.service';
       color: #4fc3f7;
       border: 1px solid rgba(41, 182, 246, 0.3);
     }
+
+    .textarea-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .textarea-actions button {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+    }
+
+    .textarea-actions mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
   `]
 
 })
@@ -1229,7 +1258,7 @@ export class CommandsComponent implements OnInit {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
       maxWidth: '90vw',
-      maxHeight: '85vh',
+      maxHeight: '90vh',
       data: {
         prompt: this.formCommand.command,
         type: 'commands',
@@ -1243,6 +1272,20 @@ export class CommandsComponent implements OnInit {
         this.formCommand.command = result.prompt;
       }
     });
+  }
+
+  /**
+   * Copia o conteúdo do comando para o clipboard.
+   */
+  async copyToClipboard(text: string | undefined): Promise<void> {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      this.statusMessage = 'Command copied to clipboard';
+      setTimeout(() => this.statusMessage = '', 3000);
+    } catch (err) {
+      this.statusMessage = 'Failed to copy to clipboard';
+    }
   }
 
   /**

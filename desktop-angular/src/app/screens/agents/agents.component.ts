@@ -478,7 +478,7 @@ export class AgentsComponent implements OnInit {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
       maxWidth: '90vw',
-      maxHeight: '85vh',
+      maxHeight: '90vh',
       data: {
         prompt: this.formAgent.prompt,
         type: 'agents',
@@ -492,6 +492,20 @@ export class AgentsComponent implements OnInit {
         this.formAgent.prompt = result.prompt;
       }
     });
+  }
+
+  /**
+   * Copia o conteúdo do prompt para o clipboard.
+   */
+  async copyToClipboard(text: string | undefined): Promise<void> {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      this.statusMessage = 'Prompt copied to clipboard';
+      setTimeout(() => this.statusMessage = '', 3000);
+    } catch (err) {
+      this.statusMessage = 'Failed to copy to clipboard';
+    }
   }
 
   /**

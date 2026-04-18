@@ -136,6 +136,16 @@
                     </mat-select>
                     <mat-icon matPrefix>description</mat-icon>
                 </mat-form-field>
+                <div class="textarea-actions">
+                    <button mat-icon-button type="button" (click)="copyToClipboard(formAgent.prompt)" 
+                        [disabled]="!formAgent.prompt" title="Copy to clipboard">
+                        <mat-icon>content_copy</mat-icon>
+                    </button>
+                    <button mat-icon-button type="button" (click)="openPromptEditor()" 
+                        title="Open in editor">
+                        <mat-icon>open_in_new</mat-icon>
+                    </button>
+                </div>
 
                 <mat-form-field class="full-width" appearance="outline">
                     <mat-label>Prompt</mat-label>
