@@ -74,7 +74,7 @@ This method compiles the application to a standalone native executable (no JVM r
 
 ```bash
 cd backend
-mvn -Pnative native:build
+mvn -Pnative native:build spring-boot:process-aot
 ```
 
 The native executable will be created at `target/backend`.

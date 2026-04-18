@@ -1,0 +1,11 @@
+
+14:05:45.075 [main] ERROR org.springframework.boot.SpringApplication -- Application run failed
+java.lang.IllegalStateException: You are starting the application with AOT mode enabled but AOT processing hasn't happened. Please build your application with enabled AOT processing first, or remove the system property 'spring.aot.enabled' to run the application in regular mode
+        at org.springframework.util.Assert.state(Assert.java:76)
+        at org.springframework.boot.SpringApplication.addAotGeneratedInitializerIfNecessary(SpringApplication.java:441)
+        at org.springframework.boot.SpringApplication.prepareContext(SpringApplication.java:399)
+        at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+        at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+        at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+        at io.github.akumosstl.agentic.backend.BackendApplication.main(BackendApplication.java:34)
+        at java.base@25.0.1/java.lang.invoke.LambdaForm$DMH/sa346b79c.invokeStaticInit(LambdaForm$DMH)
