@@ -1,5 +1,7 @@
 nul 
 
+target/
+
 # Compiled class file
 *.class
 
