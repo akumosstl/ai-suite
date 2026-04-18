@@ -642,6 +642,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewSkillsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open skills dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectSkillsDialogComponent, {
@@ -655,6 +656,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openAddSkillDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open add skill dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectSkillDialogComponent, {
@@ -679,6 +681,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewCommandsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open commands dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectCommandsDialogComponent, {
@@ -692,6 +695,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openAddCommandDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open add command dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectCommandDialogComponent, {
@@ -716,6 +720,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewScriptsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open scripts dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectScriptsDialogComponent, {
@@ -729,6 +734,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openAddScriptDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open add script dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectScriptDialogComponent, {
@@ -753,6 +759,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewAgentsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open agents dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectAgentsDialogComponent, {
@@ -767,6 +774,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openAddAgentDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
+      console.warn('Cannot open add agent dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
@@ -791,6 +799,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewInstructionsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open instructions dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectInstructionsDialogComponent, {
@@ -805,6 +814,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openAddInstructionDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
+      console.warn('Cannot open add instruction dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectInstructionDialogComponent, {
@@ -829,6 +839,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   openViewPluginsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open plugins dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectPluginsDialogComponent, {
@@ -840,6 +851,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openAddPluginDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
+      console.warn('Cannot open add plugin dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectPluginDialogComponent, {
@@ -861,6 +873,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
   openViewToolsDialog() {
     if (!this.project?.id) {
+      console.warn('Cannot open tools dialog: project not loaded');
       return;
     }
     this.dialog.open(ProjectToolsDialogComponent, {
@@ -872,6 +885,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openAddToolDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
+      console.warn('Cannot open add tool dialog: project not loaded');
       return;
     }
     const dialogRef = this.dialog.open(SelectToolDialogComponent, {
@@ -894,6 +908,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   openCreateFileDialog() {
     const projectId = this.project?.id;
     if (!projectId) {
+      console.warn('Cannot open create file dialog: project not loaded');
       return;
     }
     this.dialog.open(CreateFileDialogComponent, {

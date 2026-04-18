@@ -1,0 +1,16 @@
+[0m
+> build · big-pickle
+[0m
+[0m✗ [0mread failed
+[91m[1mError: [0mFile not found: C:\Users\USER\.agentic_workspace\hello-opencode\.agentic\pipelines\teste\20260418-093031\step1-result.json
+[0m✱ [0mGlob ".agentic/**/*.json"[90m 6 matches[0m
+[0m→ [0mRead .agentic\pipelines\teste\20260418-093031\step1-result.json
+```
+> build · big-pickle
+
+Why do programmers prefer dark mode? Because light attracts bugs.
+
+--- Step completed ---
+```
+
+--- Step completed ---

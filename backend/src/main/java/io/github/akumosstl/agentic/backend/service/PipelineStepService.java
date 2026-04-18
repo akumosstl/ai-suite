@@ -1062,6 +1062,8 @@ public class PipelineStepService {
     }
 
     private void configureProcessEnvironment(Map<String, String> env) {
+        env.put("COLORTERM", "1");
+        
         String osName = System.getProperty("os.name").toLowerCase();
         boolean isWindows = osName.contains("win");
         

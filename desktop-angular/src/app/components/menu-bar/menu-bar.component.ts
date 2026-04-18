@@ -155,7 +155,7 @@ import { ApiService } from '../../services/api.service'
       
       <span class="spacer"></span>
       
-      <div class="user-info">
+      <div class="user-info" (click)="openDocumentation()" title="Documentation">
         <mat-icon>my_library_books</mat-icon>
       </div>
     </div>
@@ -284,11 +284,12 @@ import { ApiService } from '../../services/api.service'
       padding: 8px;
       border-radius: 50%;
       transition: all 0.2s ease;
+      margin-left: auto;
     }
     
     .user-info:hover {
       background-color: #3a3a3a;
-      color: #ffffff;
+      color: #4fc3f7;
     }
     
     .user-info mat-icon {
@@ -496,5 +497,9 @@ ngOnDestroy(): void {
         });
       }
     });
+  }
+
+  openDocumentation(): void {
+    window.open('https://github.com/akumosstl/agentic-ai-suite/blob/main/README.md', '_blank');
   }
 }

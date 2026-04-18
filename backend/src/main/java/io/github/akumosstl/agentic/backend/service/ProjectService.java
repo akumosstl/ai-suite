@@ -41,6 +41,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Serviço para gerenciamento de Projetos.
@@ -1128,5 +1131,76 @@ public class ProjectService {
         
         Path filePath = Paths.get(projectPath, fileName);
         Files.writeString(filePath, content);
+    }
+    
+    public List<String> getProjectFiles(Long projectId) throws IOException {
+        Project project = getProjectById(projectId);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            throw new RuntimeException("Project path is not set");
+        }
+        
+        Path dirPath = Paths.get(projectPath);
+        if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
+            return new ArrayList<>();
+        }
+        
+        try (Stream<Path> paths = Files.walk(dirPath, 1)) {
+            return paths
+                .filter(Files::isRegularFile)
+                .map(p -> p.getFileName().toString())
+                .filter(name -> !name.startsWith("."))
+                .sorted()
+                .collect(Collectors.toList());
+        }
+    }
+    
+    public String getProjectFileContent(Long projectId, String fileName) throws IOException {
+        Project project = getProjectById(projectId);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            throw new RuntimeException("Project path is not set");
+        }
+        
+        Path filePath = Paths.get(projectPath, fileName);
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("File not found: " + fileName);
+        }
+        
+        return Files.readString(filePath);
+    }
+    
+    public void updateProjectFile(Long projectId, String fileName, String content) throws IOException {
+        Project project = getProjectById(projectId);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            throw new RuntimeException("Project path is not set");
+        }
+        
+        Path filePath = Paths.get(projectPath, fileName);
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("File not found: " + fileName);
+        }
+        
+        Files.writeString(filePath, content);
+    }
+    
+    public void deleteProjectFile(Long projectId, String fileName) throws IOException {
+        Project project = getProjectById(projectId);
+        String projectPath = project.getPath();
+        
+        if (projectPath == null || projectPath.isEmpty()) {
+            throw new RuntimeException("Project path is not set");
+        }
+        
+        Path filePath = Paths.get(projectPath, fileName);
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("File not found: " + fileName);
+        }
+        
+        Files.delete(filePath);
     }
 }

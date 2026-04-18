@@ -251,6 +251,63 @@ public class ProjectController {
         }
     }
     
+    @GetMapping("/{id}/files")
+    public ResponseEntity<?> getProjectFiles(@PathVariable Long id) {
+        try {
+            List<String> files = projectService.getProjectFiles(id);
+            return ResponseEntity.ok(files);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
+    @GetMapping("/{id}/files/{fileName}")
+    public ResponseEntity<?> getProjectFileContent(@PathVariable Long id, @PathVariable String fileName) {
+        try {
+            String content = projectService.getProjectFileContent(id, fileName);
+            Map<String, String> response = new HashMap<>();
+            response.put("fileName", fileName);
+            response.put("content", content);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
+    @PutMapping("/{id}/files/{fileName}")
+    public ResponseEntity<?> updateProjectFile(@PathVariable Long id, @PathVariable String fileName, @RequestBody Map<String, String> fileData) {
+        try {
+            String content = fileData.get("content");
+            projectService.updateProjectFile(id, fileName, content);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File updated successfully");
+            response.put("fileName", fileName);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
+    @DeleteMapping("/{id}/files/{fileName}")
+    public ResponseEntity<?> deleteProjectFile(@PathVariable Long id, @PathVariable String fileName) {
+        try {
+            projectService.deleteProjectFile(id, fileName);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> error = new HashMap<>();

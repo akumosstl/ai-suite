@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/components/hud/hud.component.ts"],
+  "sourcesContent": ["\n    .hud {\n      display: flex;\n      justify-content: space-around;\n      align-items: center;\n      background-color: rgba(0, 0, 0, 0.7);\n      color: white;\n      padding: 10px 20px;\n      border-radius: 4px;\n    }\n    .hud-item {\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n    }\n    mat-progress-bar {\n      width: 100px;\n      margin-top: 4px;\n    }\n  "],
+  "mappings": "AACI,CAAA,IACE,QAAA,KACA,gBAAA,aACA,YAAA,OACA,iBAAA,UACA,MAAA,KALF,QAME,KAAA,KANF,cAOE,IAEF,CAAA,SACE,QAAA,KACA,eAAA,OACA,YAAA,OAEF,iBACE,MAAA,MACA,WAAA",
+  "names": []
+}

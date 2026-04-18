@@ -15,6 +15,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.boot.SpringBootConfiguration;
 import io.github.akumosstl.agentic.backend.controller.ExitController;
+import io.github.akumosstl.agentic.backend.config.AgenticConfigLoader;
 
 /**
  * Classe principal da aplicação Spring Boot.
@@ -36,7 +37,8 @@ public class BackendApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void openBrowser() {
-        String url = "http://localhost:4200";
+        int port = AgenticConfigLoader.getServerPort();
+        String url = "http://localhost:" + port;
         System.out.println("Attempting to open browser at: " + url);
         
         boolean opened = false;

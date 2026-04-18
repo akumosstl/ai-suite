@@ -625,6 +625,42 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
       })
     );
   }
+
+  getProjectFiles(projectId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/projects/${projectId}/files`).pipe(
+      catchError((error) => {
+        console.error('getProjectFiles error:', error);
+        throw error;
+      })
+    );
+  }
+
+  getProjectFileContent(projectId: number, fileName: string): Observable<{ fileName: string; content: string }> {
+    return this.http.get<{ fileName: string; content: string }>(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('getProjectFileContent error:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`, { content }).pipe(
+      catchError((error) => {
+        console.error('updateProjectFile error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteProjectFile(projectId: number, fileName: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('deleteProjectFile error:', error);
+        throw error;
+      })
+    );
+  }
   
   // Pipelines for a project
   getPipelinesByProject(projectId: number, page = 0, size = 10): Observable<any> {

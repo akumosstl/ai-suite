@@ -15,11 +15,15 @@ const SCREENSHOTS: ScreenshotConfig[] = [
   { name: 'scripts', route: '/scripts', waitFor: 'app-scripts' },
   { name: 'skills', route: '/skills', waitFor: 'app-skills' },
   { name: 'commands', route: '/commands', waitFor: 'app-commands' },
+  { name: 'instructions', route: '/instructions', waitFor: 'app-instructions' },
+  { name: 'plugins', route: '/plugins', waitFor: 'app-plugins' },
+  { name: 'tools', route: '/tools', waitFor: 'app-tools' },
   { name: 'config', route: '/config', waitFor: 'app-config' },
   { name: 'templates', route: '/templates', waitFor: 'app-templates' },
+  { name: 'namespaces', route: '/namespaces', waitFor: 'app-namespaces' },
   { name: 'project', route: '/project', waitFor: 'app-project' },
+  { name: 'pipelines', route: '/pipelines', waitFor: 'app-pipelines' },
   { name: 'runpipelines', route: '/runpipelines', waitFor: 'app-runpipelines' },
-  { name: 'run-step-by-step', route: '/run-step-by-step', waitFor: 'app-run-step-by-step' },
   { name: 'pipeline-run-history', route: '/pipeline-run-history', waitFor: 'app-pipeline-run-history' },
 ];
 

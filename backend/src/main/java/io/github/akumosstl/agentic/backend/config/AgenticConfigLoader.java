@@ -85,4 +85,8 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
     private void setServerPort() {
         System.setProperty("server.port", String.valueOf(serverPort));
     }
+
+    public static int getServerPort() {
+        return serverPort;
+    }
 }

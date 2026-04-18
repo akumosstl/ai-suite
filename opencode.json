@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  
+  "command": {
+    "generate-docs": {
+      "template": "Explore the application at $1 and generate a user guide for the $2 feature.",
+      "description": "Generate user docs with Playwright screenshots",
+      "agent": "doc-agent"
+    }
+  },
+  "agent": {
+    "doc-agent": {
+      "prompt": "{file:.opencode/prompts/agents/user-doc-agent.txt}"
+    }
+  }
+
+}
