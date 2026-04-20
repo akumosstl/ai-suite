@@ -1105,16 +1105,19 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
         this.apiService.deletePipeline(projectId, pipeline.id!).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Delete response:', response);
+            this.pipelines = this.pipelines.filter(p => p.id !== pipeline.id);
+            if (this.selectedPipeline?.id === pipeline.id) {
+              this.selectedPipeline = null;
+            }
+            this.cdr.detectChanges();
             this.dialog.open(PipelineResultDialogComponent, {
               data: {
                 success: true,
                 message: `Pipeline "${pipelineName}" excluída com sucesso!`
               }
             }).afterClosed().subscribe(() => {
-              if (this.selectedPipeline?.id === pipeline.id) {
-                this.selectedPipeline = null;
-              }
               if (this.project) {
                 this.loadPipelines(this.project.id!);
               }

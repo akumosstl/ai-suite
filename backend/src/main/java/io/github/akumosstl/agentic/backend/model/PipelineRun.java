@@ -3,6 +3,8 @@ package io.github.akumosstl.agentic.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,7 @@ public class PipelineRun {
     
     @OneToMany(mappedBy = "pipelineRun", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderBy("stepOrder ASC")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<PipelineRunStep> steps = new ArrayList<>();
     
     @Column(name = "execution_id", unique = true)

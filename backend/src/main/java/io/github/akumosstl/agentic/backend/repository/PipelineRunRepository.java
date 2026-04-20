@@ -4,6 +4,8 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,4 +28,12 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, Long> 
     List<PipelineRun> findByStatusNot(String status);
 
     Page<PipelineRun> findByPipeline_Project_NameContainingIgnoreCase(String projectName, Pageable pageable);
+    
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run_step WHERE pipeline_run_id IN (SELECT id FROM pipeline_run WHERE pipeline_id = :pipelineId)", nativeQuery = true)
+    void deleteStepsByPipelineId(Long pipelineId);
+    
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run WHERE pipeline_id = :pipelineId", nativeQuery = true)
+    void deleteByPipelineId(Long pipelineId);
 }

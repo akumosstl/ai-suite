@@ -1,3 +1,6 @@
+mvn clean install -U 
+
+
 # Agentic - AI Pipeline Execution System
 
 mvn -Pnative spring-boot:process-aot

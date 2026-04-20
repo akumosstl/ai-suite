@@ -4,6 +4,7 @@ import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ import java.util.List;
 public class PipelineService {
     
     private final PipelineRepository pipelineRepository;
+    private final PipelineRunRepository pipelineRunRepository;
     private final ProjectService projectService;
     private final PipelineStepService pipelineStepService;
     private final SseService sseService;
@@ -29,11 +32,13 @@ public class PipelineService {
     @Autowired
     public PipelineService(
             PipelineRepository pipelineRepository,
+            PipelineRunRepository pipelineRunRepository,
             ProjectService projectService,
             PipelineStepService pipelineStepService,
             SseService sseService,
             ObjectProvider<PipelineRunService> pipelineRunServiceProvider) {
         this.pipelineRepository = pipelineRepository;
+        this.pipelineRunRepository = pipelineRunRepository;
         this.projectService = projectService;
         this.pipelineStepService = pipelineStepService;
         this.sseService = sseService;
@@ -78,9 +83,24 @@ public class PipelineService {
         return pipelineRepository.save(pipeline);
     }
     
+    @Transactional
     public void deletePipeline(Long id) {
-        getPipelineRunService().deleteRunsByPipeline(id);
-        pipelineRepository.deleteById(id);
+        Pipeline pipeline = pipelineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pipeline not found"));
+        
+        Long projectId = pipeline.getProject().getId();
+        
+        pipelineRunRepository.deleteStepsByPipelineId(id);
+        pipelineRunRepository.flush();
+        
+        pipelineRunRepository.deleteByPipelineId(id);
+        pipelineRunRepository.flush();
+        
+        pipelineRepository.deleteStepsByPipelineId(id);
+        pipelineRepository.flush();
+        
+        pipelineRepository.deleteByIdNative(id);
+        pipelineRepository.flush();
     }
     
     public List<Pipeline> getPipelinesByProjectAndStatus(Long projectId, String status) {

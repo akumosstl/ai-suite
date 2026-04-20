@@ -765,6 +765,8 @@ export class TemplatesComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('TemplatesComponent ngOnInit');
+    this.selectedType = 'agents';
+    this.clearForm();
     this.loadTemplates();
   }
 

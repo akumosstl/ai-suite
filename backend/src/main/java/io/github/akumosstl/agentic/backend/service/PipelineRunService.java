@@ -117,12 +117,17 @@ public class PipelineRunService {
     
     @Transactional
     public void deleteRun(Long id) {
-        pipelineRunRepository.deleteById(id);
+        PipelineRun run = getRunById(id);
+        run.getSteps().clear();
+        pipelineRunRepository.delete(run);
     }
     
     @Transactional
     public void deleteRunsByPipeline(Long pipelineId) {
         List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
+        for (PipelineRun run : runs) {
+            run.getSteps().clear();
+        }
         pipelineRunRepository.deleteAll(runs);
     }
     
