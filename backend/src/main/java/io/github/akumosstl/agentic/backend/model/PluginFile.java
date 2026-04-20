@@ -29,7 +29,7 @@ public class PluginFile {
     @Column(columnDefinition = "TEXT")
     private String content;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plugin_id", nullable = false)
     @JsonIgnore
     private Plugin plugin;

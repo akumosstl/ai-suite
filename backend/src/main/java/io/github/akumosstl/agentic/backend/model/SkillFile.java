@@ -29,7 +29,7 @@ public class SkillFile {
     @Column(columnDefinition = "TEXT")
     private String content;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "skill_id", nullable = false)
     @JsonIgnore
     private Skill skill;

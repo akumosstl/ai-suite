@@ -1,5 +1,12 @@
 # Agentic - AI Pipeline Execution System
 
+mvn -Pnative spring-boot:process-aot
+
+
+mvn -Pnative clean package -DskipTests
+
+java -Dspring.aot.enabled=true -jar target/my-app.jar
+
 A hybrid pipeline execution system with Server-Sent Events (SSE) for real-time updates and polling fallback, built on a Java Spring Boot backend and Angular frontend.
 
 ## Prerequisites
@@ -76,6 +83,11 @@ This method compiles the application to a standalone native executable (no JVM r
 cd backend
 mvn -Pnative native:build spring-boot:process-aot
 ```
+./mvnw -Pnative native:compile
+
+mvn -Pnative package -DskipTests
+
+java -jar backend/target/backend-3.5.0.jar
 
 The native executable will be created at `target/backend`.
 

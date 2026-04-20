@@ -2,6 +2,7 @@ C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agen
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\ProjectRepository.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\PipelineRunStep.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\AgentService.java
+C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\SpaFallbackConfig.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\PipelineRunController.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\Tool.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\TemplateRepository.java
@@ -72,6 +73,7 @@ C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agen
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\PluginFileRepository.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\SseService.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\ScriptService.java
+C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\HibernateConfig.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\TargetController.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\Event.java
 C:\Users\Focare\projects\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\ExportImportController.java

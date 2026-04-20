@@ -29,7 +29,7 @@ public class InstructionFile {
     @Column(columnDefinition = "TEXT")
     private String content;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "instruction_id", nullable = false)
     @JsonIgnore
     private Instruction instruction;

@@ -16,6 +16,7 @@ io\github\akumosstl\agentic\backend\service\PipelineStepService.class
 io\github\akumosstl\agentic\backend\controller\EventController.class
 io\github\akumosstl\agentic\backend\repository\ToolRepository.class
 io\github\akumosstl\agentic\backend\service\TemplateService.class
+io\github\akumosstl\agentic\backend\config\HibernateConfig.class
 io\github\akumosstl\agentic\backend\controller\SkillController.class
 io\github\akumosstl\agentic\backend\model\ToolFile.class
 io\github\akumosstl\agentic\backend\config\TargetSeedLoader.class
@@ -23,6 +24,7 @@ io\github\akumosstl\agentic\backend\repository\ToolFileRepository.class
 io\github\akumosstl\agentic\backend\controller\PluginController.class
 io\github\akumosstl\agentic\backend\BackendApplication.class
 io\github\akumosstl\agentic\backend\service\PipelineService.class
+io\github\akumosstl\agentic\backend\config\SpaFallbackConfig.class
 io\github\akumosstl\agentic\backend\config\AgenticConfigLoader.class
 io\github\akumosstl\agentic\backend\repository\TargetRepository.class
 io\github\akumosstl\agentic\backend\service\SkillService.class

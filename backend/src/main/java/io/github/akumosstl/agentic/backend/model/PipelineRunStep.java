@@ -22,7 +22,7 @@ public class PipelineRunStep {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "pipeline_run_id", nullable = false)
     @JsonIgnore
     private PipelineRun pipelineRun;

@@ -61,13 +61,13 @@ public class Pipeline {
     private String type;
     
     /** Lista de etapas do pipeline */
-    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("stepOrder ASC")
     @JsonIgnore
     private List<PipelineStep> steps = new ArrayList<>();
     
     /** Lista de execuções do pipeline */
-    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pipeline", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("createdAt DESC")
     @JsonIgnore
     private List<PipelineRun> pipelineRuns = new ArrayList<>();

@@ -5,8 +5,8 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineRunStep;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,16 +20,23 @@ import java.util.List;
 @Service
 public class PipelineRunService {
     
-    @Autowired
-    private PipelineRunRepository pipelineRunRepository;
+    private final PipelineRunRepository pipelineRunRepository;
+    private final PipelineStepService pipelineStepService;
+    private final ObjectProvider<PipelineService> pipelineServiceProvider;
     
-    @Lazy
     @Autowired
-    private PipelineService pipelineService;
+    public PipelineRunService(
+            PipelineRunRepository pipelineRunRepository,
+            PipelineStepService pipelineStepService,
+            ObjectProvider<PipelineService> pipelineServiceProvider) {
+        this.pipelineRunRepository = pipelineRunRepository;
+        this.pipelineStepService = pipelineStepService;
+        this.pipelineServiceProvider = pipelineServiceProvider;
+    }
     
-    @Lazy
-    @Autowired
-    private PipelineStepService pipelineStepService;
+    private PipelineService getPipelineService() {
+        return pipelineServiceProvider.getObject();
+    }
     
     public List<PipelineRun> getTop20RunsByPipeline(Long pipelineId) {
         return pipelineRunRepository.findTop20ByPipeline_IdOrderByCreatedAtDesc(pipelineId);
@@ -56,7 +63,7 @@ public class PipelineRunService {
     
     @Transactional
     public PipelineRun createRun(Long pipelineId) {
-        Pipeline pipeline = pipelineService.getPipelineById(pipelineId);
+        Pipeline pipeline = getPipelineService().getPipelineById(pipelineId);
         PipelineRun run = new PipelineRun(pipeline);
         run.setStatus("running");
         
