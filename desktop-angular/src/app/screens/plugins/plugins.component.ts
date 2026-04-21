@@ -1505,9 +1505,12 @@ export class PluginsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formPlugin.instructions = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formPlugin.instructions = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

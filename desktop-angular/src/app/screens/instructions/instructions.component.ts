@@ -1494,9 +1494,12 @@ export class InstructionsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formInstruction.instructions = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formInstruction.instructions = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

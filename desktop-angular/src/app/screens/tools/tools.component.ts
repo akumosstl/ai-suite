@@ -1415,9 +1415,12 @@ export class ToolsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formTool.instructions = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formTool.instructions = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

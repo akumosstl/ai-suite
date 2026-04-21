@@ -1268,9 +1268,12 @@ export class CommandsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formCommand.command = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formCommand.command = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

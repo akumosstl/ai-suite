@@ -53,4 +53,5 @@ echo.
 
 echo Starting backend application...
 cd /d C:\Users\USER\projects\github\ai-suite\backend
-java -Dspring.aot.enabled=true -jar target\backend-3.5.0.jar
+rem java -Dspring.aot.enabled=true -jar target\backend-3.5.0.jar
+call mvn -Pnative native:compile

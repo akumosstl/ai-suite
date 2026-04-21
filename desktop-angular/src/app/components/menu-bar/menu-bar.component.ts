@@ -486,7 +486,6 @@ ngOnDestroy(): void {
               data: { loading: false, result: response as ImportResult }
             });
             finalDialogRef.afterClosed().subscribe(() => {
-              window.location.reload();
             });
           },
           error: (err) => {

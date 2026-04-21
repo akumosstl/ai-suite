@@ -1238,9 +1238,12 @@ export class ScriptsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formScript.content = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formScript.content = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

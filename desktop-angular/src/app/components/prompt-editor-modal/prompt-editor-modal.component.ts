@@ -155,15 +155,39 @@ export interface PromptEditorResult {
     
     .prompt-field {
       flex: 1;
-      min-height: 350px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::ng-deep .prompt-field .mat-mdc-form-field-flex {
+      display: flex;
+      flex: 1;
+      min-height: 200px;
     }
 
     ::ng-deep .prompt-field .mat-mdc-text-field-wrapper {
-      height: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
     }
 
-    ::ng-deep .prompt-field textarea {
-      height: 300px !important;
+    ::ng-deep .prompt-field .mat-mdc-form-field-infix {
+      display: flex;
+      flex: 1;
+      padding: 12px 0;
+      min-height: 200px;
+    }
+
+    ::ng-deep .prompt-field textarea.mat-mdc-input-element {
+      flex: 1;
+      min-height: 150px;
+      overflow-y: auto;
+      resize: none;
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
     }
     
     mat-form-field {

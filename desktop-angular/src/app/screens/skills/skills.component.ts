@@ -1506,9 +1506,12 @@ export class SkillsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formSkill.instructions = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formSkill.instructions = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

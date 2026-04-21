@@ -488,9 +488,12 @@ export class AgentsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.prompt !== undefined) {
-        this.formAgent.prompt = result.prompt;
-      }
+      this.ngZone.run(() => {
+        if (result && result.prompt !== undefined) {
+          this.formAgent.prompt = result.prompt;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 
