@@ -1015,13 +1015,16 @@ export class PipelinesComponent implements OnInit {
   
   loadRuns(page = 0, projectName?: string) {
     const searchName = projectName !== undefined ? projectName : (this.searchProjectName || undefined);
+    this.selectedRun = null;
+    this.selectedStep = null;
     this.apiService.getAllPipelineRuns(page, this.pageSize, searchName).subscribe({
       next: (response: any) => {
+        console.log('Loaded runs:', response.runs);
         this.runs = response.runs || [];
         this.currentPage = response.currentPage || 0;
         this.totalPages = response.totalPages || 0;
         this.totalElements = response.totalElements || 0;
-        if (this.runs.length > 0 && !this.selectedRun) {
+        if (this.runs.length > 0) {
           this.selectRun(this.runs[0]);
         }
         this.cdr.detectChanges();
@@ -1128,13 +1131,15 @@ export class PipelinesComponent implements OnInit {
       }
       this.cleaningUp = true;
       this.apiService.cleanupAllPipelineRuns().subscribe({
-        next: () => {
+        next: (result) => {
+          console.log('Cleanup result:', result);
           this.cleaningUp = false;
           this.selectedRun = null;
           this.selectedStep = null;
           this.loadRuns();
         },
-        error: () => {
+        error: (err) => {
+          console.error('Cleanup error:', err);
           this.cleaningUp = false;
         }
       });

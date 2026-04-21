@@ -24,8 +24,19 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, Long> 
     List<PipelineRun> findTop20ByPipeline_Project_IdOrderByCreatedAtDesc(Long projectId);
     
     List<PipelineRun> findByStatus(String status);
-    
+
     List<PipelineRun> findByStatusNot(String status);
+
+    @Query("SELECT r FROM PipelineRun r WHERE r.status IS NULL OR r.status != 'running'")
+    List<PipelineRun> findAllNonRunningRuns();
+
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run_step WHERE pipeline_run_id IN (SELECT id FROM pipeline_run WHERE status != 'running' OR status IS NULL)", nativeQuery = true)
+    void deleteStepsByNonRunningRuns();
+
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run WHERE status != 'running' OR status IS NULL", nativeQuery = true)
+    int deleteAllNonRunningRunsNative();
 
     Page<PipelineRun> findByPipeline_Project_NameContainingIgnoreCase(String projectName, Pageable pageable);
     

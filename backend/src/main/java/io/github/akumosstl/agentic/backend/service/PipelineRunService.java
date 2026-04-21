@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -19,7 +21,9 @@ import java.util.List;
 
 @Service
 public class PipelineRunService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(PipelineRunService.class);
+
     private final PipelineRunRepository pipelineRunRepository;
     private final PipelineStepService pipelineStepService;
     private final ObjectProvider<PipelineService> pipelineServiceProvider;
@@ -146,9 +150,16 @@ public class PipelineRunService {
     
     @Transactional
     public int deleteAllNonRunningRuns() {
-        List<PipelineRun> nonRunningRuns = pipelineRunRepository.findByStatusNot("running");
-        int count = nonRunningRuns.size();
-        pipelineRunRepository.deleteAll(nonRunningRuns);
-        return count;
+        logger.info("Starting cleanup of non-running pipeline runs using native query");
+
+        // First delete all steps for non-running runs
+        pipelineRunRepository.deleteStepsByNonRunningRuns();
+        logger.info("Deleted steps for non-running runs");
+
+        // Then delete the runs themselves
+        int deletedCount = pipelineRunRepository.deleteAllNonRunningRunsNative();
+        logger.info("Native query deleted {} pipeline runs", deletedCount);
+
+        return deletedCount;
     }
 }

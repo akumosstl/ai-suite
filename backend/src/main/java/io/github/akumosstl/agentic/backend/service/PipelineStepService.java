@@ -287,19 +287,24 @@ public class PipelineStepService {
         return pipelineStepRepository.save(step);
     }
     
+    @Transactional
     public void removeStep(Long stepId) {
-        PipelineStep step = getStepById(stepId);
+        PipelineStep step = pipelineStepRepository.findById(stepId)
+                .orElseThrow(() -> new RuntimeException("Pipeline step not found: " + stepId));
         Long pipelineId = step.getPipelineId();
-        Integer removedOrder = step.getStepOrder();
-        
-        pipelineStepRepository.delete(step);
-        
+
+        entityManager.createNativeQuery(
+            "DELETE FROM pipeline_step WHERE id = ?1")
+            .setParameter(1, stepId)
+            .executeUpdate();
+        entityManager.flush();
+
         List<PipelineStep> remainingSteps = pipelineStepRepository.findByPipeline_IdOrderByStepOrderAsc(pipelineId);
         for (int i = 0; i < remainingSteps.size(); i++) {
             PipelineStep remainingStep = remainingSteps.get(i);
             if (remainingStep.getStepOrder() != i + 1) {
                 remainingStep.setStepOrder(i + 1);
-                pipelineStepRepository.save(remainingStep);
+                pipelineStepRepository.saveAndFlush(remainingStep);
             }
         }
     }
