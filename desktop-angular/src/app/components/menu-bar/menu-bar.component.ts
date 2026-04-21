@@ -14,11 +14,13 @@ import { ExportDialogComponent } from '../export-dialog/export-dialog.component'
 import { ImportDialogComponent, ImportResult } from '../import-dialog/import-dialog.component'
 import { ProjectContextService } from '../../services/project-context.service'
 import { ApiService } from '../../services/api.service'
+import { UpdateService } from '../../services/update.service'
+import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, UpdateDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -135,6 +137,11 @@ import { ApiService } from '../../services/api.service'
             <button mat-menu-item (click)="openImport()" class="menu-item">
               <mat-icon>file_upload</mat-icon>
               <span>Import</span>
+            </button>
+            <div class="menu-separator"></div>
+            <button mat-menu-item (click)="checkUpdate()" class="menu-item">
+              <mat-icon>system_update</mat-icon>
+              <span>Update</span>
             </button>
           </mat-menu>
         </ng-container>
@@ -342,7 +349,8 @@ constructor(
     private dialog: MatDialog,
     private projectContext: ProjectContextService,
     private apiService: ApiService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private updateService: UpdateService
   ) {
     const nav = this.router.getCurrentNavigation()
     if (nav && nav.extras && nav.extras.state && nav.extras.state['project']) {
@@ -500,5 +508,22 @@ ngOnDestroy(): void {
 
   openDocumentation(): void {
     window.open('https://github.com/akumosstl/agentic-ai-suite/blob/main/README.md', '_blank');
+  }
+
+  async checkUpdate(): Promise<void> {
+    const currentVersion = await this.apiService.getVersion()
+    const updateInfo = await this.updateService.checkForUpdate(currentVersion)
+    
+    if (updateInfo) {
+      this.dialog.open(UpdateDialogComponent, {
+        width: '400px',
+        data: {
+          currentVersion: currentVersion,
+          newVersion: updateInfo.version
+        }
+      })
+    } else {
+      this.snackBar.open('You are using the latest version', 'Close', { duration: 3000 })
+    }
   }
 }

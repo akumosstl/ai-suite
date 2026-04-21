@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, firstValueFrom } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 /**
@@ -431,10 +431,18 @@ export interface SprintReview {
  * @description Serviço de integração com endpoints REST do backend.
  */
 export class ApiService {
-  /** URL base para todas as requisições API (via proxy) */
   private baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
+
+  async getVersion(): Promise<string> {
+    try {
+      const response = await firstValueFrom(this.http.get<{ version: string }>(`${this.baseUrl}/version`))
+      return response.version
+    } catch {
+      return '1.0.0'
+    }
+  }
 
   // Projects
   getProjects(page = 0, size = 10): Observable<any> {

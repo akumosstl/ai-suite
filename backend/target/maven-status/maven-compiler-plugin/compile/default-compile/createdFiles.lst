@@ -78,6 +78,7 @@ io\github\akumosstl\agentic\backend\controller\PipelineStepController.class
 io\github\akumosstl\agentic\backend\service\InstructionFileService.class
 io\github\akumosstl\agentic\backend\service\SseService.class
 io\github\akumosstl\agentic\backend\controller\InstructionController.class
+io\github\akumosstl\agentic\backend\controller\VersionController.class
 io\github\akumosstl\agentic\backend\service\ScriptService.class
 io\github\akumosstl\agentic\backend\repository\ProjectRepository.class
 io\github\akumosstl\agentic\backend\repository\SkillFileRepository.class
