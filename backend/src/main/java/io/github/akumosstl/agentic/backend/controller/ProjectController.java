@@ -8,11 +8,14 @@ import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Instruction;
 import io.github.akumosstl.agentic.backend.model.Plugin;
 import io.github.akumosstl.agentic.backend.model.Tool;
+import io.github.akumosstl.agentic.backend.model.ProjectFile;
 import io.github.akumosstl.agentic.backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -33,6 +36,8 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "*")
 public class ProjectController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
     
     @Autowired
     private ProjectService projectService;
@@ -225,90 +230,76 @@ public class ProjectController {
     }
     
     @PostMapping("/{id}/files")
-    public ResponseEntity<Map<String, String>> createProjectFile(@PathVariable Long id, @RequestBody Map<String, String> fileData) {
+    public ResponseEntity<ProjectFile> createProjectFile(@PathVariable Long id, @RequestBody Map<String, String> fileData) {
+        logger.info("createProjectFile called - projectId: {}, fileData: {}", id, fileData);
         String fileName = fileData.get("fileName");
         String content = fileData.get("content");
+        logger.info("Creating file - fileName: {}, content length: {}", fileName, content != null ? content.length() : 0);
         
-        Project project = projectService.getProjectById(id);
-        String projectPath = project.getPath();
-        
-        if (projectPath == null || projectPath.isEmpty()) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Project path is not set");
-            return ResponseEntity.badRequest().body(error);
-        }
-        
-        try {
-            projectService.createProjectFile(id, fileName, content);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File created successfully");
-            response.put("fileName", fileName);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+        ProjectFile projectFile = projectService.createProjectFile(id, fileName, content);
+        logger.info("File created successfully - id: {}, fileName: {}", projectFile.getId(), projectFile.getFileName());
+        return ResponseEntity.ok(projectFile);
     }
     
     @GetMapping("/{id}/files")
-    public ResponseEntity<?> getProjectFiles(@PathVariable Long id) {
-        try {
-            List<String> files = projectService.getProjectFiles(id);
-            return ResponseEntity.ok(files);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    public ResponseEntity<List<ProjectFile>> getProjectFiles(@PathVariable Long id) {
+        logger.info("getProjectFiles called - projectId: {}", id);
+        List<ProjectFile> files = projectService.getProjectFiles(id);
+        logger.info("getProjectFiles returning {} files", files.size());
+        return ResponseEntity.ok(files);
     }
     
-    @GetMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> getProjectFileContent(@PathVariable Long id, @PathVariable String fileName) {
-        try {
-            String content = projectService.getProjectFileContent(id, fileName);
-            Map<String, String> response = new HashMap<>();
-            response.put("fileName", fileName);
-            response.put("content", content);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    @GetMapping("/{id}/files/{fileId}")
+    public ResponseEntity<ProjectFile> getProjectFile(@PathVariable Long id, @PathVariable Long fileId) {
+        ProjectFile file = projectService.getProjectFileById(fileId);
+        return ResponseEntity.ok(file);
     }
     
-    @PutMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> updateProjectFile(@PathVariable Long id, @PathVariable String fileName, @RequestBody Map<String, String> fileData) {
-        try {
-            String content = fileData.get("content");
-            projectService.updateProjectFile(id, fileName, content);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File updated successfully");
-            response.put("fileName", fileName);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    @GetMapping("/{id}/files/by-name/{fileName}")
+    public ResponseEntity<ProjectFile> getProjectFileByName(@PathVariable Long id, @PathVariable String fileName) {
+        ProjectFile file = projectService.getProjectFile(id, fileName);
+        return ResponseEntity.ok(file);
     }
     
-    @DeleteMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> deleteProjectFile(@PathVariable Long id, @PathVariable String fileName) {
-        try {
-            projectService.deleteProjectFile(id, fileName);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    @PutMapping("/{id}/files/{fileId}")
+    public ResponseEntity<ProjectFile> updateProjectFile(@PathVariable Long id, @PathVariable Long fileId, @RequestBody Map<String, String> fileData) {
+        String content = fileData.get("content");
+        
+        ProjectFile projectFile = projectService.updateProjectFile(fileId, content);
+        return ResponseEntity.ok(projectFile);
     }
     
-    @ExceptionHandler(RuntimeException.class)
+    @PutMapping("/{id}/files/by-name/{fileName}")
+    public ResponseEntity<ProjectFile> updateProjectFileByName(@PathVariable Long id, @PathVariable String fileName, @RequestBody Map<String, String> fileData) {
+        String content = fileData.get("content");
+        
+        ProjectFile projectFile = projectService.updateProjectFileByName(id, fileName, content);
+        return ResponseEntity.ok(projectFile);
+    }
+    
+    @DeleteMapping("/{id}/files/{fileId}")
+    public ResponseEntity<Map<String, String>> deleteProjectFile(@PathVariable Long id, @PathVariable Long fileId) {
+        projectService.deleteProjectFile(fileId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "File deleted successfully");
+        return ResponseEntity.ok(response);
+    }
+    
+    @DeleteMapping("/{id}/files/by-name/{fileName}")
+    public ResponseEntity<Map<String, String>> deleteProjectFileByName(@PathVariable Long id, @PathVariable String fileName) {
+        projectService.deleteProjectFileByName(id, fileName);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "File deleted successfully");
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/{id}/sync-to-fs")
+    public ResponseEntity<Map<String, String>> syncProjectToFileSystem(@PathVariable Long id) {
+        String result = projectService.syncProjectToFileSystem(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", result);
+        return ResponseEntity.ok(response);
+    }
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> error = new HashMap<>();
         error.put("message", ex.getMessage());

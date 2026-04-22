@@ -1,6 +1,8 @@
 package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Project;
+import io.github.akumosstl.agentic.backend.model.Pipeline;
+import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.Skill;
 import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
@@ -13,6 +15,7 @@ import io.github.akumosstl.agentic.backend.model.Tool;
 import io.github.akumosstl.agentic.backend.model.InstructionFile;
 import io.github.akumosstl.agentic.backend.model.PluginFile;
 import io.github.akumosstl.agentic.backend.model.ToolFile;
+import io.github.akumosstl.agentic.backend.model.ProjectFile;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.SkillRepository;
 import io.github.akumosstl.agentic.backend.repository.CommandRepository;
@@ -26,6 +29,9 @@ import io.github.akumosstl.agentic.backend.repository.ToolRepository;
 import io.github.akumosstl.agentic.backend.repository.InstructionFileRepository;
 import io.github.akumosstl.agentic.backend.repository.PluginFileRepository;
 import io.github.akumosstl.agentic.backend.repository.ToolFileRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectFileRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +39,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +65,8 @@ import java.util.stream.Stream;
  */
 @Service
 public class ProjectService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
     
     @Autowired
     private ProjectRepository projectRepository;
@@ -96,6 +106,15 @@ public class ProjectService {
     
     @Autowired
     private ToolFileRepository toolFileRepository;
+    
+    @Autowired
+    private ProjectFileRepository projectFileRepository;
+    
+    @Autowired
+    private PipelineRepository pipelineRepository;
+    
+    @Autowired
+    private PipelineRunRepository pipelineRunRepository;
     
     public List<Project> getRecentProjects(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -166,6 +185,10 @@ public class ProjectService {
     
     @Transactional
     public void deleteProject(Long id) {
+        pipelineRunRepository.deleteStepsByProjectId(id);
+        pipelineRunRepository.deleteRunsByProjectId(id);
+        pipelineRepository.deleteStepsByProjectId(id);
+        pipelineRepository.deleteByProjectId(id);
         projectRepository.deleteById(id);
     }
     
@@ -1121,7 +1144,323 @@ public class ProjectService {
         return projectRepository.save(project);
     }
     
-    public void createProjectFile(Long projectId, String fileName, String content) throws IOException {
+    @Transactional
+    public ProjectFile createProjectFile(Long projectId, String fileName, String content) {
+        Project project = getProjectById(projectId);
+        
+        var existingFile = projectFileRepository.findByProjectIdAndFileName(projectId, fileName);
+        if (existingFile.isPresent()) {
+            existingFile.get().setContent(content);
+            ProjectFile saved = projectFileRepository.save(existingFile.get());
+            writeFileToFs(project, fileName, content);
+            return saved;
+        }
+        
+        ProjectFile projectFile = new ProjectFile(fileName, content, project);
+        ProjectFile saved = projectFileRepository.save(projectFile);
+        writeFileToFs(project, fileName, content);
+        return saved;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ProjectFile> getProjectFiles(Long projectId) {
+        return projectFileRepository.findByProjectId(projectId);
+    }
+    
+    @Transactional(readOnly = true)
+    public ProjectFile getProjectFileById(Long projectFileId) {
+        return projectFileRepository.findById(projectFileId)
+                .orElseThrow(() -> new RuntimeException("Project file not found"));
+    }
+    
+    @Transactional(readOnly = true)
+    public ProjectFile getProjectFile(Long projectId, String fileName) {
+        return projectFileRepository.findByProjectIdAndFileName(projectId, fileName)
+                .orElseThrow(() -> new RuntimeException("File not found: " + fileName));
+    }
+    
+    @Transactional
+    public ProjectFile updateProjectFile(Long projectFileId, String content) {
+        ProjectFile projectFile = projectFileRepository.findById(projectFileId)
+                .orElseThrow(() -> new RuntimeException("Project file not found"));
+        projectFile.setContent(content);
+        ProjectFile saved = projectFileRepository.save(projectFile);
+        writeFileToFs(projectFile.getProject(), projectFile.getFileName(), content);
+        return saved;
+    }
+    
+    @Transactional
+    public ProjectFile updateProjectFileByName(Long projectId, String fileName, String content) {
+        ProjectFile projectFile = projectFileRepository.findByProjectIdAndFileName(projectId, fileName)
+                .orElseThrow(() -> new RuntimeException("File not found: " + fileName));
+        projectFile.setContent(content);
+        ProjectFile saved = projectFileRepository.save(projectFile);
+        writeFileToFs(projectFile.getProject(), fileName, content);
+        return saved;
+    }
+    
+    @Transactional
+    public void deleteProjectFile(Long projectFileId) {
+        projectFileRepository.deleteById(projectFileId);
+    }
+    
+    @Transactional
+    public void deleteProjectFileByName(Long projectId, String fileName) {
+        ProjectFile projectFile = projectFileRepository.findByProjectIdAndFileName(projectId, fileName)
+                .orElseThrow(() -> new RuntimeException("File not found: " + fileName));
+        projectFileRepository.delete(projectFile);
+    }
+    
+    @Transactional
+    public String syncProjectToFileSystem(Long projectId) {
+        Project project = getProjectById(projectId);
+        
+        if (project.getPath() == null || project.getPath().isEmpty()) {
+            throw new RuntimeException("Project does not have a path defined");
+        }
+        
+        StringBuilder result = new StringBuilder();
+        result.append("Syncing project '").append(project.getName()).append("' to filesystem:\n");
+        
+        Target target = null;
+        if (project.getTargetId() != null) {
+            target = targetRepository.findById(project.getTargetId()).orElse(null);
+        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+            List<Target> targets = targetRepository.findAll();
+            target = targets.stream()
+                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        
+        String skillsPath = target != null && target.getSkillsPath() != null ? target.getSkillsPath() : "skills";
+        String commandsPath = target != null && target.getCommandsPath() != null ? target.getCommandsPath() : "commands";
+        String scriptsPath = target != null && target.getScriptsPath() != null ? target.getScriptsPath() : "scripts";
+        String agentsPath = target != null && target.getAgentsPath() != null ? target.getAgentsPath() : "agents";
+        String instructionsPath = target != null && target.getInstructionsPath() != null ? target.getInstructionsPath() : "instructions";
+        String pluginsPath = target != null && target.getPluginsPath() != null ? target.getPluginsPath() : "plugins";
+        String toolsPath = target != null && target.getToolsPath() != null ? target.getToolsPath() : "tools";
+        
+        String projectPath = project.getPath();
+        
+        for (Skill skill : project.getSkills()) {
+            try {
+                String fullPath = projectPath + File.separator + skillsPath;
+                if (skill.getPath() != null && !skill.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + skill.getPath();
+                }
+                Path skillPathObj = Paths.get(fullPath);
+                Files.createDirectories(skillPathObj);
+                String fileName = skill.getName();
+                Path filePath = skillPathObj.resolve(fileName);
+                String content = skill.getInstructions() != null ? skill.getInstructions() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Skills: ").append(fileName).append("\n");
+                
+                for (SkillFile skillFile : skillFileRepository.findBySkillId(skill.getId())) {
+                    String fileDirPath = fullPath;
+                    if (skillFile.getPath() != null && !skillFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + skillFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    Path attachedFilePath = fileDirPathObj.resolve(skillFile.getFileName());
+                    String fileContent = skillFile.getContent() != null ? skillFile.getContent() : "";
+                    Files.writeString(attachedFilePath, fileContent);
+                    result.append("    - ").append(skillFile.getFileName()).append("\n");
+                }
+            } catch (IOException e) {
+                logger.error("Error syncing skill {}: {}", skill.getName(), e.getMessage());
+            }
+        }
+        
+        for (Command command : project.getCommands()) {
+            try {
+                String fullPath = projectPath + File.separator + commandsPath;
+                if (command.getPath() != null && !command.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + command.getPath();
+                }
+                Path commandPathObj = Paths.get(fullPath);
+                Files.createDirectories(commandPathObj);
+                String fileName = command.getName();
+                Path filePath = commandPathObj.resolve(fileName);
+                String content = command.getCommand() != null ? command.getCommand() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Commands: ").append(fileName).append("\n");
+            } catch (IOException e) {
+                logger.error("Error syncing command {}: {}", command.getName(), e.getMessage());
+            }
+        }
+        
+        for (Script script : project.getScripts()) {
+            try {
+                String fullPath = projectPath + File.separator + scriptsPath;
+                if (script.getPath() != null && !script.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + script.getPath();
+                }
+                Path scriptPathObj = Paths.get(fullPath);
+                Files.createDirectories(scriptPathObj);
+                String scriptName = script.getName();
+                if (!scriptName.toLowerCase().endsWith(".sh") && !scriptName.toLowerCase().endsWith(".ps1")) {
+                    scriptName = scriptName + ".sh";
+                }
+                Path filePath = scriptPathObj.resolve(scriptName);
+                String content = script.getContent() != null ? script.getContent() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Scripts: ").append(scriptName).append("\n");
+            } catch (IOException e) {
+                logger.error("Error syncing script {}: {}", script.getName(), e.getMessage());
+            }
+        }
+        
+        for (Agent agent : project.getAgents()) {
+            try {
+                String fullPath = projectPath + File.separator + agentsPath;
+                if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + agent.getPath();
+                }
+                Path agentPathObj = Paths.get(fullPath);
+                Files.createDirectories(agentPathObj);
+                String fileName = agent.getName();
+                Path filePath = agentPathObj.resolve(fileName);
+                String content = agent.getPrompt() != null ? agent.getPrompt() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Agents: ").append(fileName).append("\n");
+            } catch (IOException e) {
+                logger.error("Error syncing agent {}: {}", agent.getName(), e.getMessage());
+            }
+        }
+        
+        for (Instruction instruction : project.getInstructions()) {
+            try {
+                String fullPath = projectPath + File.separator + instructionsPath;
+                if (instruction.getPath() != null && !instruction.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + instruction.getPath();
+                }
+                Path instructionPathObj = Paths.get(fullPath);
+                Files.createDirectories(instructionPathObj);
+                String fileName = instruction.getName();
+                Path filePath = instructionPathObj.resolve(fileName);
+                String content = instruction.getInstructions() != null ? instruction.getInstructions() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Instructions: ").append(fileName).append("\n");
+                
+                for (InstructionFile instructionFile : instructionFileRepository.findByInstructionId(instruction.getId())) {
+                    String fileDirPath = fullPath;
+                    if (instructionFile.getPath() != null && !instructionFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + instructionFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    Path attachedFilePath = fileDirPathObj.resolve(instructionFile.getFileName());
+                    String fileContent = instructionFile.getContent() != null ? instructionFile.getContent() : "";
+                    Files.writeString(attachedFilePath, fileContent);
+                    result.append("    - ").append(instructionFile.getFileName()).append("\n");
+                }
+            } catch (IOException e) {
+                logger.error("Error syncing instruction {}: {}", instruction.getName(), e.getMessage());
+            }
+        }
+        
+        for (Plugin plugin : project.getPlugins()) {
+            try {
+                String fullPath = projectPath + File.separator + pluginsPath;
+                if (plugin.getPath() != null && !plugin.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + plugin.getPath();
+                }
+                Path pluginPathObj = Paths.get(fullPath);
+                Files.createDirectories(pluginPathObj);
+                String fileName = plugin.getName();
+                Path filePath = pluginPathObj.resolve(fileName);
+                String content = plugin.getInstructions() != null ? plugin.getInstructions() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Plugins: ").append(fileName).append("\n");
+                
+                for (PluginFile pluginFile : pluginFileRepository.findByPluginId(plugin.getId())) {
+                    String fileDirPath = fullPath;
+                    if (pluginFile.getPath() != null && !pluginFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + pluginFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    Path attachedFilePath = fileDirPathObj.resolve(pluginFile.getFileName());
+                    String fileContent = pluginFile.getContent() != null ? pluginFile.getContent() : "";
+                    Files.writeString(attachedFilePath, fileContent);
+                    result.append("    - ").append(pluginFile.getFileName()).append("\n");
+                }
+            } catch (IOException e) {
+                logger.error("Error syncing plugin {}: {}", plugin.getName(), e.getMessage());
+            }
+        }
+        
+        for (Tool tool : project.getTools()) {
+            try {
+                String fullPath = projectPath + File.separator + toolsPath;
+                if (tool.getPath() != null && !tool.getPath().isEmpty()) {
+                    fullPath = fullPath + File.separator + tool.getPath();
+                }
+                Path toolPathObj = Paths.get(fullPath);
+                Files.createDirectories(toolPathObj);
+                String fileName = tool.getName();
+                Path filePath = toolPathObj.resolve(fileName);
+                String content = tool.getInstructions() != null ? tool.getInstructions() : "";
+                Files.writeString(filePath, content);
+                result.append("  - Tools: ").append(fileName).append("\n");
+                
+                for (ToolFile toolFile : toolFileRepository.findByToolId(tool.getId())) {
+                    String fileDirPath = fullPath;
+                    if (toolFile.getPath() != null && !toolFile.getPath().isEmpty()) {
+                        fileDirPath = fileDirPath + File.separator + toolFile.getPath();
+                    }
+                    Path fileDirPathObj = Paths.get(fileDirPath);
+                    Files.createDirectories(fileDirPathObj);
+                    Path attachedFilePath = fileDirPathObj.resolve(toolFile.getFileName());
+                    String fileContent = toolFile.getContent() != null ? toolFile.getContent() : "";
+                    Files.writeString(attachedFilePath, fileContent);
+                    result.append("    - ").append(toolFile.getFileName()).append("\n");
+                }
+            } catch (IOException e) {
+                logger.error("Error syncing tool {}: {}", tool.getName(), e.getMessage());
+            }
+        }
+        
+        if (project.getReadme() != null && !project.getReadme().isEmpty()) {
+            try {
+                Path readmePath = Paths.get(projectPath, "README.md");
+                Files.writeString(readmePath, project.getReadme());
+                result.append("  - README.md\n");
+            } catch (IOException e) {
+                logger.error("Error syncing README: {}", e.getMessage());
+            }
+        }
+        
+        result.append("Sync complete for path: ").append(projectPath);
+        logger.info(result.toString());
+        return result.toString();
+    }
+    
+    private void writeFileToFs(Project project, String fileName, String content) {
+        String projectPath = project.getPath();
+        if (projectPath == null || projectPath.isEmpty()) {
+            logger.warn("Project path is not set, skipping filesystem write for: {}", fileName);
+            return;
+        }
+        
+        try {
+            Path filePath = Paths.get(projectPath, fileName);
+            Path parentDir = filePath.getParent();
+            if (parentDir != null && !Files.exists(parentDir)) {
+                Files.createDirectories(parentDir);
+            }
+            Files.writeString(filePath, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            logger.info("File written to filesystem: {}", filePath);
+        } catch (IOException e) {
+            logger.error("Error writing file to filesystem: {}", fileName, e);
+        }
+    }
+    
+    @Deprecated
+    public void createProjectFileFs(Long projectId, String fileName, String content) throws IOException {
         Project project = getProjectById(projectId);
         String projectPath = project.getPath();
         
@@ -1133,7 +1472,8 @@ public class ProjectService {
         Files.writeString(filePath, content);
     }
     
-    public List<String> getProjectFiles(Long projectId) throws IOException {
+    @Deprecated
+    public List<String> getProjectFilesFs(Long projectId) throws IOException {
         Project project = getProjectById(projectId);
         String projectPath = project.getPath();
         
@@ -1156,7 +1496,8 @@ public class ProjectService {
         }
     }
     
-    public String getProjectFileContent(Long projectId, String fileName) throws IOException {
+    @Deprecated
+    public String getProjectFileContentFs(Long projectId, String fileName) throws IOException {
         Project project = getProjectById(projectId);
         String projectPath = project.getPath();
         
@@ -1172,7 +1513,8 @@ public class ProjectService {
         return Files.readString(filePath);
     }
     
-    public void updateProjectFile(Long projectId, String fileName, String content) throws IOException {
+    @Deprecated
+    public void updateProjectFileFs(Long projectId, String fileName, String content) throws IOException {
         Project project = getProjectById(projectId);
         String projectPath = project.getPath();
         
@@ -1188,7 +1530,8 @@ public class ProjectService {
         Files.writeString(filePath, content);
     }
     
-    public void deleteProjectFile(Long projectId, String fileName) throws IOException {
+    @Deprecated
+    public void deleteProjectFileFs(Long projectId, String fileName) throws IOException {
         Project project = getProjectById(projectId);
         String projectPath = project.getPath();
         

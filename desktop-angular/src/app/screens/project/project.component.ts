@@ -16,7 +16,7 @@ import { PipelineResultDialogComponent } from '../../components/pipeline-result-
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ApiService, Project, Pipeline, PipelineStep, Agent, Target } from '../../services/api.service';
+import { ApiService, Project, Pipeline, PipelineStep, Agent, Target, ProjectFile } from '../../services/api.service';
 import { SelectAgentDialogComponent, SelectedStep } from '../../components/select-agent-dialog/select-agent-dialog.component';
 import { SelectSkillDialogComponent } from '../../components/select-skill-dialog/select-skill-dialog.component';
 import { SelectCommandDialogComponent } from '../../components/select-command-dialog/select-command-dialog.component';
@@ -98,6 +98,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   isReorderingSteps = false;
   isSavingProject = false;
   endpointsExpanded = false;
+  projectFiles: ProjectFile[] = [];
 
   private runningCheckInterval: any;
 
@@ -162,6 +163,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         localStorage.setItem('lastProjectId', stateProject.id.toString())
         this.projectContext.setProjectId(stateProject.id)
         this.projectContext.setFromProject(true)
+        this.loadProjectFiles(stateProject.id)
       }
       this.restoreSelectedPipeline()
       this.cdr.detectChanges()
@@ -204,6 +206,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         console.log('Project loaded:', project);
         this.project = project;
         this.loadPipelines(id);
+        this.loadProjectFiles(id);
         this.projectContext.setProjectId(id);
         this.projectContext.setFromProject(true);
         this.loading = false;
@@ -212,6 +215,20 @@ export class ProjectComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading project:', error);
         this.loading = false;
+      }
+    });
+  }
+
+  loadProjectFiles(projectId: number) {
+    console.log('loadProjectFiles called for project:', projectId);
+    this.apiService.getProjectFiles(projectId).subscribe({
+      next: (files) => {
+        this.projectFiles = files;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading project files:', error);
+        this.projectFiles = [];
       }
     });
   }
@@ -312,6 +329,27 @@ export class ProjectComponent implements OnInit, OnDestroy {
       if (updatedProject && this.project) {
         this.project = { ...this.project, readme: updatedProject.readme };
         this.showMessage('README saved successfully', 'success');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  syncProjectToFileSystem() {
+    if (!this.project?.id) {
+      return;
+    }
+
+    this.isSavingProject = true;
+    this.apiService.syncProjectToFileSystem(this.project.id).subscribe({
+      next: (response: any) => {
+        this.isSavingProject = false;
+        this.showMessage('Project synced to filesystem successfully', 'success');
+        console.log('Sync result:', response.message);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        this.isSavingProject = false;
+        this.showMessage('Failed to sync project: ' + (error.error?.message || error.message), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -905,15 +943,45 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
-  openCreateFileDialog() {
+  openCreateFileDialog(file?: ProjectFile) {
     const projectId = this.project?.id;
     if (!projectId) {
       console.warn('Cannot open create file dialog: project not loaded');
       return;
     }
-    this.dialog.open(CreateFileDialogComponent, {
+
+    if (this.projectFiles.length > 0 && !file) {
+      const dialogRef = this.dialog.open(CreateFileDialogComponent, {
+        width: '600px',
+        data: { 
+          projectId,
+          files: this.projectFiles,
+          showFileList: true
+        }
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result) {
+          this.loadProjectFiles(projectId);
+        }
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(CreateFileDialogComponent, {
       width: '600px',
-      data: { projectId }
+      data: { 
+        projectId,
+        fileId: file?.id,
+        fileName: file?.fileName,
+        content: file?.content
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loadProjectFiles(projectId);
+      }
     });
   }
 

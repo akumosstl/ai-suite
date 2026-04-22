@@ -11,6 +11,7 @@ import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Instruction;
 import io.github.akumosstl.agentic.backend.model.Plugin;
 import io.github.akumosstl.agentic.backend.model.Tool;
+import io.github.akumosstl.agentic.backend.model.ProjectFile;
 
 /**
  * Entidade que representa um Projeto no sistema.
@@ -61,6 +62,11 @@ public class Project {
     @OrderBy("createdAt DESC")
     @JsonIgnore
     private List<Pipeline> pipelines = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("createdAt DESC")
+    @JsonIgnore
+    private List<ProjectFile> files = new ArrayList<>();
     
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -194,6 +200,9 @@ public class Project {
     public List<Tool> getTools() { return tools; }
     public void setTools(List<Tool> tools) { this.tools = tools; }
     
+    public List<ProjectFile> getFiles() { return files; }
+    public void setFiles(List<ProjectFile> files) { this.files = files; }
+    
     public void addSkill(Skill skill) {
         skills.add(skill);
     }
@@ -258,5 +267,15 @@ public class Project {
     public void removePipeline(Pipeline pipeline) {
         pipelines.remove(pipeline);
         pipeline.setProject(null);
+    }
+    
+    public void addFile(ProjectFile file) {
+        files.add(file);
+        file.setProject(this);
+    }
+    
+    public void removeFile(ProjectFile file) {
+        files.remove(file);
+        file.setProject(null);
     }
 }

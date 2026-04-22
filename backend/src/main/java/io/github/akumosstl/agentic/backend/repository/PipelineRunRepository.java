@@ -47,4 +47,12 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, Long> 
     @Modifying
     @Query(value = "DELETE FROM pipeline_run WHERE pipeline_id = :pipelineId", nativeQuery = true)
     void deleteByPipelineId(Long pipelineId);
+    
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run_step WHERE pipeline_run_id IN (SELECT pr.id FROM pipeline_run pr JOIN pipeline p ON pr.pipeline_id = p.id WHERE p.project_id = :projectId)", nativeQuery = true)
+    void deleteStepsByProjectId(Long projectId);
+    
+    @Modifying
+    @Query(value = "DELETE FROM pipeline_run WHERE pipeline_id IN (SELECT id FROM pipeline WHERE project_id = :projectId)", nativeQuery = true)
+    void deleteRunsByProjectId(Long projectId);
 }

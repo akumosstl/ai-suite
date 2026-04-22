@@ -19,6 +19,7 @@ C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\ImportResult.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\SpaFallbackConfig.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\PipelineStep.java
+C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\ProjectFileRepository.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\TemplateService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\PipelineRunController.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\InstructionFileService.java
@@ -74,6 +75,7 @@ C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\ScriptRepository.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\CommandService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\InstructionController.java
+C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\ProjectFile.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\Target.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\HibernateConfig.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\TargetSeedLoader.java

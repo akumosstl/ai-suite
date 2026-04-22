@@ -127,6 +127,9 @@
                     <mat-icon>dashboard</mat-icon>
                     <h2>Project Information</h2>
                     <div class="header-actions" *ngIf="project && !isEditingProject">
+                        <button class="icon-btn sync-btn" (click)="syncProjectToFileSystem()" title="Sync to filesystem">
+                            <mat-icon>sync</mat-icon>
+                        </button>
                         <button class="icon-btn readme-btn" (click)="openReadmeDialog()" title="Edit README">
                             <mat-icon>description</mat-icon>
                         </button>
@@ -222,6 +225,22 @@
                             Updated
                         </span>
                         <span class="info-value">{{ project.updatedAt | date:'medium' }}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label">
+                            <mat-icon>folder</mat-icon>
+                            Files
+                        </span>
+                        <div class="files-list">
+                            <div *ngFor="let file of projectFiles" class="file-item" (click)="openCreateFileDialog(file)">
+                                <mat-icon>description</mat-icon>
+                                <span>{{ file.fileName }}</span>
+                            </div>
+                            <div *ngIf="projectFiles.length === 0" class="no-files">
+                                No files created yet
+                            </div>
+                        </div>
                     </div>
                 </div>
 

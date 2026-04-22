@@ -6,12 +6,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ApiService } from '../../services/api.service';
+import { MatListModule } from '@angular/material/list';
+import { ApiService, ProjectFile } from '../../services/api.service';
 
 export interface CreateFileDialogData {
   projectId: number;
+  fileId?: number;
   fileName?: string;
   content?: string;
+  files?: ProjectFile[];
+  showFileList?: boolean;
 }
 
 @Component({
@@ -24,59 +28,86 @@ export interface CreateFileDialogData {
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatListModule
   ],
   template: `
     <div class="file-dialog">
-      <div class="dialog-header">
-        <mat-icon class="header-icon">insert_drive_file</mat-icon>
-        <h2 class="dialog-title">Create Project File</h2>
-        <button class="close-btn" (click)="close()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-      
-      <mat-dialog-content class="dialog-content">
-        <div class="form-group">
-          <label for="fileName">
-            <mat-icon>badge</mat-icon>
-            File Name
-          </label>
-          <input 
-            type="text" 
-            id="fileName" 
-            [(ngModel)]="fileName" 
-            placeholder="e.g., opencode.json"
-            class="form-input"
-          />
+      <ng-container *ngIf="data.showFileList && !showForm">
+        <div class="dialog-header">
+          <mat-icon class="header-icon">folder</mat-icon>
+          <h2 class="dialog-title">Select Config File</h2>
+          <button class="close-btn" (click)="close()">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
         
-        <div class="form-group">
-          <label for="content">
-            <mat-icon>description</mat-icon>
-            Content
-          </label>
-          <textarea 
-            id="content" 
-            [(ngModel)]="content" 
-            placeholder="Enter file content..."
-            class="form-textarea"
-            rows="15"
-          ></textarea>
+        <mat-dialog-content class="dialog-content">
+          <div class="files-list-container">
+            <div class="file-option new-file" (click)="createNew()">
+              <mat-icon>add_circle</mat-icon>
+              <span>Create New File</span>
+            </div>
+            <div class="file-option" *ngFor="let f of data.files" (click)="selectFile(f)">
+              <mat-icon>description</mat-icon>
+              <span>{{ f.fileName }}</span>
+            </div>
+          </div>
+        </mat-dialog-content>
+      </ng-container>
+
+      <ng-container *ngIf="!data.showFileList || showForm">
+        <div class="dialog-header">
+          <mat-icon class="header-icon">{{ data.fileId ? 'edit' : 'insert_drive_file' }}</mat-icon>
+          <h2 class="dialog-title">{{ data.fileId ? 'Edit' : 'Create' }} Config File</h2>
+          <button class="close-btn" (click)="data.showFileList && showForm ? goBack() : close()">
+            <mat-icon>{{ data.showFileList && showForm ? 'arrow_back' : 'close' }}</mat-icon>
+          </button>
         </div>
-      </mat-dialog-content>
-      
-      <mat-dialog-actions align="end">
-        <button class="btn btn-secondary" (click)="close()">
-          <mat-icon>close</mat-icon>
-          Cancel
-        </button>
-        <button class="btn btn-primary" (click)="save()" [disabled]="!fileName || saving">
-          <mat-icon *ngIf="!saving">save</mat-icon>
-          <mat-icon *ngIf="saving" class="spin">sync</mat-icon>
-          {{ saving ? 'Saving...' : 'Save' }}
-        </button>
-      </mat-dialog-actions>
+        
+        <mat-dialog-content class="dialog-content">
+          <div class="form-group">
+            <label for="fileName">
+              <mat-icon>badge</mat-icon>
+              File Name
+            </label>
+            <input 
+              type="text" 
+              id="fileName" 
+              [(ngModel)]="fileName" 
+              placeholder="e.g., opencode.json"
+              class="form-input"
+              [disabled]="!!data.fileId"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="content">
+              <mat-icon>description</mat-icon>
+              Content
+            </label>
+            <textarea 
+              id="content" 
+              [(ngModel)]="content" 
+              placeholder="Enter file content..."
+              class="form-textarea"
+              rows="15"
+            ></textarea>
+          </div>
+        </mat-dialog-content>
+        
+        <mat-dialog-actions align="end">
+          <button class="btn btn-secondary" (click)="data.showFileList && showForm ? goBack() : close()">
+            <mat-icon>close</mat-icon>
+            {{ data.showFileList && showForm ? 'Back' : 'Cancel' }}
+          </button>
+          <button class="btn btn-primary" (click)="save()" [disabled]="!fileName || saving">
+            <mat-icon *ngIf="!saving">save</mat-icon>
+            <mat-icon *ngIf="saving" class="spin">sync</mat-icon>
+            {{ saving ? 'Saving...' : (data.fileId ? 'Update' : 'Save') }}
+          </button>
+        </mat-dialog-actions>
+      </ng-container>
     </div>
   `,
   styles: [`
@@ -236,12 +267,54 @@ export interface CreateFileDialogData {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
+    .files-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .file-option:hover {
+      background: #2a2a2a;
+      border-color: #4fc3f7;
+    }
+
+    .file-option.new-file {
+      border-color: #4fc3f7;
+      color: #4fc3f7;
+    }
+
+    .file-option.new-file:hover {
+      background: #1e3a4d;
+    }
+
+    .file-option mat-icon {
+      color: #888;
+    }
+
+    .file-option.new-file mat-icon {
+      color: #4fc3f7;
+    }
   `]
 })
 export class CreateFileDialogComponent {
   fileName = '';
   content = '';
   saving = false;
+  selectedFile: ProjectFile | null = null;
+  showForm = false;
 
   constructor(
     public dialogRef: MatDialogRef<CreateFileDialogComponent>,
@@ -256,22 +329,57 @@ export class CreateFileDialogComponent {
     }
   }
 
+  selectFile(file: ProjectFile) {
+    this.selectedFile = file;
+    this.fileName = file.fileName;
+    this.content = file.content || '';
+    this.data.fileId = file.id;
+    this.showForm = true;
+  }
+
+  createNew() {
+    this.selectedFile = null;
+    this.fileName = '';
+    this.content = '';
+    this.data.fileId = undefined;
+    this.showForm = true;
+  }
+
+  goBack() {
+    this.selectedFile = null;
+    this.showForm = false;
+  }
+
   save() {
     if (!this.fileName || this.saving) {
       return;
     }
 
     this.saving = true;
-    this.apiService.createProjectFile(this.data.projectId, this.fileName, this.content).subscribe({
-      next: (response) => {
-        this.saving = false;
-        this.dialogRef.close({ fileName: this.fileName, content: this.content });
-      },
-      error: (err) => {
-        console.error('Error creating file:', err);
-        this.saving = false;
-      }
-    });
+
+    if (this.data.fileId) {
+      this.apiService.updateProjectFile(this.data.projectId, this.data.fileId, this.content).subscribe({
+        next: () => {
+          this.saving = false;
+          this.dialogRef.close({ fileId: this.data.fileId, fileName: this.fileName, content: this.content });
+        },
+        error: (err) => {
+          console.error('Error updating file:', err);
+          this.saving = false;
+        }
+      });
+    } else {
+      this.apiService.createProjectFile(this.data.projectId, this.fileName, this.content).subscribe({
+        next: (response) => {
+          this.saving = false;
+          this.dialogRef.close({ fileId: response.id, fileName: this.fileName, content: this.content });
+        },
+        error: (err) => {
+          console.error('Error creating file:', err);
+          this.saving = false;
+        }
+      });
+    }
   }
 
   close() {

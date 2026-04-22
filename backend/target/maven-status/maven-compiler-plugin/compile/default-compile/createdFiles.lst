@@ -1,11 +1,13 @@
 io\github\akumosstl\agentic\backend\service\BackupService.class
 io\github\akumosstl\agentic\backend\controller\ProjectController.class
 io\github\akumosstl\agentic\backend\repository\EventRepository.class
+io\github\akumosstl\agentic\backend\repository\ProjectFileRepository.class
 io\github\akumosstl\agentic\backend\model\Pipeline.class
 io\github\akumosstl\agentic\backend\repository\TemplateRepository.class
 io\github\akumosstl\agentic\backend\controller\SkillFileController.class
 io\github\akumosstl\agentic\backend\model\Script.class
 io\github\akumosstl\agentic\backend\service\PluginService.class
+io\github\akumosstl\agentic\backend\model\ProjectFile.class
 io\github\akumosstl\agentic\backend\controller\ExportImportController.class
 io\github\akumosstl\agentic\backend\repository\PluginFileRepository.class
 io\github\akumosstl\agentic\backend\model\PipelineRunStep.class

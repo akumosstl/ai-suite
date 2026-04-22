@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError, firstValueFrom } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 
 /**
  * Interface que representa um Projeto no sistema.
@@ -318,6 +318,16 @@ export interface Target {
   toolsPath?: string;
 }
 
+export interface ProjectFile {
+  id?: number;
+  path?: string;
+  fileName: string;
+  content: string;
+  projectId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /**
  * Interface que representa um membro de equipe.
  * Usado no sistema de gestão de projetos.
@@ -625,8 +635,10 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
   
-  createProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
+  createProjectFile(projectId: number, fileName: string, content: string): Observable<ProjectFile> {
+    console.log('API createProjectFile called:', { projectId, fileName, contentLength: content?.length });
+    return this.http.post<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
+      tap(response => console.log('API createProjectFile success:', response)),
       catchError((error) => {
         console.error('createProjectFile error:', error);
         throw error;
@@ -634,8 +646,10 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  getProjectFiles(projectId: number): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/projects/${projectId}/files`).pipe(
+  getProjectFiles(projectId: number): Observable<ProjectFile[]> {
+    console.log('API getProjectFiles called for project:', projectId);
+    return this.http.get<ProjectFile[]>(`${this.baseUrl}/projects/${projectId}/files`).pipe(
+      tap(files => console.log('API getProjectFiles success:', files)),
       catchError((error) => {
         console.error('getProjectFiles error:', error);
         throw error;
@@ -643,17 +657,26 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  getProjectFileContent(projectId: number, fileName: string): Observable<{ fileName: string; content: string }> {
-    return this.http.get<{ fileName: string; content: string }>(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+  getProjectFile(projectId: number, fileId: number): Observable<ProjectFile> {
+    return this.http.get<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/${fileId}`).pipe(
       catchError((error) => {
-        console.error('getProjectFileContent error:', error);
+        console.error('getProjectFile error:', error);
         throw error;
       })
     );
   }
 
-  updateProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`, { content }).pipe(
+  getProjectFileByName(projectId: number, fileName: string): Observable<ProjectFile> {
+    return this.http.get<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('getProjectFileByName error:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateProjectFile(projectId: number, fileId: number, content: string): Observable<ProjectFile> {
+    return this.http.put<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/${fileId}`, { content }).pipe(
       catchError((error) => {
         console.error('updateProjectFile error:', error);
         throw error;
@@ -661,10 +684,37 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  deleteProjectFile(projectId: number, fileName: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+  updateProjectFileByName(projectId: number, fileName: string, content: string): Observable<ProjectFile> {
+    return this.http.put<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`, { content }).pipe(
+      catchError((error) => {
+        console.error('updateProjectFileByName error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteProjectFile(projectId: number, fileId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/${fileId}`).pipe(
       catchError((error) => {
         console.error('deleteProjectFile error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteProjectFileByName(projectId: number, fileName: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('deleteProjectFileByName error:', error);
+        throw error;
+      })
+    );
+  }
+
+  syncProjectToFileSystem(projectId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/sync-to-fs`, {}).pipe(
+      catchError((error) => {
+        console.error('syncProjectToFileSystem error:', error);
         throw error;
       })
     );
