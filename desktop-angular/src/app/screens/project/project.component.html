@@ -316,8 +316,10 @@
                             <mat-icon>flag</mat-icon>
                             Status
                         </span>
-                        <span class="status-badge" [ngClass]="selectedPipeline.status || 'pending'">
-                            {{ selectedPipeline.status || 'pending' }}
+                        <span class="info-value">
+                            <span [ngClass]="selectedPipeline.status || 'pending'">
+                                {{ selectedPipeline.status || 'pending' }}
+                            </span>
                         </span>
                     </div>
                     <div class="info-row" *ngIf="selectedPipeline.type">

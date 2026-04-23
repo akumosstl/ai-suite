@@ -415,7 +415,7 @@
     .type-value {
       text-transform: capitalize;
     }
-    
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -425,8 +425,8 @@
       font-weight: 500;
       text-transform: capitalize;
     }
-    
-    .status-badge.active {
+
+.status-badge.active {
       background: rgba(76, 175, 80, 0.2);
       color: #81c784;
     }
