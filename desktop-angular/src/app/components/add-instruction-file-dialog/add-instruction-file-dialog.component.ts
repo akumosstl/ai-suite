@@ -35,25 +35,22 @@ export interface InstructionFileData {
       <div class="form-section">
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Path</mat-label>
-          <input matInput [(ngModel)]="filePath" required autocomplete="off" placeholder="e.g., code-guia/agents">
+          <input matInput [(ngModel)]="filePath" required autocomplete="off" placeholder="e.g., reference/java-style.md">
           <mat-icon matPrefix>folder</mat-icon>
-          <mat-hint>Folder path (e.g., code-guia/agents)</mat-hint>
+          <mat-hint>Subfolder and file name (e.g., reference/java-style.md)</mat-hint>
         </mat-form-field>
 
         <mat-form-field class="full-width" appearance="outline">
-          <mat-label>File Name</mat-label>
-          <input matInput [(ngModel)]="fileName" required autocomplete="off" placeholder="revisor.txt">
+          <mat-label>File</mat-label>
+          <input matInput [value]="fileName" readonly placeholder="Select a file">
           <mat-icon matPrefix>description</mat-icon>
-          <mat-hint>File name (e.g., revisor.txt)</mat-hint>
+          <button mat-icon-button matSuffix (click)="fileInput.click()" type="button" aria-label="Browse file">
+            <mat-icon>folder_open</mat-icon>
+          </button>
+          <input #fileInput type="file" hidden (change)="onFileSelected($event)">
         </mat-form-field>
 
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Content</mat-label>
-          <textarea matInput [(ngModel)]="fileContent" required rows="8" placeholder="Enter file content..."></textarea>
-          <mat-icon matPrefix>edit</mat-icon>
-        </mat-form-field>
-
-        <div class="content-preview" *ngIf="fileContent">
+        <div class="file-preview" *ngIf="fileContent">
           <mat-icon>text_snippet</mat-icon>
           <span>{{ fileName }} ({{ fileContent.length }} chars)</span>
         </div>
@@ -65,7 +62,7 @@ export interface InstructionFileData {
         <mat-icon>close</mat-icon>
         Cancel
       </button>
-      <button mat-raised-button color="primary" (click)="onAdd()" [disabled]="!filePath || !fileName || !fileContent" class="save-btn">
+      <button mat-raised-button color="primary" (click)="onAdd()" [disabled]="!filePath || !fileContent" class="save-btn">
         <mat-icon>add</mat-icon>
         Add File
       </button>
@@ -113,7 +110,7 @@ export interface InstructionFileData {
       width: 100%;
     }
     
-    .content-preview {
+    .file-preview {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -124,7 +121,7 @@ export interface InstructionFileData {
       font-size: 0.875rem;
     }
     
-    .content-preview mat-icon {
+    .file-preview mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
@@ -190,6 +187,20 @@ export class AddInstructionFileDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<AddInstructionFileDialogComponent>
   ) {}
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      this.fileName = file.name;
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.fileContent = reader.result as string;
+      };
+      reader.readAsText(file);
+    }
+  }
 
   onCancel(): void {
     this.dialogRef.close();

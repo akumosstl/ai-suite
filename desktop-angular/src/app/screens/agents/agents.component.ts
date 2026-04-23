@@ -161,6 +161,7 @@ export class AgentsComponent implements OnInit {
    * @param value - Valor digitado pelo usuário
    */
   onNamespaceChange(value: string): void {
+    this.formAgent.namespace = value;
     const filterValue = value.toLowerCase();
     this.filteredNamespaces = this.namespaces.filter(ns => 
       ns.toLowerCase().startsWith(filterValue)
@@ -170,11 +171,16 @@ export class AgentsComponent implements OnInit {
     }
   }
 
+  displayNamespace(value: string): string {
+    return value || '';
+  }
+
   /**
    * Filtra namespaces disponíveis no autocomplete de busca.
    * @param value - Valor digitado pelo usuário
    */
   onSearchNamespaceChange(value: string): void {
+    this.searchNamespace = value;
     const filterValue = value.toLowerCase();
     this.filteredSearchNamespaces = this.namespaces.filter(ns => 
       ns.toLowerCase().startsWith(filterValue)
@@ -182,6 +188,10 @@ export class AgentsComponent implements OnInit {
     if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
       this.filteredSearchNamespaces = [value, ...this.filteredSearchNamespaces];
     }
+  }
+
+  displaySearchNamespace(value: string): string {
+    return value || '';
   }
 
   /**
@@ -312,15 +322,24 @@ export class AgentsComponent implements OnInit {
       return;
     }
 
+    const agentData = {
+      name: this.formAgent.name,
+      namespace: this.formAgent.namespace || '',
+      description: this.formAgent.description || '',
+      prompt: this.formAgent.prompt || '',
+      scope: this.formAgent.scope || 'global',
+      path: this.formAgent.path || ''
+    };
+
     if (this.formAgent.id) {
-      // Update existing agent
-      this.apiService.updateAgent(this.formAgent.id, this.formAgent).subscribe({
+      this.apiService.updateAgent(this.formAgent.id, agentData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Agent '${updated.name}' updated successfully`;
             this.selectedAgent = { ...updated };
+            this.formAgent = { ...updated };
+            this.loadAgents();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadAgents(), 0);
           });
         },
         error: (err) => {
@@ -331,16 +350,15 @@ export class AgentsComponent implements OnInit {
         }
       });
     } else {
-      // Create new agent
       const projectId = this.projectContext.getProjectId();
-      this.apiService.createAgent(this.formAgent, projectId || undefined).subscribe({
+      this.apiService.createAgent(agentData, projectId || undefined).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
             this.statusMessage = `Agent '${created.name}' created successfully`;
             this.selectedAgent = { ...created };
             this.formAgent = { ...created };
+            this.loadAgents();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadAgents(), 0);
           });
         },
         error: (err) => {

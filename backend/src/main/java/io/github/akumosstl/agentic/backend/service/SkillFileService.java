@@ -42,4 +42,16 @@ public class SkillFileService {
     public void deleteFilesBySkillId(Long skillId) {
         skillFileRepository.deleteBySkillId(skillId);
     }
+    
+    @Transactional
+    public SkillFile updateFile(Long id, String path, String fileName, String content) {
+        SkillFile skillFile = skillFileRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("File not found"));
+        
+        if (path != null) skillFile.setPath(path);
+        if (fileName != null) skillFile.setFileName(fileName);
+        if (content != null) skillFile.setContent(content);
+        
+        return skillFileRepository.save(skillFile);
+    }
 }

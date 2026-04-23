@@ -81,4 +81,16 @@ public class PluginFileService {
     public void deleteFilesByPluginId(Long pluginId) {
         pluginFileRepository.deleteByPluginId(pluginId);
     }
+    
+    @Transactional
+    public PluginFile updateFile(Long id, String path, String fileName, String content) {
+        PluginFile pluginFile = pluginFileRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("File not found"));
+        
+        if (path != null) pluginFile.setPath(path);
+        if (fileName != null) pluginFile.setFileName(fileName);
+        if (content != null) pluginFile.setContent(content);
+        
+        return pluginFileRepository.save(pluginFile);
+    }
 }

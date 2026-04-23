@@ -84,14 +84,7 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-label>Namespace</mat-label>
               <input matInput 
                      [(ngModel)]="searchNamespace" 
-                     [matAutocomplete]="searchNamespaceAutoComplete"
-                     (input)="onSearchNamespaceChange($event.target.value)"
-                     (keyup.enter)="search()">
-              <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
-                <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
-                  {{ ns }}
-                </mat-option>
-              </mat-autocomplete>
+                     placeholder="Search by namespace">
               <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
@@ -174,13 +167,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <mat-label>Namespace</mat-label>
                 <input matInput 
                        [(ngModel)]="formCommand.namespace" 
-                       [matAutocomplete]="namespaceAutoComplete"
-                       (input)="onNamespaceChange($event.target.value)">
-                <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
-                  <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
-                    {{ ns }}
-                  </mat-option>
-                </mat-autocomplete>
+                       placeholder="Enter namespace">
                 <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
               
@@ -1094,14 +1081,24 @@ export class CommandsComponent implements OnInit {
       return;
     }
 
+    const commandData = {
+      name: this.formCommand.name,
+      namespace: this.formCommand.namespace || '',
+      description: this.formCommand.description || '',
+      command: this.formCommand.command || '',
+      scope: this.formCommand.scope || '',
+      path: this.formCommand.path || ''
+    };
+
     if (this.formCommand.id) {
-      this.apiService.updateCommand(this.formCommand.id, this.formCommand).subscribe({
+      this.apiService.updateCommand(this.formCommand.id, commandData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Command '${updated.name}' updated successfully`;
             this.selectedCommand = { ...updated };
+            this.formCommand = { ...updated };
+            this.loadCommands();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadCommands(), 0);
           });
         },
         error: (err) => {
@@ -1113,14 +1110,14 @@ export class CommandsComponent implements OnInit {
       });
     } else {
       this.currentPage = 0;
-      this.apiService.createCommand(this.formCommand).subscribe({
+      this.apiService.createCommand(commandData).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
             this.statusMessage = `Command '${created.name}' created successfully`;
             this.selectedCommand = { ...created };
             this.formCommand = { ...created };
+            this.loadCommands();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadCommands(), 0);
           });
         },
         error: (err) => {

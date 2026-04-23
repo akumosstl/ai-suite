@@ -23,6 +23,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService, Plugin, PluginFile, Project, Template } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddPluginFileDialogComponent, PluginFileData } from '../../components/add-plugin-file-dialog/add-plugin-file-dialog.component';
+import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
@@ -50,10 +51,11 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatDialogModule,
     MatMenuModule,
     MatIconModule,
-    MenuBarComponent,
-    PipelineResultDialogComponent,
-    PromptEditorModalComponent,
-    PanelToggleComponent
+MenuBarComponent,
+     PipelineResultDialogComponent,
+     PromptEditorModalComponent,
+     EditFileDialogComponent,
+     PanelToggleComponent
   ],
   template: `
     <div class="plugins-container">
@@ -238,9 +240,14 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <div class="file-row" *ngFor="let file of formPluginFiles; let i = index">
                   <span class="file-path">{{ file.path }}</span>
                   <span class="file-name">{{ file.fileName }}</span>
-                  <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <div class="file-actions">
+                    <button mat-icon-button class="edit-btn" (click)="editFile(i)" title="Edit file" *ngIf="isEditableFile(file.fileName)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -714,16 +721,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     .files-table {
       border: 1px solid #2a2a2a;
       border-radius: 6px;
-      overflow: hidden;
+      overflow: visible;
     }
     
     .file-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 50px;
+      grid-template-columns: 2fr 1fr 100px;
       gap: 8px;
       padding: 10px 12px;
       align-items: center;
       border-bottom: 1px solid #2a2a2a;
+      overflow: visible;
+    }
+    
+    .file-actions {
+      display: flex !important;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    
+    .file-actions .mat-icon-button {
+      display: inline-flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
     }
     
     .file-row:last-child {
@@ -756,6 +779,14 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .file-row .delete-btn:hover {
       background: rgba(239, 83, 80, 0.1);
+    }
+    
+    .file-row .edit-btn {
+      color: #ffb74d;
+    }
+    
+    .file-row .edit-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
     }
     
     .no-files {
@@ -1085,10 +1116,16 @@ export class PluginsComponent implements OnInit {
     });
   }
 
-  /**
+/**
    * Remove um arquivo da lista de arquivos.
    * @param index - Índice do arquivo a remover
    */
+  isEditableFile(fileName: string): boolean {
+    const editableExtensions = ['.txt', '.json', '.md', '.yml'];
+    const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'));
+    return editableExtensions.includes(ext);
+  }
+
   removeFile(index: number): void {
     const fileToRemove = this.formPluginFiles[index];
     this.ngZone.run(() => {
@@ -1101,6 +1138,48 @@ export class PluginsComponent implements OnInit {
         error: (err) => console.error('Error deleting file:', err)
       });
     }
+  }
+
+  editFile(index: number): void {
+    const file = this.formPluginFiles[index];
+    const dialogRef = this.dialog.open(EditFileDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        fileName: file.fileName,
+        path: file.path,
+        content: file.content,
+        type: 'plugin'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.ngZone.run(() => {
+        if (result && result.content !== undefined) {
+          file.content = result.content;
+          if (file.id) {
+            this.apiService.updatePluginFile(file.id, file.path, file.fileName, file.content).subscribe({
+              next: (updated) => {
+                this.ngZone.run(() => {
+                  this.formPluginFiles[index] = { ...updated };
+                  this.statusMessage = `File "${file.fileName}" updated successfully`;
+                  this.cdr.detectChanges();
+                });
+              },
+              error: (err) => {
+                this.statusMessage = 'Error updating file: ' + err.message;
+                this.cdr.detectChanges();
+              }
+            });
+          } else {
+            this.statusMessage = `File "${file.fileName}" updated in memory`;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    });
   }
 
   /**
@@ -1333,12 +1412,21 @@ export class PluginsComponent implements OnInit {
     };
 
     if (this.formPlugin.id) {
-      this.apiService.updatePlugin(this.formPlugin.id, this.formPlugin).subscribe({
+      const pluginData = {
+        name: this.formPlugin.name,
+        namespace: this.formPlugin.namespace || '',
+        description: this.formPlugin.description || '',
+        instructions: this.formPlugin.instructions || '',
+        path: this.formPlugin.path || ''
+      };
+      this.apiService.updatePlugin(this.formPlugin.id, pluginData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Plugin '${updated.name}' updated successfully`;
             this.selectedPlugin = { ...updated };
-            syncPluginFiles(updated.id!, false);
+            this.formPlugin = { ...updated };
+            this.loadPlugins();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {
@@ -1354,9 +1442,8 @@ export class PluginsComponent implements OnInit {
             this.statusMessage = `Plugin '${created.name}' created successfully`;
             this.selectedPlugin = { ...created };
             this.formPlugin = { ...created };
-            if (created.id) {
-              syncPluginFiles(created.id, true);
-            }
+            this.loadPlugins();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {

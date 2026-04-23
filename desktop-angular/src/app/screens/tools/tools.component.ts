@@ -16,6 +16,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService, Tool, ToolFile, Project, Template } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddToolFileDialogComponent, ToolFileData } from '../../components/add-tool-file-dialog/add-tool-file-dialog.component';
+import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
@@ -43,10 +44,11 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatDialogModule,
     MatMenuModule,
     MatIconModule,
-    MenuBarComponent,
-    PipelineResultDialogComponent,
-    PromptEditorModalComponent,
-    PanelToggleComponent
+MenuBarComponent,
+     PipelineResultDialogComponent,
+     PromptEditorModalComponent,
+     EditFileDialogComponent,
+     PanelToggleComponent
   ],
   template: `
     <div class="tools-container">
@@ -231,9 +233,14 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <div class="file-row" *ngFor="let file of formToolFiles; let i = index">
                   <span class="file-path">{{ file.path }}</span>
                   <span class="file-name">{{ file.fileName }}</span>
-                  <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <div class="file-actions">
+                    <button mat-icon-button class="edit-btn" (click)="editFile(i)" title="Edit file" *ngIf="isEditableFile(file.fileName)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -707,16 +714,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     .files-table {
       border: 1px solid #2a2a2a;
       border-radius: 6px;
-      overflow: hidden;
+      overflow: visible;
     }
     
     .file-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 50px;
+      grid-template-columns: 2fr 1fr 100px;
       gap: 8px;
       padding: 10px 12px;
       align-items: center;
       border-bottom: 1px solid #2a2a2a;
+      overflow: visible;
+    }
+    
+    .file-actions {
+      display: flex !important;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    
+    .file-actions .mat-icon-button {
+      display: inline-flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
     }
     
     .file-row:last-child {
@@ -749,6 +772,14 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .file-row .delete-btn:hover {
       background: rgba(239, 83, 80, 0.1);
+    }
+    
+    .file-row .edit-btn {
+      color: #ffb74d;
+    }
+    
+    .file-row .edit-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
     }
     
     .no-files {
@@ -1045,6 +1076,12 @@ export class ToolsComponent implements OnInit {
     });
   }
 
+  isEditableFile(fileName: string): boolean {
+    const editableExtensions = ['.txt', '.json', '.md', '.yml'];
+    const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'));
+    return editableExtensions.includes(ext);
+  }
+
   removeFile(index: number): void {
     const fileToRemove = this.formToolFiles[index];
     this.ngZone.run(() => {
@@ -1057,6 +1094,48 @@ export class ToolsComponent implements OnInit {
         error: (err) => console.error('Error deleting file:', err)
       });
     }
+  }
+
+  editFile(index: number): void {
+    const file = this.formToolFiles[index];
+    const dialogRef = this.dialog.open(EditFileDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        fileName: file.fileName,
+        path: file.path,
+        content: file.content,
+        type: 'tool'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.ngZone.run(() => {
+        if (result && result.content !== undefined) {
+          file.content = result.content;
+          if (file.id) {
+            this.apiService.updateToolFile(file.id, file.path, file.fileName, file.content).subscribe({
+              next: (updated) => {
+                this.ngZone.run(() => {
+                  this.formToolFiles[index] = { ...updated };
+                  this.statusMessage = `File "${file.fileName}" updated successfully`;
+                  this.cdr.detectChanges();
+                });
+              },
+              error: (err) => {
+                this.statusMessage = 'Error updating file: ' + err.message;
+                this.cdr.detectChanges();
+              }
+            });
+          } else {
+            this.statusMessage = `File "${file.fileName}" updated in memory`;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    });
   }
 
   ngOnInit(): void {
@@ -1266,12 +1345,21 @@ export class ToolsComponent implements OnInit {
     };
 
     if (this.formTool.id) {
-      this.apiService.updateTool(this.formTool.id, this.formTool).subscribe({
+      const toolData = {
+        name: this.formTool.name,
+        namespace: this.formTool.namespace || '',
+        description: this.formTool.description || '',
+        instructions: this.formTool.instructions || '',
+        path: this.formTool.path || ''
+      };
+      this.apiService.updateTool(this.formTool.id, toolData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Tool '${updated.name}' updated successfully`;
             this.selectedTool = { ...updated };
-            syncToolFiles(updated.id!, false);
+            this.formTool = { ...updated };
+            this.loadTools();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {
@@ -1287,9 +1375,8 @@ export class ToolsComponent implements OnInit {
             this.statusMessage = `Tool '${created.name}' created successfully`;
             this.selectedTool = { ...created };
             this.formTool = { ...created };
-            if (created.id) {
-              syncToolFiles(created.id, true);
-            }
+            this.loadTools();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {

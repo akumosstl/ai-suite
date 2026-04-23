@@ -1174,6 +1174,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
+  updateSkillFile(id: number, path: string, fileName: string, content: string): Observable<SkillFile> {
+    return this.http.put<SkillFile>(`${this.baseUrl}/skill-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<SkillFile>('updateSkillFile', {} as SkillFile)));
+  }
+
   // Instructions
   getInstructions(page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/instructions`, {
@@ -1236,6 +1244,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     return this.http.delete(`${this.baseUrl}/instruction-files/${id}`).pipe(
       catchError(this.handleError('deleteInstructionFile', null))
     );
+  }
+
+  updateInstructionFile(id: number, path: string, fileName: string, content: string): Observable<InstructionFile> {
+    return this.http.put<InstructionFile>(`${this.baseUrl}/instruction-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<InstructionFile>('updateInstructionFile', {} as InstructionFile)));
   }
 
   // Plugins
@@ -1302,6 +1318,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
+  updatePluginFile(id: number, path: string, fileName: string, content: string): Observable<PluginFile> {
+    return this.http.put<PluginFile>(`${this.baseUrl}/plugin-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<PluginFile>('updatePluginFile', {} as PluginFile)));
+  }
+
   // Tools
   getTools(page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/tools`, {
@@ -1364,6 +1388,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     return this.http.delete(`${this.baseUrl}/tool-files/${id}`).pipe(
       catchError(this.handleError('deleteToolFile', null))
     );
+  }
+
+  updateToolFile(id: number, path: string, fileName: string, content: string): Observable<ToolFile> {
+    return this.http.put<ToolFile>(`${this.baseUrl}/tool-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<ToolFile>('updateToolFile', {} as ToolFile)));
   }
 
   // Targets

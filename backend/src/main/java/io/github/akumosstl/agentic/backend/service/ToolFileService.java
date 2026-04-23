@@ -81,4 +81,16 @@ public class ToolFileService {
     public void deleteFilesByToolId(Long toolId) {
         toolFileRepository.deleteByToolId(toolId);
     }
+    
+    @Transactional
+    public ToolFile updateFile(Long id, String path, String fileName, String content) {
+        ToolFile toolFile = toolFileRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("File not found"));
+        
+        if (path != null) toolFile.setPath(path);
+        if (fileName != null) toolFile.setFileName(fileName);
+        if (content != null) toolFile.setContent(content);
+        
+        return toolFileRepository.save(toolFile);
+    }
 }

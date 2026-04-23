@@ -21,13 +21,7 @@
                 </mat-form-field>
                 <mat-form-field class="search-field" appearance="outline">
                     <mat-label>Namespace</mat-label>
-                    <input matInput [(ngModel)]="searchNamespace" [matAutocomplete]="searchNamespaceAutoComplete"
-                        (input)="onSearchNamespaceChange($event.target.value)" (keyup.enter)="search()">
-                    <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
-                        <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
-                            {{ ns }}
-                        </mat-option>
-                    </mat-autocomplete>
+                    <input matInput [(ngModel)]="searchNamespace" placeholder="Search by namespace">
                     <mat-icon matPrefix>category</mat-icon>
                 </mat-form-field>
                 <button class="icon-btn search-btn" (click)="search()" title="Search">
@@ -102,13 +96,7 @@
 
                     <mat-form-field class="form-field" appearance="outline">
                         <mat-label>Namespace</mat-label>
-                        <input matInput [(ngModel)]="formSkill.namespace" [matAutocomplete]="namespaceAutoComplete"
-                            (input)="onNamespaceChange($event.target.value)">
-                        <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
-                            <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
-                                {{ ns }}
-                            </mat-option>
-                        </mat-autocomplete>
+                        <input matInput [(ngModel)]="formSkill.namespace" placeholder="Enter namespace">
                         <mat-icon matPrefix>category</mat-icon>
                     </mat-form-field>
 

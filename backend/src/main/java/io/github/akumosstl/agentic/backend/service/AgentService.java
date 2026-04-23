@@ -130,6 +130,7 @@ public class AgentService {
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
         agent.setName(agentDetails.getName());
+        agent.setNamespace(agentDetails.getNamespace());
         agent.setDescription(agentDetails.getDescription());
         agent.setPrompt(agentDetails.getPrompt());
         agent.setPath(agentDetails.getPath());

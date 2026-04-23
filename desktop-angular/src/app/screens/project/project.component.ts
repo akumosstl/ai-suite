@@ -568,17 +568,20 @@ export class ProjectComponent implements OnInit, OnDestroy {
       data: {
         id: this.selectedPipeline.id,
         name: this.selectedPipeline.name,
-        description: this.selectedPipeline.description || ''
+        description: this.selectedPipeline.description || '',
+        outputExtension: this.selectedPipeline.outputExtension
       }
     });
 
-    dialogRef.afterClosed().subscribe((result: { name: string; description: string } | undefined) => {
+    dialogRef.afterClosed().subscribe((result: { name: string; description: string; outputExtension?: string } | undefined) => {
       if (result && this.selectedPipeline && this.project?.id && this.selectedPipeline.id) {
         const pipelineId = this.selectedPipeline.id;
         const updatedPipeline: Pipeline = {
           ...this.selectedPipeline,
           name: result.name,
           description: result.description
+          ,
+          outputExtension: result.outputExtension
         };
 
         this.apiService.updatePipeline(this.project.id, pipelineId, updatedPipeline).subscribe({

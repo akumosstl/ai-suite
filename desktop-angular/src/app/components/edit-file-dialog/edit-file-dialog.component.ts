@@ -1,27 +1,25 @@
-import { Component, Inject, OnInit, ViewEncapsulation, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ApiService, Template } from '../../services/api.service';
 
-export interface PromptEditorData {
-  prompt: string;
-  type: 'agents' | 'skills' | 'commands' | 'scripts' | 'instructions' | 'plugins' | 'tools';
-  title?: string;
+export interface EditFileDialogData {
+  fileName: string;
+  path: string;
+  content: string;
+  type: 'skill' | 'tool' | 'instruction' | 'plugin';
 }
 
-export interface PromptEditorResult {
-  prompt: string;
+export interface EditFileDialogResult {
+  content: string;
 }
 
 @Component({
-  selector: 'app-prompt-editor-modal',
+  selector: 'app-edit-file-dialog',
   standalone: true,
   encapsulation: ViewEncapsulation.None,
   imports: [
@@ -31,42 +29,27 @@ export interface PromptEditorResult {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
-    MatIconModule,
-    MatProgressSpinnerModule
+    MatIconModule
   ],
   template: `
     <div class="modal-container">
       <div class="dialog-header">
-        <mat-icon class="header-icon">edit_note</mat-icon>
-        <h2 class="dialog-title">{{ data.title || 'Edit Prompt' }}</h2>
+        <mat-icon class="header-icon">edit_document</mat-icon>
+        <h2 class="dialog-title">Edit File: {{ data.fileName }}</h2>
       </div>
       
       <div class="dialog-content">
-        <div class="template-section">
-          <mat-form-field class="template-select" appearance="outline">
-            <mat-label>Template</mat-label>
-            <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="onTemplateSelect()">
-              <mat-option [value]="null">-- Select a template --</mat-option>
-              <mat-option *ngFor="let template of templates" [value]="template.id">
-                {{ template.name }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>description</mat-icon>
-          </mat-form-field>
-          
-          <div *ngIf="loadingTemplates" class="loading-spinner">
-            <mat-spinner diameter="24"></mat-spinner>
-          </div>
+        <div class="file-info">
+          <mat-icon>folder</mat-icon>
+          <span class="file-path">{{ data.path }}/{{ data.fileName }}</span>
         </div>
         
-        <mat-form-field class="full-width prompt-field" appearance="outline">
-          <mat-label>Prompt</mat-label>
+        <mat-form-field class="full-width content-field" appearance="outline">
+          <mat-label>File Content</mat-label>
           <textarea matInput 
-                    [(ngModel)]="editedPrompt" 
-                    rows="15" 
-                    placeholder="Enter the prompt content"
-                    (ngModelChange)="onPromptChange()"></textarea>
+                    [(ngModel)]="editedContent" 
+                    rows="20" 
+                    placeholder="Enter the file content"></textarea>
           <mat-icon matPrefix>code</mat-icon>
         </mat-form-field>
       </div>
@@ -87,9 +70,9 @@ export interface PromptEditorResult {
     .modal-container {
       display: flex;
       flex-direction: column;
-      min-width: 700px;
+      min-width: 600px;
       max-width: 900px;
-      min-height: 300px;
+      min-height: 520px;
       max-height: 90vh;
       background: #1e1e1e;
       border-radius: 12px;
@@ -110,7 +93,7 @@ export interface PromptEditorResult {
       font-size: 28px;
       width: 28px;
       height: 28px;
-      color: #4fc3f7;
+      color: #ffb74d;
     }
     
     .dialog-title {
@@ -124,7 +107,7 @@ export interface PromptEditorResult {
     .dialog-content {
       flex: 1;
       padding: 24px;
-      min-height: 200px;
+      min-height: 320px;
       max-height: calc(90vh - 140px);
       background: #1e1e1e;
       display: flex;
@@ -133,61 +116,65 @@ export interface PromptEditorResult {
       overflow-y: auto;
     }
     
-    .template-section {
+    .file-info {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #252525;
+      border-radius: 8px;
+      color: #4fc3f7;
+      font-size: 0.875rem;
+      font-family: monospace;
     }
     
-    .template-select {
-      flex: 1;
+    .file-info mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     
-    .loading-spinner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     .full-width {
       width: 100%;
     }
     
-    .prompt-field {
+    .content-field {
       flex: 1;
       display: flex;
       flex-direction: column;
     }
 
-    ::ng-deep .prompt-field .mat-mdc-form-field-flex {
+    ::ng-deep .content-field .mat-mdc-form-field-flex {
       display: flex;
       flex: 1;
-      min-height: 200px;
+      min-height: 330px;
     }
 
-    ::ng-deep .prompt-field .mat-mdc-text-field-wrapper {
+    ::ng-deep .content-field .mat-mdc-text-field-wrapper {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 200px;
+      min-height: 330px;
     }
 
-    ::ng-deep .prompt-field .mat-mdc-form-field-infix {
+    ::ng-deep .content-field .mat-mdc-form-field-infix {
       display: flex;
       flex: 1;
       padding: 12px 0;
-      min-height: 200px;
+      min-height: 330px;
     }
 
-    ::ng-deep .prompt-field textarea.mat-mdc-input-element {
+    ::ng-deep .content-field textarea.mat-mdc-input-element {
       flex: 1;
-      min-height: 150px;
+      min-height: 330px;
       overflow-y: auto;
       resize: none;
       border: none !important;
       outline: none !important;
       background: transparent !important;
       box-shadow: none !important;
+      font-family: monospace;
+      font-size: 0.875rem;
     }
     
     mat-form-field {
@@ -213,7 +200,7 @@ export interface PromptEditorResult {
     ::ng-deep .mat-mdc-form-field.mat-form-field-appearance-outline.mat-focused .mdc-notched-outline__leading,
     ::ng-deep .mat-mdc-form-field.mat-form-field-appearance-outline.mat-focused .mdc-notched-outline__notch,
     ::ng-deep .mat-mdc-form-field.mat-form-field-appearance-outline.mat-focused .mdc-notched-outline__trailing {
-      border-color: #4fc3f7;
+      border-color: #ffb74d;
     }
     
     ::ng-deep .mdc-floating-label {
@@ -221,7 +208,7 @@ export interface PromptEditorResult {
     }
     
     ::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
-      color: #4fc3f7 !important;
+      color: #ffb74d !important;
     }
     
     ::ng-deep input[matInput],
@@ -232,22 +219,6 @@ export interface PromptEditorResult {
     ::ng-deep input[matInput]::placeholder,
     ::ng-deep textarea[matInput]::placeholder {
       color: #666;
-    }
-    
-    ::ng-deep .mat-mdc-select-panel {
-      background: #2a2a2a !important;
-    }
-    
-    ::ng-deep .mat-mdc-option {
-      color: #e0e0e0 !important;
-    }
-    
-    ::ng-deep .mat-mdc-option:hover {
-      background: #3a3a3a !important;
-    }
-    
-    ::ng-deep .mat-mdc-option.mat-mdc-option-active {
-      background: #3a3a3a !important;
     }
     
     .dialog-actions {
@@ -285,11 +256,11 @@ export interface PromptEditorResult {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+      background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
     }
     
     .save-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
     }
     
     .save-btn:disabled {
@@ -304,78 +275,24 @@ export interface PromptEditorResult {
     }
   `]
 })
-export class PromptEditorModalComponent implements OnInit {
-  editedPrompt = '';
-  selectedTemplateId: number | null = null;
-  templates: Template[] = [];
-  loadingTemplates = false;
+export class EditFileDialogComponent implements OnInit {
+  editedContent = '';
 
   constructor(
-    public dialogRef: MatDialogRef<PromptEditorModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: PromptEditorData,
-    private apiService: ApiService
+    public dialogRef: MatDialogRef<EditFileDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: EditFileDialogData
   ) {
-    this.editedPrompt = data.prompt || '';
+    this.editedContent = data.content || '';
   }
 
   ngOnInit(): void {
-    this.loadTemplates();
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Tab' && !event.shiftKey) {
-      const target = event.target as HTMLElement;
-      if (target.tagName === 'TEXTAREA' && target.closest('.modal-container')) {
-        event.preventDefault();
-        const textarea = target as HTMLTextAreaElement;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const value = textarea.value;
-        this.editedPrompt = value.substring(0, start) + '  ' + value.substring(end);
-        setTimeout(() => {
-          textarea.selectionStart = textarea.selectionEnd = start + 2;
-        }, 0);
-      }
-    }
-  }
-
-  loadTemplates(): void {
-    this.loadingTemplates = true;
-    this.apiService.getTemplatesByType(this.data.type).subscribe({
-      next: (templates) => {
-        this.templates = templates;
-        this.loadingTemplates = false;
-      },
-      error: () => {
-        this.templates = [];
-        this.loadingTemplates = false;
-      }
-    });
-  }
-
-  onTemplateSelect(): void {
-    if (this.selectedTemplateId) {
-      const template = this.templates.find(t => t.id === this.selectedTemplateId);
-      if (template && template.template) {
-        if (this.editedPrompt) {
-          this.editedPrompt = this.editedPrompt + '\n\n' + template.template;
-        } else {
-          this.editedPrompt = template.template;
-        }
-        this.selectedTemplateId = null;
-      }
-    }
-  }
-
-  onPromptChange(): void {
   }
 
   onCancel(): void {
-    this.dialogRef.close({ prompt: this.data.prompt });
+    this.dialogRef.close();
   }
 
   onSave(): void {
-    this.dialogRef.close({ prompt: this.editedPrompt });
+    this.dialogRef.close({ content: this.editedContent });
   }
 }

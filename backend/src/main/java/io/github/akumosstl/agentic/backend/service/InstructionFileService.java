@@ -81,4 +81,16 @@ public class InstructionFileService {
     public void deleteFilesByInstructionId(Long instructionId) {
         instructionFileRepository.deleteByInstructionId(instructionId);
     }
+    
+    @Transactional
+    public InstructionFile updateFile(Long id, String path, String fileName, String content) {
+        InstructionFile instructionFile = instructionFileRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("File not found"));
+        
+        if (path != null) instructionFile.setPath(path);
+        if (fileName != null) instructionFile.setFileName(fileName);
+        if (content != null) instructionFile.setContent(content);
+        
+        return instructionFileRepository.save(instructionFile);
+    }
 }

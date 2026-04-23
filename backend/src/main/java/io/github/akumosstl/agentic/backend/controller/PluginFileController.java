@@ -37,4 +37,12 @@ public class PluginFileController {
         pluginFileService.deleteFile(id);
         return ResponseEntity.ok().build();
     }
+    
+    @PutMapping("/{id}")
+    public PluginFile updateFile(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String path = request.get("path");
+        String fileName = request.get("fileName");
+        String content = request.get("content");
+        return pluginFileService.updateFile(id, path, fileName, content);
+    }
 }

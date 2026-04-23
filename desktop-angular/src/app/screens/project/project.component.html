@@ -304,6 +304,13 @@
                         </span>
                         <span class="info-value">{{ selectedPipeline.description || 'No description' }}</span>
                     </div>
+                    <div class="info-row" *ngIf="selectedPipeline.outputExtension">
+                        <span class="info-label">
+                            <mat-icon>description</mat-icon>
+                            Output Extension
+                        </span>
+                        <span class="info-value">{{ selectedPipeline.outputExtension }}</span>
+                    </div>
                     <div class="info-row">
                         <span class="info-label">
                             <mat-icon>flag</mat-icon>
@@ -434,6 +441,14 @@
                         </label>
                         <input type="text" id="pipelineName" [(ngModel)]="newPipeline.name" name="pipelineName"
                             placeholder="Enter pipeline name" required class="form-input" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pipelineDescription">
+                            <mat-icon>description</mat-icon>
+                            Description
+                        </label>
+                        <textarea id="pipelineDescription" [(ngModel)]="newPipeline.description" name="pipelineDescription"
+                            placeholder="Describe the pipeline (optional)" class="form-input" rows="3"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="outputExtension">

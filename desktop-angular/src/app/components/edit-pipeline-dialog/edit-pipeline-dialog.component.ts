@@ -11,6 +11,7 @@ export interface EditPipelineData {
   id: number;
   name: string;
   description: string;
+  outputExtension?: string;
 }
 
 @Component({
@@ -42,6 +43,11 @@ export interface EditPipelineData {
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Description</mat-label>
           <textarea matInput [(ngModel)]="pipeline.description" rows="3" maxlength="256" placeholder="Describe your pipeline (optional)"></textarea>
+          <mat-icon matPrefix>description</mat-icon>
+        </mat-form-field>
+        <mat-form-field class="full-width" appearance="outline">
+          <mat-label>Output Extension</mat-label>
+          <input matInput [(ngModel)]="pipeline.outputExtension" placeholder="e.g., json" autocomplete="off">
           <mat-icon matPrefix>description</mat-icon>
         </mat-form-field>
       </div>
@@ -199,9 +205,10 @@ export interface EditPipelineData {
   `]
 })
 export class EditPipelineDialogComponent implements OnInit {
-  pipeline: { name: string; description: string } = {
+  pipeline: { name: string; description: string; outputExtension?: string } = {
     name: '',
-    description: ''
+    description: '',
+    outputExtension: ''
   };
 
   constructor(
@@ -213,6 +220,7 @@ export class EditPipelineDialogComponent implements OnInit {
     if (this.data) {
       this.pipeline.name = this.data.name;
       this.pipeline.description = this.data.description;
+      this.pipeline.outputExtension = this.data.outputExtension ?? '';
     }
   }
 

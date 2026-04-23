@@ -37,4 +37,12 @@ public class SkillFileController {
         skillFileService.deleteFile(id);
         return ResponseEntity.ok().build();
     }
+    
+    @PutMapping("/{id}")
+    public SkillFile updateFile(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String path = request.get("path");
+        String fileName = request.get("fileName");
+        String content = request.get("content");
+        return skillFileService.updateFile(id, path, fileName, content);
+    }
 }

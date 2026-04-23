@@ -99,6 +99,7 @@ Each feature has its own detailed guide:
 |-------|-------------|------|
 | Agents | Create AI agents with custom prompts | [agents-guide.md](./agents-guide.md) |
 | Projects | Manage projects and pipelines | [project-guide.md](./project-guide.md) |
+| Pipeline Steps | Create and configure pipeline steps | [pipeline-steps.md](./pipeline-steps.md) |
 | Pipelines | View executed pipelines | [pipelines-guide.md](./pipelines-guide.md) |
 | Run Pipelines | Execute pipelines with real-time updates | [runpipelines-guide.md](./runpipelines-guide.md) |
 | Pipeline History | View past executions | [pipeline-run-history-guide.md](./pipeline-run-history-guide.md) |

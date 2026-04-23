@@ -76,14 +76,7 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-label>Namespace</mat-label>
               <input matInput 
                      [(ngModel)]="searchNamespace" 
-                     [matAutocomplete]="searchNamespaceAutoComplete"
-                     (input)="onSearchNamespaceChange($event.target.value)"
-                     (keyup.enter)="search()">
-              <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
-                <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
-                  {{ ns }}
-                </mat-option>
-              </mat-autocomplete>
+                     placeholder="Search by namespace">
               <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
@@ -166,13 +159,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <mat-label>Namespace</mat-label>
                 <input matInput 
                        [(ngModel)]="formScript.namespace" 
-                       [matAutocomplete]="namespaceAutoComplete"
-                       (input)="onNamespaceChange($event.target.value)">
-                <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
-                  <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
-                    {{ ns }}
-                  </mat-option>
-                </mat-autocomplete>
+                       placeholder="Enter namespace">
                 <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
               
@@ -1064,14 +1051,24 @@ export class ScriptsComponent implements OnInit {
       return;
     }
 
+    const scriptData = {
+      name: this.formScript.name,
+      namespace: this.formScript.namespace || '',
+      description: this.formScript.description || '',
+      content: this.formScript.content || '',
+      scope: this.formScript.scope || 'global',
+      path: this.formScript.path || ''
+    };
+
     if (this.formScript.id) {
-      this.apiService.updateScript(this.formScript.id, this.formScript).subscribe({
+      this.apiService.updateScript(this.formScript.id, scriptData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Script '${updated.name}' updated successfully`;
             this.selectedScript = { ...updated };
+            this.formScript = { ...updated };
+            this.loadScripts();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadScripts(), 0);
           });
         },
         error: (err) => {
@@ -1083,14 +1080,14 @@ export class ScriptsComponent implements OnInit {
       });
     } else {
       this.currentPage = 0;
-      this.apiService.createScript(this.formScript).subscribe({
+      this.apiService.createScript(scriptData).subscribe({
         next: (created) => {
           this.ngZone.run(() => {
             this.statusMessage = `Script '${created.name}' created successfully`;
             this.selectedScript = { ...created };
             this.formScript = { ...created };
+            this.loadScripts();
             this.cdr.detectChanges();
-            setTimeout(() => this.loadScripts(), 0);
           });
         },
         error: (err) => {

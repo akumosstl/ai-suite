@@ -23,6 +23,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService, Instruction, InstructionFile, Project, Template } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddInstructionFileDialogComponent, InstructionFileData } from '../../components/add-instruction-file-dialog/add-instruction-file-dialog.component';
+import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
@@ -50,10 +51,11 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatDialogModule,
     MatMenuModule,
     MatIconModule,
-    MenuBarComponent,
-    PipelineResultDialogComponent,
-    PromptEditorModalComponent,
-    PanelToggleComponent
+MenuBarComponent,
+     PipelineResultDialogComponent,
+     PromptEditorModalComponent,
+     EditFileDialogComponent,
+     PanelToggleComponent
   ],
   template: `
     <div class="instructions-container">
@@ -81,14 +83,7 @@ import { ProjectContextService } from '../../services/project-context.service';
               <mat-label>Namespace</mat-label>
               <input matInput 
                      [(ngModel)]="searchNamespace" 
-                     [matAutocomplete]="searchNamespaceAutoComplete"
-                     (input)="onSearchNamespaceChange($event.target.value)"
-                     (keyup.enter)="search()">
-              <mat-autocomplete #searchNamespaceAutoComplete="matAutocomplete">
-                <mat-option *ngFor="let ns of filteredSearchNamespaces" [value]="ns">
-                  {{ ns }}
-                </mat-option>
-              </mat-autocomplete>
+                     placeholder="Search by namespace">
               <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
@@ -171,13 +166,7 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <mat-label>Namespace</mat-label>
                 <input matInput 
                        [(ngModel)]="formInstruction.namespace" 
-                       [matAutocomplete]="namespaceAutoComplete"
-                       (input)="onNamespaceChange($event.target.value)">
-                <mat-autocomplete #namespaceAutoComplete="matAutocomplete">
-                  <mat-option *ngFor="let ns of filteredNamespaces" [value]="ns">
-                    {{ ns }}
-                  </mat-option>
-                </mat-autocomplete>
+                       placeholder="Enter namespace">
                 <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
               
@@ -238,9 +227,14 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <div class="file-row" *ngFor="let file of formInstructionFiles; let i = index">
                   <span class="file-path">{{ file.path }}</span>
                   <span class="file-name">{{ file.fileName }}</span>
-                  <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <div class="file-actions">
+                    <button mat-icon-button class="edit-btn" (click)="editFile(i)" title="Edit file" *ngIf="isEditableFile(file.fileName)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -715,16 +709,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     .files-table {
       border: 1px solid #2a2a2a;
       border-radius: 6px;
-      overflow: hidden;
+      overflow: visible;
     }
     
     .file-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 50px;
+      grid-template-columns: 2fr 1fr 100px;
       gap: 8px;
       padding: 10px 12px;
       align-items: center;
       border-bottom: 1px solid #2a2a2a;
+      overflow: visible;
+    }
+    
+    .file-actions {
+      display: flex !important;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    
+    .file-actions .mat-icon-button {
+      display: inline-flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
     }
     
     .file-row:last-child {
@@ -757,6 +767,14 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .file-row .delete-btn:hover {
       background: rgba(239, 83, 80, 0.1);
+    }
+    
+    .file-row .edit-btn {
+      color: #ffb74d;
+    }
+    
+    .file-row .edit-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
     }
     
     .no-files {
@@ -1073,10 +1091,16 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
-  /**
+/**
    * Remove um arquivo da lista de arquivos da instrução.
    * @param index - Índice do arquivo a ser removido
    */
+  isEditableFile(fileName: string): boolean {
+    const editableExtensions = ['.txt', '.json', '.md', '.yml'];
+    const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'));
+    return editableExtensions.includes(ext);
+  }
+
   removeFile(index: number): void {
     const fileToRemove = this.formInstructionFiles[index];
     this.ngZone.run(() => {
@@ -1089,6 +1113,48 @@ export class InstructionsComponent implements OnInit {
         error: (err) => console.error('Error deleting file:', err)
       });
     }
+  }
+
+  editFile(index: number): void {
+    const file = this.formInstructionFiles[index];
+    const dialogRef = this.dialog.open(EditFileDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        fileName: file.fileName,
+        path: file.path,
+        content: file.content,
+        type: 'instruction'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.ngZone.run(() => {
+        if (result && result.content !== undefined) {
+          file.content = result.content;
+          if (file.id) {
+            this.apiService.updateInstructionFile(file.id, file.path, file.fileName, file.content).subscribe({
+              next: (updated) => {
+                this.ngZone.run(() => {
+                  this.formInstructionFiles[index] = { ...updated };
+                  this.statusMessage = `File "${file.fileName}" updated successfully`;
+                  this.cdr.detectChanges();
+                });
+              },
+              error: (err) => {
+                this.statusMessage = 'Error updating file: ' + err.message;
+                this.cdr.detectChanges();
+              }
+            });
+          } else {
+            this.statusMessage = `File "${file.fileName}" updated in memory`;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    });
   }
 
   /**
@@ -1322,12 +1388,25 @@ export class InstructionsComponent implements OnInit {
     };
 
     if (this.formInstruction.id) {
-      this.apiService.updateInstruction(this.formInstruction.id, this.formInstruction).subscribe({
+      const instructionData = {
+        name: this.formInstruction.name,
+        namespace: this.formInstruction.namespace || '',
+        description: this.formInstruction.description || '',
+        instructions: this.formInstruction.instructions || '',
+        path: this.formInstruction.path || ''
+      };
+      this.apiService.updateInstruction(this.formInstruction.id, instructionData).subscribe({
         next: (updated) => {
+          const idToUse = typeof updated?.id === 'number' ? updated.id : this.formInstruction.id;
+          if (typeof idToUse === 'number') {
+            syncInstructionFiles(idToUse, false);
+          }
           this.ngZone.run(() => {
             this.statusMessage = `Instruction '${updated.name}' updated successfully`;
             this.selectedInstruction = { ...updated };
-            syncInstructionFiles(updated.id!, false);
+            this.formInstruction = { ...updated };
+            this.loadInstructions();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {
@@ -1339,13 +1418,18 @@ export class InstructionsComponent implements OnInit {
     } else {
       this.apiService.createInstruction(this.formInstruction).subscribe({
         next: (created) => {
+          const idToUse = typeof created?.id === 'number' ? created.id : this.formInstruction.id;
+          if (typeof idToUse === 'number') {
+            syncInstructionFiles(idToUse, true);
+          } else if (typeof this.formInstruction.id === 'number') {
+            syncInstructionFiles(this.formInstruction.id, true);
+          }
           this.ngZone.run(() => {
             this.statusMessage = `Instruction '${created.name}' created successfully`;
             this.selectedInstruction = { ...created };
             this.formInstruction = { ...created };
-              if (created.id) {
-              syncInstructionFiles(created.id, true);
-            }
+            this.loadInstructions();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {

@@ -18,6 +18,7 @@ import { NewProjectDialogComponent } from '../../components/new-project-dialog/n
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { AddSkillFileDialogComponent, SkillFileData } from '../../components/add-skill-file-dialog/add-skill-file-dialog.component';
+import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
@@ -54,10 +55,11 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatDialogModule,
     MatMenuModule,
     MatIconModule,
-    MenuBarComponent,
-    PipelineResultDialogComponent,
-    PromptEditorModalComponent,
-    PanelToggleComponent
+MenuBarComponent,
+     PipelineResultDialogComponent,
+     PromptEditorModalComponent,
+     EditFileDialogComponent,
+     PanelToggleComponent
   ],
   template: `
     <div class="skills-container">
@@ -234,9 +236,14 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <div class="file-row" *ngFor="let file of formSkillFiles; let i = index">
                   <span class="file-path">{{ file.path }}</span>
                   <span class="file-name">{{ file.fileName }}</span>
-                  <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <div class="file-actions">
+                    <button mat-icon-button class="edit-btn" (click)="editFile(i)" title="Edit file" *ngIf="isEditableFile(file.fileName)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-btn" (click)="removeFile(i)" title="Remove file">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -710,16 +717,32 @@ import { ProjectContextService } from '../../services/project-context.service';
     .files-table {
       border: 1px solid #2a2a2a;
       border-radius: 6px;
-      overflow: hidden;
+      overflow: visible;
     }
     
     .file-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 50px;
+      grid-template-columns: 2fr 1fr 100px;
       gap: 8px;
       padding: 10px 12px;
       align-items: center;
       border-bottom: 1px solid #2a2a2a;
+      overflow: visible;
+    }
+    
+    .file-actions {
+      display: flex !important;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    
+    .file-actions .mat-icon-button {
+      display: inline-flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
     }
     
     .file-row:last-child {
@@ -752,6 +775,14 @@ import { ProjectContextService } from '../../services/project-context.service';
     
     .file-row .delete-btn:hover {
       background: rgba(239, 83, 80, 0.1);
+    }
+    
+    .file-row .edit-btn {
+      color: #ffb74d;
+    }
+    
+    .file-row .edit-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
     }
     
     .no-files {
@@ -1084,6 +1115,15 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+/**
+     * Verifica se um arquivo pode ser editado com base em sua extensão.
+     */
+  isEditableFile(fileName: string): boolean {
+    const editableExtensions = ['.txt', '.json', '.md', '.yml'];
+    const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'));
+    return editableExtensions.includes(ext);
+  }
+
   /**
    * Remove um arquivo da lista de arquivos da skill.
    * @param index - Índice do arquivo a ser removido
@@ -1100,6 +1140,48 @@ export class SkillsComponent implements OnInit {
         error: (err) => console.error('Error deleting file:', err)
       });
     }
+  }
+
+  editFile(index: number): void {
+    const file = this.formSkillFiles[index];
+    const dialogRef = this.dialog.open(EditFileDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        fileName: file.fileName,
+        path: file.path,
+        content: file.content,
+        type: 'skill'
+      },
+      panelClass: 'custom-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.ngZone.run(() => {
+        if (result && result.content !== undefined) {
+          file.content = result.content;
+          if (file.id) {
+            this.apiService.updateSkillFile(file.id, file.path, file.fileName, file.content).subscribe({
+              next: (updated) => {
+                this.ngZone.run(() => {
+                  this.formSkillFiles[index] = { ...updated };
+                  this.statusMessage = `File "${file.fileName}" updated successfully`;
+                  this.cdr.detectChanges();
+                });
+              },
+              error: (err) => {
+                this.statusMessage = 'Error updating file: ' + err.message;
+                this.cdr.detectChanges();
+              }
+            });
+          } else {
+            this.statusMessage = `File "${file.fileName}" updated in memory`;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    });
   }
 
   /**
@@ -1334,12 +1416,21 @@ export class SkillsComponent implements OnInit {
     };
 
     if (this.formSkill.id) {
-      this.apiService.updateSkill(this.formSkill.id, this.formSkill).subscribe({
+      const skillData = {
+        name: this.formSkill.name,
+        namespace: this.formSkill.namespace || '',
+        description: this.formSkill.description || '',
+        instructions: this.formSkill.instructions || '',
+        path: this.formSkill.path || ''
+      };
+      this.apiService.updateSkill(this.formSkill.id, skillData).subscribe({
         next: (updated) => {
           this.ngZone.run(() => {
             this.statusMessage = `Skill '${updated.name}' updated successfully`;
             this.selectedSkill = { ...updated };
-            syncSkillFiles(updated.id!, false);
+            this.formSkill = { ...updated };
+            this.loadSkills();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {
@@ -1355,9 +1446,8 @@ export class SkillsComponent implements OnInit {
             this.statusMessage = `Skill '${created.name}' created successfully`;
             this.selectedSkill = { ...created };
             this.formSkill = { ...created };
-              if (created.id) {
-              syncSkillFiles(created.id, true);
-            }
+            this.loadSkills();
+            this.cdr.detectChanges();
           });
         },
         error: (err) => {
