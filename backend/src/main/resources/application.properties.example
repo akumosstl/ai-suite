@@ -1,8 +1,15 @@
-agentic.version=2.0.0
+# Agentic AI Suite - Application Properties Example
+# Copie este arquivo para application.properties e ajuste conforme necessário
+
+# Version
+agentic.version=1.88.8
+
+# Application
 spring.application.name=agentic-backend
 server.port=8080
+
+# H2 Database
 spring.main.allow-circular-references=true
-spring.aop.proxy-target-class=false
 spring.datasource.url=jdbc:h2:file:${user.home}/.agentic/db/agentic_db;AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000;WRITE_DELAY=0
 spring.datasource.driverClassName=org.h2.Driver
 spring.datasource.username=sa
@@ -14,8 +21,7 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.bytecode.provider=bytebuddy
 
-plugins.registry.url=https://raw.githubusercontent.com/akumosstl/akumosstl.github.io/main/plugins.json
-
+# Logging
 logging.level.root=ERROR
 logging.level.org.springframework.web=ERROR
 logging.level.org.hibernate=ERROR
@@ -23,7 +29,11 @@ logging.level.com.agentic=ERROR
 logging.level.io.github.akumosstl.agentic.backend.controller.ProjectController=INFO
 logging.level.org.springframework.boot.SpringApplication=ERROR
 logging.level.org.springframework.boot.logging=ERROR
-
 spring.main.banner-mode=off
 logging.pattern.console=%msg%n
 logging.pattern.file=%msg%n
+
+# Plugin Registry (Optional)
+# URL do registry de plugins para carregar plugins disponíveis
+# Padrão: https://raw.githubusercontent.com/akumosstl/akumosstl.github.io/main/plugins.json
+# plugins.registry.url=https://seu-servidor.com/plugins.json

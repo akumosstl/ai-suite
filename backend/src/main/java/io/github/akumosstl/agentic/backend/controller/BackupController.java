@@ -7,10 +7,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class BackupController {
 
     @Autowired
@@ -36,21 +39,27 @@ public class BackupController {
         }
     }
 
+    /**
+     * Downloads a full database backup directly as a .sql file.
+     * This endpoint generates the backup in memory and streams it for download.
+     */
     @GetMapping("/backup/download")
-    public ResponseEntity<byte[]> downloadBackup(@RequestParam String filePath) {
+    public ResponseEntity<byte[]> downloadBackup() {
         try {
-            java.nio.file.Path path = java.nio.file.Paths.get(filePath);
-            byte[] content = java.nio.file.Files.readAllBytes(path);
+            String sqlContent = backupService.createFullBackup();
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String fileName = "agentic_backup_" + timestamp + ".sql";
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", java.nio.file.Paths.get(filePath).getFileName().toString());
+            headers.setContentType(MediaType.parseMediaType("application/sql"));
+            headers.setContentDispositionFormData("attachment", fileName);
 
             return ResponseEntity.ok()
-                .headers(headers)
-                .body(content);
+                    .headers(headers)
+                    .body(sqlContent.getBytes());
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

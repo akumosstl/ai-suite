@@ -1,0 +1,34 @@
+{
+  "plugins": [
+{
+  "plugins": [
+    {
+      "name": "auth-plugin",
+      "version": "1.0.0",
+      "namespace": "com.company.security",
+      "documentationUrl": "https://docs.company.com/plugins/auth-plugin",
+      "downloadUrl": "https://downloads.company.com/plugins/auth-plugin-1.0.0.jar",
+      "description": "Provides authentication and authorization features."
+    },
+    {
+      "name": "payment-plugin",
+      "version": "2.3.1",
+      "namespace": "com.company.finance",
+      "documentationUrl": "https://docs.company.com/plugins/payment-plugin",
+      "downloadUrl": "https://downloads.company.com/plugins/payment-plugin-2.3.1.jar",
+      "description": "Handles payment processing and transaction management."
+    },
+    {
+      "name": "notification-plugin",
+      "version": "1.5.4",
+      "namespace": "com.company.communication",
+      "documentationUrl": "https://docs.company.com/plugins/notification-plugin",
+      "downloadUrl": "https://downloads.company.com/plugins/notification-plugin-1.5.4.jar",
+      "description": "Manages email, SMS, and push notifications."
+    }
+  ]
+}
+  ]
+}
+  ]
+}

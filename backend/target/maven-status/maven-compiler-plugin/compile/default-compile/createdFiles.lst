@@ -21,6 +21,7 @@ io\github\akumosstl\agentic\backend\config\SpaFallbackConfig.class
 io\github\akumosstl\agentic\backend\config\AgenticConfigLoader.class
 io\github\akumosstl\agentic\backend\repository\TargetRepository.class
 io\github\akumosstl\agentic\backend\controller\NamespaceController$NamespaceItems.class
+io\github\akumosstl\agentic\backend\controller\PluginRegistryController.class
 io\github\akumosstl\agentic\backend\controller\NamespaceController.class
 io\github\akumosstl\agentic\backend\controller\TargetController$ErrorResponse.class
 io\github\akumosstl\agentic\backend\model\PipelineRun.class

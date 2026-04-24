@@ -1541,9 +1541,17 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-   backupDatabase(directory: string, fileName: string): Observable<any> {
-     return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
-       catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
+backupDatabase(directory: string, fileName: string): Observable<any> {
+      return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
+        catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
+      );
+    }
+
+   downloadBackup(): Observable<Blob> {
+     return this.http.get(`${this.baseUrl}/backup/download`, {
+       responseType: 'blob'
+     }).pipe(
+       catchError(this.handleError('downloadBackup', new Blob()))
      );
    }
 
@@ -1578,9 +1586,15 @@ getNamespacesByType(type: string): Observable<string[]> {
      );
    }
 
-   clearNamespace(type: string, namespace: string): Observable<any> {
-     return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
-       catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
-     );
-   }
+  clearNamespace(type: string, namespace: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
+      catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
+    );
+  }
+
+  getPluginRegistry(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/plugins/registry`).pipe(
+      catchError(this.handleError('getPluginRegistry', { plugins: [] }))
+    );
+  }
 }

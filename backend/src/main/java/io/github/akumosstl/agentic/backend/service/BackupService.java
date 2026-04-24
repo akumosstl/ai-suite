@@ -69,6 +69,17 @@ public class BackupService {
         Path targetPath = Paths.get(finalFileName);
         Files.createDirectories(targetPath.getParent());
 
+        String sqlContent = createFullBackup();
+        Files.writeString(targetPath, sqlContent);
+
+        return targetPath.toString();
+    }
+
+    /**
+     * Creates a full database backup in memory and returns the SQL content.
+     * This is used for direct download without saving to disk.
+     */
+    public String createFullBackup() {
         StringBuilder sql = new StringBuilder();
         sql.append("-- AI Suite Database Backup\n");
         sql.append("-- Generated: ").append(LocalDateTime.now()).append("\n\n");
@@ -82,9 +93,7 @@ public class BackupService {
         sql.append(exportPipelineSteps());
         sql.append(exportPipelineRuns());
 
-        Files.writeString(targetPath, sql.toString());
-
-        return targetPath.toString();
+        return sql.toString();
     }
 
     private String exportAgents() {

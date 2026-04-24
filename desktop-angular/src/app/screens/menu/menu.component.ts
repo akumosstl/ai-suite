@@ -77,7 +77,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       </div>
       
       <div class="footer">
-        <p class="version">Version 1.88.8</p>
+        <p class="version">Version 2.0.0</p>
         <div class="footer-links">
           <span class="link">Documentation</span>
           <span class="separator">·</span>

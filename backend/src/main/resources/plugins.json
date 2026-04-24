@@ -1,0 +1,25 @@
+{
+  "plugins": [
+    {
+      "name": "auth-plugin",
+      "version": "1.0.0",
+      "namespace": "com.company.security",
+      "documentationUrl": "https://docs.company.com/plugins/auth-plugin",
+      "download": ""
+    },
+    {
+      "name": "payment-plugin",
+      "version": "2.3.1",
+      "namespace": "com.company.finance",
+      "documentationUrl": "https://docs.company.com/plugins/payment-plugin",
+      "download": ""
+    },
+    {
+      "name": "notification-plugin",
+      "version": "1.5.4",
+      "namespace": "com.company.communication",
+      "documentationUrl": "https://docs.company.com/plugins/notification-plugin",
+      "download": ""
+    }
+  ]
+}

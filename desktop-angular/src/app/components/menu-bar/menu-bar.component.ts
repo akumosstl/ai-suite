@@ -12,15 +12,17 @@ import { OpenProjectDialogComponent } from '../open-project-dialog/open-project-
 import { NewProjectDialogComponent } from '../new-project-dialog/new-project-dialog.component'
 import { ExportDialogComponent } from '../export-dialog/export-dialog.component'
 import { ImportDialogComponent, ImportResult } from '../import-dialog/import-dialog.component'
+import { BackupDialogComponent } from '../backup-dialog/backup-dialog.component'
 import { ProjectContextService } from '../../services/project-context.service'
 import { ApiService } from '../../services/api.service'
 import { UpdateService } from '../../services/update.service'
 import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
+import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, UpdateDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, BackupDialogComponent, UpdateDialogComponent, PluginsModalComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -99,6 +101,11 @@ import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
             </button>
           </mat-menu>
 
+          <button class="menu-button" (click)="openPluginsModal()">
+            <mat-icon>extension</mat-icon>
+            <span>Tools</span>
+          </button>
+
           <button class="menu-button" [matMenuTriggerFor]="managementMenu">
             <mat-icon>settings</mat-icon>
             <span>Management</span>
@@ -121,6 +128,11 @@ import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
             <button mat-menu-item (click)="openImport()" class="menu-item">
               <mat-icon>file_upload</mat-icon>
               <span>Import</span>
+            </button>
+            <div class="menu-separator"></div>
+            <button mat-menu-item (click)="openBackup()" class="menu-item">
+              <mat-icon>backup</mat-icon>
+              <span>Backup</span>
             </button>
             <div class="menu-separator"></div>
             <button mat-menu-item (click)="checkUpdate()" class="menu-item">
@@ -497,7 +509,7 @@ ngOnDestroy(): void {
   async checkUpdate(): Promise<void> {
     const currentVersion = await this.apiService.getVersion()
     const updateInfo = await this.updateService.checkForUpdate(currentVersion)
-    
+
     if (updateInfo) {
       this.dialog.open(UpdateDialogComponent, {
         width: '400px',
@@ -509,5 +521,27 @@ ngOnDestroy(): void {
     } else {
       this.snackBar.open('You are using the latest version', 'Close', { duration: 3000 })
     }
+  }
+
+  openPluginsModal(): void {
+    this.dialog.open(PluginsModalComponent, {
+      width: '80vw',
+      maxWidth: '1600px',
+      height: '80vh',
+      maxHeight: '1000px',
+      panelClass: 'plugins-modal'
+    })
+  }
+
+  openBackup(): void {
+    const dialogRef = this.dialog.open(BackupDialogComponent, {
+      width: '450px',
+      data: { loading: false }
+    });
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        this.snackBar.open('Backup completed successfully!', 'Close', { duration: 3000 });
+      }
+    });
   }
 }
