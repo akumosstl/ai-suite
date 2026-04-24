@@ -12,7 +12,7 @@ import { ApiService, Template } from '../../services/api.service';
 
 export interface PromptEditorData {
   prompt: string;
-  type: 'agents' | 'skills' | 'commands' | 'scripts' | 'instructions' | 'plugins' | 'tools';
+  type: 'agents' | 'scripts' | 'instructions';
   title?: string;
 }
 

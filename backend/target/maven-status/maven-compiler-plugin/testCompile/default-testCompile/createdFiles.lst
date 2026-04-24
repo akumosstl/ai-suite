@@ -1,8 +1,5 @@
+io\github\akumosstl\agentic\backend\PipelineModelTest.class
+io\github\akumosstl\agentic\backend\InstructionCrudTest.class
 io\github\akumosstl\agentic\backend\PipelineExecutionTest.class
 io\github\akumosstl\agentic\backend\PipelineRunTest.class
-io\github\akumosstl\agentic\backend\ToolCrudTest.class
 io\github\akumosstl\agentic\backend\PipelineTest.class
-io\github\akumosstl\agentic\backend\PipelineModelTest.class
-io\github\akumosstl\agentic\backend\SkillCrudTest.class
-io\github\akumosstl\agentic\backend\InstructionCrudTest.class
-io\github\akumosstl\agentic\backend\PluginCrudTest.class

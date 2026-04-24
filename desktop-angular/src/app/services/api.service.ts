@@ -194,7 +194,7 @@ export interface Template {
   name: string;
   description?: string;
   template?: string;
-  type: string; // "agents", "skills", "commands", "scripts", "instructions", "plugins", "tools"
+  type: string; // "agents", "scripts", "instructions"
   createdAt?: string;
   updatedAt?: string;
 }
@@ -547,8 +547,8 @@ export class ApiService {
     );
   }
 
-  addScriptsToProject(projectId: number, scriptIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/scripts`, scriptIds).pipe(
+  addScriptsToProject(projectId: number, scriptIds: number[], force: boolean = false): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/scripts`, { scriptIds, force }).pipe(
       catchError(this.handleError('addScriptsToProject', {} as Project))
     );
   }
@@ -566,8 +566,8 @@ export class ApiService {
     );
   }
 
-  addAgentsToProject(projectId: number, agentIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/agents`, agentIds).pipe(
+  addAgentsToProject(projectId: number, agentIds: number[], force: boolean = false): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/agents`, { agentIds, force }).pipe(
       catchError(this.handleError('addAgentsToProject', {} as Project))
     );
   }
@@ -585,8 +585,8 @@ export class ApiService {
     );
   }
 
-  addInstructionsToProject(projectId: number, instructionIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/instructions`, instructionIds).pipe(
+  addInstructionsToProject(projectId: number, instructionIds: number[], force: boolean = false): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/instructions`, { instructionIds, force }).pipe(
       catchError(this.handleError('addInstructionsToProject', {} as Project))
     );
   }

@@ -61,75 +61,12 @@
     </app-panel-toggle>
 
     <div class="right-panel">
-        <div class="toolbar">
-            <div class="toolbar-section">
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn add" matTooltip="Config file"
-                        (click)="openCreateFileDialog()">
-                        <mat-icon>insert_drive_file</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="agents"
-                        (click)="openViewAgentsDialog()">
-                        <mat-icon>smart_toy</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="skills"
-                        (click)="openViewSkillsDialog()">
-                        <mat-icon>format_list_bulleted</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="commands"
-                        (click)="openViewCommandsDialog()">
-                        <mat-icon>terminal</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="scripts"
-                        (click)="openViewScriptsDialog()">
-                        <mat-icon>code</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="instructions"
-                        (click)="openViewInstructionsDialog()">
-                        <mat-icon>menu_book</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="plugins"
-                        (click)="openViewPluginsDialog()">
-                        <mat-icon>extension</mat-icon>
-                    </button>
-                </div>
-                <div class="divider"></div>
-                <div class="button-group">
-                    <button mat-icon-button class="tool-btn" matTooltip="tools"
-                        (click)="openViewToolsDialog()">
-                        <mat-icon>build</mat-icon>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="content-area">
             <div *ngIf="showProjectInfo" class="info-section">
                 <div class="section-header">
                     <mat-icon>dashboard</mat-icon>
                     <h2>Project Information</h2>
                     <div class="header-actions" *ngIf="project && !isEditingProject">
-                        <button class="icon-btn sync-btn" (click)="syncProjectToFileSystem()" title="Sync to filesystem">
-                            <mat-icon>sync</mat-icon>
-                        </button>
                         <button class="icon-btn readme-btn" (click)="openReadmeDialog()" title="Edit README">
                             <mat-icon>description</mat-icon>
                         </button>
@@ -226,22 +163,6 @@
                         </span>
                         <span class="info-value">{{ project.updatedAt | date:'medium' }}</span>
                     </div>
-
-                    <div class="info-row">
-                        <span class="info-label">
-                            <mat-icon>folder</mat-icon>
-                            Files
-                        </span>
-                        <div class="files-list">
-                            <div *ngFor="let file of projectFiles" class="file-item" (click)="openCreateFileDialog(file)">
-                                <mat-icon>description</mat-icon>
-                                <span>{{ file.fileName }}</span>
-                            </div>
-                            <div *ngIf="projectFiles.length === 0" class="no-files">
-                                No files created yet
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div *ngIf="loading" class="loading-state">
@@ -265,8 +186,7 @@
                             <mat-icon>edit</mat-icon>
                         </button>
                         <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
-                            [disabled]="pipelineSteps.length === 0 || isRunningPipeline" 
-                            *ngIf="!isRunningPipeline">
+                            [disabled]="pipelineSteps.length === 0 || isRunningPipeline" *ngIf="!isRunningPipeline">
                             <mat-icon>play_arrow</mat-icon>
                             <span class="btn-text">Run</span>
                         </button>
@@ -274,10 +194,6 @@
                             *ngIf="isRunningPipeline">
                             <mat-icon>stop</mat-icon>
                             <span class="btn-text">Stop</span>
-                        </button>
-                        <button class="icon-btn view-running-btn" (click)="viewRunningPipeline()"
-                            title="View running pipeline" *ngIf="isRunningPipeline">
-                            <mat-icon>visibility</mat-icon>
                         </button>
                         <button class="icon-btn add-btn" (click)="openAddStepDialog()" title="Add step to pipeline">
                             <mat-icon>add</mat-icon>
@@ -334,14 +250,16 @@
 
                     <!-- API Endpoints -->
                     <div class="info-row endpoint-row">
-                        <span class="info-label" (click)="endpointsExpanded = !endpointsExpanded" style="cursor: pointer;">
+                        <span class="info-label" (click)="endpointsExpanded = !endpointsExpanded"
+                            style="cursor: pointer;">
                             <mat-icon>{{ endpointsExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
                             Endpoints
                         </span>
                         <div class="endpoint-list" *ngIf="endpointsExpanded">
                             <div class="endpoint-item">
                                 <span class="endpoint-label">Start Runner:</span>
-                                <code class="endpoint-value">POST {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs</code>
+                                <code
+                                    class="endpoint-value">POST {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs</code>
                                 <button mat-icon-button
                                     (click)="copyToClipboard(baseUrl + 'api/pipelines/' + selectedPipeline.id + '/runs')"
                                     title="Copy to clipboard">
@@ -350,7 +268,8 @@
                             </div>
                             <div class="endpoint-item">
                                 <span class="endpoint-label">Get Status/Results:</span>
-                                <code class="endpoint-value">GET {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs?page=0&size=20</code>
+                                <code
+                                    class="endpoint-value">GET {{ baseUrl }}api/pipelines/{{ selectedPipeline.id }}/runs?page=0&size=20</code>
                                 <button mat-icon-button
                                     (click)="copyToClipboard(baseUrl + 'api/pipelines/' + selectedPipeline.id + '/runs?page=0&size=20')"
                                     title="Copy to clipboard">
@@ -359,7 +278,8 @@
                             </div>
                             <div class="endpoint-item">
                                 <span class="endpoint-label">Stop Pipeline:</span>
-                                <code class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/stop</code>
+                                <code
+                                    class="endpoint-value">POST {{ baseUrl }}api/projects/{{ project?.id }}/pipelines/{{ selectedPipeline.id }}/stop</code>
                                 <button mat-icon-button
                                     (click)="copyToClipboard(baseUrl + 'api/projects/' + project?.id + '/pipelines/' + selectedPipeline.id + '/stop')"
                                     title="Copy to clipboard">
@@ -388,12 +308,16 @@
                                 <div class="step-agent">
                                     <mat-icon class="agent-icon" *ngIf="step.agent">smart_toy</mat-icon>
                                     <mat-icon class="agent-icon" *ngIf="step.script">code</mat-icon>
-                                    <span class="agent-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                                    <span class="agent-name">{{ step.agent?.name || step.script?.name || 'Unknown'
+                                        }}</span>
                                 </div>
                                 <div class="step-info">
-                                    <span class="step-category" *ngIf="step.agent?.namespace">{{ step.agent?.namespace }}</span>
-                                    <span class="step-category" *ngIf="step.script?.namespace">{{ step.script?.namespace }}</span>
-                                    <span class="step-status" [ngClass]="step.status || 'pending'">{{ step.status || 'pending' }}</span>
+                                    <span class="step-namespace" *ngIf="step.agent?.namespace">{{ step.agent?.namespace
+                                        }}</span>
+                                    <span class="step-namespace" *ngIf="step.script?.namespace">{{ step.script?.namespace
+                                        }}</span>
+                                    <span class="step-status" [ngClass]="step.status || 'pending'">{{ step.status ||
+                                        'pending' }}</span>
                                 </div>
                             </div>
                             <div class="step-io-buttons">
@@ -449,8 +373,9 @@
                             <mat-icon>description</mat-icon>
                             Description
                         </label>
-                        <textarea id="pipelineDescription" [(ngModel)]="newPipeline.description" name="pipelineDescription"
-                            placeholder="Describe the pipeline (optional)" class="form-input" rows="3"></textarea>
+                        <textarea id="pipelineDescription" [(ngModel)]="newPipeline.description"
+                            name="pipelineDescription" placeholder="Describe the pipeline (optional)" class="form-input"
+                            rows="3"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="outputExtension">

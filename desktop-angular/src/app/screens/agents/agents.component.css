@@ -589,8 +589,107 @@ app-panel-toggle.collapsed {
 }
 
 .textarea-actions mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.files-section {
+  margin-bottom: 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  padding: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #e0e0e0;
+}
+
+.section-header mat-icon {
+  color: #4fc3f7;
+}
+
+.section-header span {
+  font-weight: 500;
+  flex: 1;
+}
+
+.add-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #4fc3f7 !important;
+  border-color: #4fc3f7 !important;
+}
+
+.add-file-btn:hover {
+  background: rgba(79, 195, 247, 0.1);
+}
+
+.files-table {
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 50px;
+  gap: 8px;
+  padding: 10px 12px;
+  align-items: center;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.file-row:last-child {
+  border-bottom: none;
+}
+
+.file-row.header {
+  background: #252525;
+  font-weight: 500;
+  color: #888;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.file-path {
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.file-name {
+  color: #4fc3f7;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.file-row .delete-btn {
+  color: #ef5350;
+}
+
+.file-row .delete-btn:hover {
+  background: rgba(239, 83, 80, 0.1);
+}
+
+.no-files {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.no-files mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }
 

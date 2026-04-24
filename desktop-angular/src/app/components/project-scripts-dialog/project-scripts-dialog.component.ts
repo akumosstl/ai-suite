@@ -1,7 +1,7 @@
 import { Component, Inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +11,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ApiService, Script } from '../../services/api.service';
 
 export interface ProjectScriptsDialogData {
@@ -20,7 +21,7 @@ export interface ProjectScriptsDialogData {
 @Component({
   selector: 'app-project-scripts-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule, MatCheckboxModule, MatTabsModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule, MatCheckboxModule, MatTabsModule, ConfirmDialogComponent],
   template: `
     <div class="dialog-header">
       <mat-icon class="header-icon">code</mat-icon>
@@ -127,7 +128,7 @@ export class ProjectScriptsDialogComponent {
   displayedColumns = ['name', 'category', 'actions'];
   availableColumns = ['select', 'name', 'category'];
   selection: { isSelected: (row: Script) => boolean; hasValue: () => boolean; selected: Script[]; toggle: (row: Script) => void; clear: () => void; isEmpty: () => boolean } = { isSelected: () => false, hasValue: () => false, selected: [], toggle: () => {}, clear: () => {}, isEmpty: () => true };
-  constructor(public dialogRef: MatDialogRef<ProjectScriptsDialogComponent>, private apiService: ApiService, private cdr: ChangeDetectorRef, @Inject(MAT_DIALOG_DATA) public data: ProjectScriptsDialogData) { this.loadProjectItems(); this.loadAvailableItems(); this.initSelection(); }
+  constructor(public dialogRef: MatDialogRef<ProjectScriptsDialogComponent>, private apiService: ApiService, private cdr: ChangeDetectorRef, private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: ProjectScriptsDialogData) { this.loadProjectItems(); this.loadAvailableItems(); this.initSelection(); }
   private initSelection(): void { const selectedItems: Script[] = []; this.selection = { isSelected: (row: Script) => selectedItems.some(s => s.id === row.id), hasValue: () => selectedItems.length > 0, get selected() { return selectedItems; }, toggle: (row: Script) => { const index = selectedItems.findIndex(s => s.id === row.id); if (index >= 0) { selectedItems.splice(index, 1); } else { selectedItems.push(row); } this.cdr.detectChanges(); }, clear: () => { selectedItems.length = 0; this.cdr.detectChanges(); }, isEmpty: () => selectedItems.length === 0 }; }
   loadProjectItems(): void { this.loading = true; this.apiService.getProjectScripts(this.data.projectId).subscribe({ next: (items) => { this.projectItems = items || []; this.loading = false; this.cdr.detectChanges(); }, error: (err) => { console.error('Error loading project scripts:', err); this.loading = false; this.cdr.detectChanges(); } }); }
   loadAvailableItems(): void { this.loadingAvailable = true; if (this.searchTerm.trim()) { this.apiService.searchScripts(this.searchTerm, '', this.currentPage, this.pageSize).subscribe({ next: (response) => { this.handleResponse(response); }, error: (err) => { console.error('Error searching scripts:', err); this.loadingAvailable = false; } }); } else { this.apiService.getScripts(this.currentPage, this.pageSize).subscribe({ next: (response) => { this.handleResponse(response); }, error: (err) => { console.error('Error loading scripts:', err); this.loadingAvailable = false; } }); } }
@@ -139,6 +140,6 @@ export class ProjectScriptsDialogComponent {
   toggleAllRows(): void { if (this.isAllSelected()) { this.selection.clear(); } else { this.availableItems.forEach(item => { if (!this.selection.isSelected(item)) { this.selection.toggle(item); } }); } }
   isAllSelected(): boolean { return this.availableItems.length > 0 && this.availableItems.every(item => this.selection.isSelected(item)); }
   removeItem(item: Script, event: Event): void { event.stopPropagation(); if (item.id) { this.apiService.removeScriptFromProject(this.data.projectId, item.id).subscribe({ next: () => { this.loadProjectItems(); }, error: (err) => { console.error('Error removing script:', err); } }); } }
-  onAdd(): void { if (this.selection.selected.length > 0 && this.data.projectId) { const itemIds = this.selection.selected.filter(s => s.id).map(s => s.id as number); this.apiService.addScriptsToProject(this.data.projectId, itemIds).subscribe({ next: () => { this.dialogRef.close(this.selection.selected); }, error: (err) => { console.error('Error adding scripts to project:', err); } }); } }
+  onAdd(): void { if (this.selection.selected.length > 0 && this.data.projectId) { const itemIds = this.selection.selected.filter(s => s.id).map(s => s.id as number); this.apiService.addScriptsToProject(this.data.projectId, itemIds).subscribe({ next: () => { this.dialogRef.close(this.selection.selected); }, error: (err) => { if (err.status === 409 && err.error?.error === 'FILE_ALREADY_EXISTS') { this.showOverwriteConfirmation(err.error.message, () => { this.apiService.addScriptsToProject(this.data.projectId, itemIds, true).subscribe({ next: () => { this.dialogRef.close(this.selection.selected); }, error: (retryErr) => { console.error('Error adding scripts to project:', retryErr); } }); }); } else { console.error('Error adding scripts to project:', err); } } }); } } showOverwriteConfirmation(fileName: string, onConfirm: () => void): void { const dialogRef = this.dialog.open(ConfirmDialogComponent, { width: '400px', data: { title: 'File Already Exists', message: `${fileName} already exists. Do you want to overwrite it?` }, panelClass: 'custom-dialog-panel' }); dialogRef.afterClosed().subscribe((result) => { if (result) { onConfirm(); } }); }
   onClose(): void { this.dialogRef.close(); }
 }

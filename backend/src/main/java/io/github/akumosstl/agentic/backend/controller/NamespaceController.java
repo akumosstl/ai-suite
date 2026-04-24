@@ -19,22 +19,10 @@ public class NamespaceController {
     private AgentService agentService;
 
     @Autowired
-    private SkillService skillService;
-
-    @Autowired
     private ScriptService scriptService;
 
     @Autowired
-    private CommandService commandService;
-
-    @Autowired
     private InstructionService instructionService;
-
-    @Autowired
-    private PluginService pluginService;
-
-    @Autowired
-    private ToolService toolService;
 
     @Autowired
     private PipelineService pipelineService;
@@ -47,7 +35,7 @@ public class NamespaceController {
 
     @GetMapping("/types")
     public ResponseEntity<List<String>> getTypes() {
-        return ResponseEntity.ok(Arrays.asList("agents", "skills", "commands", "scripts", "instructions", "plugins", "tools"));
+        return ResponseEntity.ok(Arrays.asList("agents", "scripts", "instructions"));
     }
 
     @GetMapping("/namespaces/{type}")
@@ -58,18 +46,6 @@ public class NamespaceController {
                 namespaces = agentService.getDistinctNamespaces();
                 if (namespaces.isEmpty()) {
                     namespaces = agentService.getDistinctCategories();
-                }
-                break;
-            case "skills":
-                namespaces = skillService.getDistinctNamespaces();
-                if (namespaces.isEmpty()) {
-                    namespaces = skillService.getDistinctCategories();
-                }
-                break;
-            case "commands":
-                namespaces = commandService.getDistinctNamespaces();
-                if (namespaces.isEmpty()) {
-                    namespaces = commandService.getDistinctCategories();
                 }
                 break;
             case "scripts":
@@ -84,18 +60,6 @@ public class NamespaceController {
                     namespaces = instructionService.getDistinctCategories();
                 }
                 break;
-            case "plugins":
-                namespaces = pluginService.getDistinctNamespaces();
-                if (namespaces.isEmpty()) {
-                    namespaces = pluginService.getDistinctCategories();
-                }
-                break;
-            case "tools":
-                namespaces = toolService.getDistinctNamespaces();
-                if (namespaces.isEmpty()) {
-                    namespaces = toolService.getDistinctCategories();
-                }
-                break;
             default:
                 return ResponseEntity.badRequest().build();
         }
@@ -106,12 +70,8 @@ public class NamespaceController {
     public ResponseEntity<Map<String, List<String>>> getAllNamespaces() {
         Map<String, List<String>> result = new HashMap<>();
         result.put("agents", agentService.getDistinctNamespaces());
-        result.put("skills", skillService.getDistinctNamespaces());
-        result.put("commands", commandService.getDistinctNamespaces());
         result.put("scripts", scriptService.getDistinctNamespaces());
         result.put("instructions", instructionService.getDistinctNamespaces());
-        result.put("plugins", pluginService.getDistinctNamespaces());
-        result.put("tools", toolService.getDistinctNamespaces());
         return ResponseEntity.ok(result);
     }
 
@@ -122,29 +82,16 @@ public class NamespaceController {
             @RequestParam(required = false) String searchTerm) {
         
         List<?> items = new ArrayList<>();
-        long totalElements = 0;
 
         switch (type) {
             case "agents":
                 items = agentService.getAgentsByNamespace(namespace);
-                break;
-            case "skills":
-                items = skillService.getSkillsByNamespace(namespace);
-                break;
-            case "commands":
-                items = commandService.getCommandsByNamespace(namespace);
                 break;
             case "scripts":
                 items = scriptService.getScriptsByNamespace(namespace);
                 break;
             case "instructions":
                 items = instructionService.getInstructionsByNamespace(namespace);
-                break;
-            case "plugins":
-                items = pluginService.getPluginsByNamespace(namespace);
-                break;
-            case "tools":
-                items = toolService.getToolsByNamespace(namespace);
                 break;
             default:
                 return ResponseEntity.badRequest().build();
@@ -201,19 +148,7 @@ public class NamespaceController {
             boolean referencesNamespace = false;
             
             switch (type) {
-                case "skills":
-                    if (project.getSkills() != null) {
-                        referencesNamespace = project.getSkills().stream()
-                            .anyMatch(s -> itemIds.contains(s.getId()));
-                    }
-                    break;
-                case "commands":
-                    if (project.getCommands() != null) {
-                        referencesNamespace = project.getCommands().stream()
-                            .anyMatch(c -> itemIds.contains(c.getId()));
-                    }
-                    break;
-case "scripts":
+                case "scripts":
                     if (project.getScripts() != null) {
                         referencesNamespace = project.getScripts().stream()
                             .anyMatch(s -> itemIds.contains(s.getId()));
@@ -229,18 +164,6 @@ case "scripts":
                     if (project.getInstructions() != null) {
                         referencesNamespace = project.getInstructions().stream()
                             .anyMatch(i -> itemIds.contains(i.getId()));
-                    }
-                    break;
-                case "plugins":
-                    if (project.getPlugins() != null) {
-                        referencesNamespace = project.getPlugins().stream()
-                            .anyMatch(p -> itemIds.contains(p.getId()));
-                    }
-                    break;
-                case "tools":
-                    if (project.getTools() != null) {
-                        referencesNamespace = project.getTools().stream()
-                            .anyMatch(t -> itemIds.contains(t.getId()));
                     }
                     break;
             }
@@ -281,18 +204,6 @@ case "scripts":
                     deletedCount++;
                 }
                 break;
-            case "skills":
-                for (Long id : itemIds) {
-                    skillService.deleteSkill(id);
-                    deletedCount++;
-                }
-                break;
-            case "commands":
-                for (Long id : itemIds) {
-                    commandService.deleteCommand(id);
-                    deletedCount++;
-                }
-                break;
             case "scripts":
                 for (Long id : itemIds) {
                     scriptService.deleteScript(id);
@@ -316,18 +227,6 @@ case "scripts":
                 List<Agent> agents = agentService.getAgentsByNamespace(namespace);
                 for (Agent a : agents) {
                     if (a.getId() != null) itemIds.add(a.getId());
-                }
-                break;
-            case "skills":
-                List<Skill> skills = skillService.getSkillsByNamespace(namespace);
-                for (Skill s : skills) {
-                    if (s.getId() != null) itemIds.add(s.getId());
-                }
-                break;
-            case "commands":
-                List<Command> commands = commandService.getCommandsByNamespace(namespace);
-                for (Command c : commands) {
-                    if (c.getId() != null) itemIds.add(c.getId());
                 }
                 break;
             case "scripts":
@@ -370,18 +269,6 @@ case "scripts":
             boolean referencesNamespace = false;
             
             switch (type) {
-                case "skills":
-                    if (project.getSkills() != null) {
-                        referencesNamespace = project.getSkills().stream()
-                            .anyMatch(s -> itemIds.contains(s.getId()));
-                    }
-                    break;
-                case "commands":
-                    if (project.getCommands() != null) {
-                        referencesNamespace = project.getCommands().stream()
-                            .anyMatch(c -> itemIds.contains(c.getId()));
-                    }
-                    break;
                 case "scripts":
                     if (project.getScripts() != null) {
                         referencesNamespace = project.getScripts().stream()

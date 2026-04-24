@@ -1,7 +1,21 @@
 package io.github.akumosstl.agentic.backend.service;
 
-import io.github.akumosstl.agentic.backend.model.*;
-import io.github.akumosstl.agentic.backend.repository.*;
+import io.github.akumosstl.agentic.backend.model.Agent;
+import io.github.akumosstl.agentic.backend.model.Project;
+import io.github.akumosstl.agentic.backend.model.Pipeline;
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
+import io.github.akumosstl.agentic.backend.model.PipelineRun;
+import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Template;
+import io.github.akumosstl.agentic.backend.model.Instruction;
+import io.github.akumosstl.agentic.backend.repository.AgentRepository;
+import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
+import io.github.akumosstl.agentic.backend.repository.InstructionRepository;
+import io.github.akumosstl.agentic.backend.repository.TemplateRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +36,10 @@ public class BackupService {
     private AgentRepository agentRepository;
 
     @Autowired
-    private SkillRepository skillRepository;
-
-    @Autowired
-    private CommandRepository commandRepository;
-
-    @Autowired
     private ScriptRepository scriptRepository;
+
+    @Autowired
+    private InstructionRepository instructionRepository;
 
     @Autowired
     private TemplateRepository templateRepository;
@@ -63,9 +74,8 @@ public class BackupService {
         sql.append("-- Generated: ").append(LocalDateTime.now()).append("\n\n");
 
         sql.append(exportAgents());
-        sql.append(exportSkills());
-        sql.append(exportCommands());
         sql.append(exportScripts());
+        sql.append(exportInstructions());
         sql.append(exportTemplates());
         sql.append(exportProjects());
         sql.append(exportPipelines());
@@ -105,63 +115,6 @@ public class BackupService {
         return sql.toString();
     }
 
-    private String exportSkills() {
-        StringBuilder sql = new StringBuilder();
-        List<Skill> skills = skillRepository.findAll();
-        
-        if (skills.isEmpty()) return "";
-        
-        sql.append("-- Skills\n");
-        sql.append("INSERT INTO skill (id, name, namespace, path, description, instructions, created_at, updated_at) VALUES\n");
-        
-        for (int i = 0; i < skills.size(); i++) {
-            Skill s = skills.get(i);
-            sql.append("(").append(s.getId()).append(", ");
-            sql.append("'").append(escape(s.getName())).append("', ");
-            sql.append("'").append(escape(s.getNamespace())).append("', ");
-            sql.append("'").append(escape(s.getPath())).append("', ");
-            sql.append("'").append(escape(s.getDescription())).append("', ");
-            sql.append("'").append(escape(s.getInstructions())).append("', ");
-            sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-            if (i < skills.size() - 1) {
-                sql.append(",\n");
-            } else {
-                sql.append(";\n\n");
-            }
-        }
-        
-        return sql.toString();
-    }
-
-    private String exportCommands() {
-        StringBuilder sql = new StringBuilder();
-        List<Command> commands = commandRepository.findAll();
-        
-        if (commands.isEmpty()) return "";
-        
-        sql.append("-- Commands\n");
-        sql.append("INSERT INTO command (id, name, namespace, category, path, description, command, created_at, updated_at) VALUES\n");
-        
-        for (int i = 0; i < commands.size(); i++) {
-            Command c = commands.get(i);
-            sql.append("(").append(c.getId()).append(", ");
-            sql.append("'").append(escape(c.getName())).append("', ");
-            sql.append("'").append(escape(c.getNamespace())).append("', ");
-            sql.append("'").append(escape(c.getCategory())).append("', ");
-            sql.append("'").append(escape(c.getPath())).append("', ");
-            sql.append("'").append(escape(c.getDescription())).append("', ");
-            sql.append("'").append(escape(c.getCommand())).append("', ");
-            sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-            if (i < commands.size() - 1) {
-                sql.append(",\n");
-            } else {
-                sql.append(";\n\n");
-            }
-        }
-        
-        return sql.toString();
-    }
-
     private String exportScripts() {
         StringBuilder sql = new StringBuilder();
         List<Script> scripts = scriptRepository.findAll();
@@ -183,6 +136,35 @@ public class BackupService {
             sql.append("'").append(escape(s.getScope())).append("', ");
             sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
             if (i < scripts.size() - 1) {
+                sql.append(",\n");
+            } else {
+                sql.append(";\n\n");
+            }
+        }
+        
+        return sql.toString();
+    }
+
+    private String exportInstructions() {
+        StringBuilder sql = new StringBuilder();
+        List<Instruction> instructions = instructionRepository.findAll();
+        
+        if (instructions.isEmpty()) return "";
+        
+        sql.append("-- Instructions\n");
+        sql.append("INSERT INTO instruction (id, name, namespace, category, path, description, instructions, created_at, updated_at) VALUES\n");
+        
+        for (int i = 0; i < instructions.size(); i++) {
+            Instruction ins = instructions.get(i);
+            sql.append("(").append(ins.getId()).append(", ");
+            sql.append("'").append(escape(ins.getName())).append("', ");
+            sql.append("'").append(escape(ins.getNamespace())).append("', ");
+            sql.append("'").append(escape(ins.getCategory())).append("', ");
+            sql.append("'").append(escape(ins.getPath())).append("', ");
+            sql.append("'").append(escape(ins.getDescription())).append("', ");
+            sql.append("'").append(escape(ins.getInstructions())).append("', ");
+            sql.append("CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+            if (i < instructions.size() - 1) {
                 sql.append(",\n");
             } else {
                 sql.append(";\n\n");

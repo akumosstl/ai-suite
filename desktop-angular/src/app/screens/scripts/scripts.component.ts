@@ -1146,10 +1146,10 @@ export class ScriptsComponent implements OnInit {
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir o script "${scriptName}"?`,
+        message: `Do you really want to delete the script "${scriptName}"?`,
         showConfirm: true,
-        confirmText: 'Excluir',
-        cancelText: 'Cancelar'
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
@@ -1159,7 +1159,7 @@ export class ScriptsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: true,
-                  message: `Script "${scriptName}" excluído com sucesso!`
+                  message: `Script "${scriptName}" deleted successfully!`
                 }
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {

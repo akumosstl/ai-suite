@@ -329,11 +329,61 @@
             font-size: 1.05rem;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
+.features-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+gap: 24px;
+}
+
+.tutorials {
+padding: 100px 0;
+background: var(--bg-primary);
+}
+
+.tutorials-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 24px;
+max-width: 800px;
+margin: 0 auto;
+}
+
+.tutorial-card {
+background: var(--bg-tertiary);
+border: 1px solid var(--border);
+border-radius: 16px;
+padding: 36px;
+text-align: center;
+transition: all 0.3s;
+}
+
+.tutorial-card:hover {
+border-color: var(--accent);
+transform: translateY(-4px);
+}
+
+.tutorial-icon {
+font-size: 48px;
+margin-bottom: 16px;
+}
+
+.tutorial-card h3 {
+font-size: 1.2rem;
+font-weight: 600;
+margin-bottom: 10px;
+}
+
+.tutorial-card p {
+color: var(--text-secondary);
+font-size: 0.9rem;
+margin-bottom: 20px;
+line-height: 1.6;
+}
+
+.tutorial-card .btn {
+width: 100%;
+justify-content: center;
+}
 
         .feature-card {
             background: var(--bg-tertiary);
@@ -744,8 +794,9 @@
             <div class="nav-right">
                 <ul class="nav-links">
                     <li><a href="#value" data-i18n="nav.value">Valor</a></li>
-                    <li><a href="#features" data-i18n="nav.features">Recursos</a></li>
-                    <li><a href="#targets" data-i18n="nav.targets">Integrações</a></li>
+<li><a href="#features" data-i18n="nav.features">Recursos</a></li>
+<li><a href="#targets" data-i18n="nav.targets">Integrações</a></li>
+<li><a href="#tutorials" data-i18n="nav.tutorials">Tutoriais</a></li>
                     <li><a href="#enterprise" data-i18n="nav.enterprise">Empresas</a></li>
                     <li><a href="#pricing" data-i18n="nav.pricing">Planos</a></li>
                 </ul>
@@ -950,10 +1001,39 @@
         </div>
     </section>
 
-    <section class="cta">
-        <div class="container">
-            <h2 data-i18n="cta.title">Pronto para Profissionalizar Seu Desenvolvimento de IA?</h2>
-            <p data-i18n="cta.desc">Baixe o executável e transforme sua equipe em Harness Engineers.</p>
+<section class="tutorials" id="tutorials">
+<div class="container">
+<div class="section-header">
+<h2 data-i18n="tutorials.title">Aprenda Agentic</h2>
+<p data-i18n="tutorials.subtitle">Tutoriais em vídeo e conteúdo educacional para dominar a plataforma.</p>
+</div>
+<div class="tutorials-grid">
+<div class="tutorial-card">
+<div class="tutorial-icon">📺</div>
+<h3 data-i18n="tutorials.playlist.title">Playlist de Tutoriais</h3>
+<p data-i18n="tutorials.playlist.desc">Assista à série completa de tutoriais no YouTube</p>
+<a href="https://www.youtube.com/playlist?list=PLiMUh1uAEERTDmFysNAaFYMQDUwnyuH1z" target="_blank" class="btn btn-primary">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="MM23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.5V8.5l6.463 3.5-6.463 3.5z"/></svg>
+<span data-i18n="tutorials.playlist.btn">Assistir Playlist</span>
+</a>
+</div>
+<div class="tutorial-card">
+<div class="tutorial-icon">🎬</div>
+<h3 data-i18n="tutorials.channel.title">Canal do YouTube</h3>
+<p data-i18n="tutorials.channel.desc">Inscreva-se no canal para mais conteúdo</p>
+<a href="https://www.youtube.com/@akumosstl" target="_blank" class="btn btn-secondary">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="MM23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.5V8.5l6.463 3.5-6.463 3.5z"/></svg>
+<span data-i18n="tutorials.channel.btn">Visitar Canal</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+
+<section class="cta">
+<div class="container">
+<h2 data-i18n="cta.title">Pronto para Profissionalizar Seu Desenvolvimento de IA?</h2>
+<p data-i18n="cta.desc">Baixe o executável e transforme sua equipe em Harness Engineers.</p>
             <div class="hero-buttons">
                 <a href="https://raw.githubusercontent.com/akumosstl/akumosstl.github.io/main/agentic.zip" class="btn btn-primary">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1002,8 +1082,9 @@
             pt: {
                 'nav.value': 'Valor',
                 'nav.features': 'Recursos',
-                'nav.targets': 'Integrações',
-                'nav.enterprise': 'Empresas',
+'nav.targets': 'Integrações',
+'nav.tutorials': 'Tutoriais',
+'nav.enterprise': 'Empresas',
                 'nav.pricing': 'Planos',
                 'hero.badge': 'v1.0 - Enterprise Edition',
                 'hero.highlight1': 'Codifique de Forma Inteligente, Entregue Mais Rápido',
@@ -1036,9 +1117,17 @@
                 'features.5.desc': 'Acompanhe performance de pipelines, taxas de sucesso e métricas de custo. Tome decisões baseadas em dados sobre investimento em IA.',
                 'features.6.title': 'Integração REST API',
                 'features.6.desc': 'API REST completa com documentação Swagger. Integre com CI/CD, monitoramento e sistemas enterprise.',
-                'features.7.title': 'Colaboração em Equipe',
-                'features.7.desc': 'Pipelines compartilhados, acesso baseado em funções e trilhas de auditoria. Enable múltiplas equipes para trabalhar com IA com segurança.',
-                'targets.title': 'Integrações com Principais AI Targets',
+'features.7.title': 'Colaboração em Equipe',
+'features.7.desc': 'Pipelines compartilhados, acesso baseado em funções e trilhas de auditoria. Enable múltiplas equipes para trabalhar com IA com segurança.',
+'tutorials.title': 'Aprenda Agentic',
+'tutorials.subtitle': 'Tutoriais em vídeo e conteúdo educacional para dominar a plataforma.',
+'tutorials.playlist.title': 'Playlist de Tutoriais',
+'tutorials.playlist.desc': 'Assista à série completa de tutoriais no YouTube',
+'tutorials.playlist.btn': 'Assistir Playlist',
+'tutorials.channel.title': 'Canal do YouTube',
+'tutorials.channel.desc': 'Inscreva-se no canal para mais conteúdo',
+'tutorials.channel.btn': 'Visitar Canal',
+'targets.title': 'Integrações com Principais AI Targets',
                 'targets.subtitle': 'Conecte seus agentes favoritos e unifique seu fluxo de trabalho.',
                 'targets.opencode': 'O agente de código mais avançado para desenvolvimento autônomo',
                 'targets.copilot': 'Assistência de IA líder em código da GitHub',
@@ -1097,8 +1186,9 @@
             en: {
                 'nav.value': 'Value',
                 'nav.features': 'Features',
-                'nav.targets': 'Integrations',
-                'nav.enterprise': 'Enterprise',
+'nav.targets': 'Integrations',
+'nav.tutorials': 'Tutorials',
+'nav.enterprise': 'Enterprise',
                 'nav.pricing': 'Pricing',
                 'hero.badge': 'v1.0 - Enterprise Edition',
                 'hero.highlight1': 'Code Smarter, Ship Faster',
@@ -1131,9 +1221,17 @@
                 'features.5.desc': 'Track pipeline performance, success rates, and cost metrics. Make data-driven decisions about AI investment.',
                 'features.6.title': 'REST API Integration',
                 'features.6.desc': 'Full REST API with Swagger documentation. Integrate with CI/CD, monitoring, and enterprise systems.',
-                'features.7.title': 'Team Collaboration',
-                'features.7.desc': 'Shared pipelines, role-based access, and audit trails. Enable multiple teams to work with AI safely.',
-                'targets.title': 'Integration with Top AI Targets',
+'features.7.title': 'Team Collaboration',
+'features.7.desc': 'Shared pipelines, role-based access, and audit trails. Enable multiple teams to work with AI safely.',
+'tutorials.title': 'Learn Agentic',
+'tutorials.subtitle': 'Video tutorials and educational content to master the platform.',
+'tutorials.playlist.title': 'Tutorial Playlist',
+'tutorials.playlist.desc': 'Watch the complete tutorial series on YouTube',
+'tutorials.playlist.btn': 'Watch Playlist',
+'tutorials.channel.title': 'YouTube Channel',
+'tutorials.channel.desc': 'Subscribe to the channel for more content',
+'tutorials.channel.btn': 'Visit Channel',
+'targets.title': 'Integration with Top AI Targets',
                 'targets.subtitle': 'Connect your favorite agents and unify your workflow.',
                 'targets.opencode': 'The most advanced code agent for autonomous development',
                 'targets.copilot': 'GitHub\'s leading AI code assistant',

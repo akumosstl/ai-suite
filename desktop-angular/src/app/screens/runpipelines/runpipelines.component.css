@@ -486,7 +486,7 @@
     text-overflow: ellipsis;
 }
 
-.step-category {
+.step-namespace {
     font-size: 0.7rem;
     color: #888;
     text-transform: capitalize;

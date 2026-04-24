@@ -52,14 +52,6 @@ import { ApiService, Template } from '../../services/api.service';
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'skills'" (click)="selectType('skills')">
-              <mat-icon>psychology</mat-icon>
-              <span>Skills</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'commands'" (click)="selectType('commands')">
-              <mat-icon>terminal</mat-icon>
-              <span>Commands</span>
-            </button>
             <button class="type-btn" [class.active]="selectedType === 'scripts'" (click)="selectType('scripts')">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
@@ -67,14 +59,6 @@ import { ApiService, Template } from '../../services/api.service';
             <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
               <mat-icon>list_alt</mat-icon>
               <span>Instructions</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'plugins'" (click)="selectType('plugins')">
-              <mat-icon>extension</mat-icon>
-              <span>Plugins</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'tools'" (click)="selectType('tools')">
-              <mat-icon>build</mat-icon>
-              <span>Tools</span>
             </button>
           </div>
           
@@ -744,12 +728,8 @@ export class TemplatesComponent implements OnInit {
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
-      'skills': 'Skills',
-      'commands': 'Commands',
       'scripts': 'Scripts',
-      'instructions': 'Instructions',
-      'plugins': 'Plugins',
-      'tools': 'Tools'
+      'instructions': 'Instructions'
     };
     return labels[this.selectedType] || 'Unknown';
   }
@@ -995,10 +975,10 @@ export class TemplatesComponent implements OnInit {
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir o template "${templateName}"?`,
+        message: `Do you really want to delete the template "${templateName}"?`,
         showConfirm: true,
-        confirmText: 'Excluir',
-        cancelText: 'Cancelar'
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {

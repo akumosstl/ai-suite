@@ -83,30 +83,14 @@ import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button mat-menu-item routerLink="/skills" class="menu-item">
-              <mat-icon>psychology</mat-icon>
-              <span>Skills</span>
-            </button>
             <button mat-menu-item routerLink="/instructions" class="menu-item">
               <mat-icon>rule</mat-icon>
               <span>Instructions</span>
-            </button>
-            <button mat-menu-item routerLink="/plugins" class="menu-item">
-              <mat-icon>extension</mat-icon>
-              <span>Plugins</span>
-            </button>
-            <button mat-menu-item routerLink="/tools" class="menu-item">
-              <mat-icon>build</mat-icon>
-              <span>Tools</span>
             </button>
             <div class="menu-separator"></div>
             <button mat-menu-item routerLink="/scripts" class="menu-item">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
-            </button>
-            <button mat-menu-item routerLink="/commands" class="menu-item">
-              <mat-icon>terminal</mat-icon>
-              <span>Commands</span>
             </button>
             <div class="menu-separator"></div>
             <button mat-menu-item routerLink="/pipelines" class="menu-item">
@@ -385,7 +369,7 @@ ngOnDestroy(): void {
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/skills', '/scripts', '/commands', '/templates', '/namespaces'];
+    const internalPages = ['/agents', '/scripts', '/instructions', '/templates', '/namespaces', '/pipelines'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;

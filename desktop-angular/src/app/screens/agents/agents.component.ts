@@ -18,21 +18,13 @@ import { NewProjectDialogComponent } from '../../components/new-project-dialog/n
 import { OpenProjectDialogComponent } from '../../components/open-project-dialog/open-project-dialog.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
+import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 
-/**
- * Componente de Gerenciamento de Agentes.
- * Permite criar, editar, buscar e excluir agentes do sistema.
- * Fornece interface para visualização de lista paginada e formulário de detalhes.
- * 
- * @component
- * @name AgentsComponent
- * @selector app-agents
- */
 @Component({
   selector: 'app-agents',
   standalone: true,
@@ -58,19 +50,9 @@ import { ProjectContextService } from '../../services/project-context.service';
     PromptEditorModalComponent,
     PanelToggleComponent
   ],
-  templateUrl: './agents.component.html' ,
+  templateUrl: './agents.component.html',
   styleUrls: ['./agents.component.css']
 })
-
-/**
- * Tela de gerenciamento de agentes.
- * Permite visualizar, criar e editar agentes do sistema.
- *
- * @author Seu Nome
- * @since 2024
- * @component
- * @description Componente de tela para operações com agentes.
- */
 export class AgentsComponent implements OnInit {
   fromHome = false;
   agents: Agent[] = [];
@@ -107,24 +89,14 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Navega para a tela do menu principal.
-   */
   goHome() {
     this.router.navigate(['/menu'])
   }
 
-  /**
-   * Alterna a visibilidade do painel lateral esquerdo.
-   */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
-  /**
-   * Retorna um objeto Agent vazio com valores padrão.
-   * @returns Objeto Agent com propriedades vazias
-   */
   private getEmptyAgent(): Agent {
     return {
       name: '',
@@ -136,9 +108,6 @@ export class AgentsComponent implements OnInit {
     };
   }
 
-  /**
-   * Carrega a lista de namespaces de agentes disponíveis.
-   */
   loadNamespaces(): void {
     this.apiService.getAgentNamespaces().subscribe({
       next: (namespaces) => {
@@ -156,14 +125,10 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
-   * @param value - Valor digitado pelo usuário
-   */
   onNamespaceChange(value: string): void {
     this.formAgent.namespace = value;
     const filterValue = value.toLowerCase();
-    this.filteredNamespaces = this.namespaces.filter(ns => 
+    this.filteredNamespaces = this.namespaces.filter(ns =>
       ns.toLowerCase().startsWith(filterValue)
     );
     if (filterValue && !this.filteredNamespaces.includes(value)) {
@@ -175,14 +140,10 @@ export class AgentsComponent implements OnInit {
     return value || '';
   }
 
-  /**
-   * Filtra namespaces disponíveis no autocomplete de busca.
-   * @param value - Valor digitado pelo usuário
-   */
   onSearchNamespaceChange(value: string): void {
     this.searchNamespace = value;
     const filterValue = value.toLowerCase();
-    this.filteredSearchNamespaces = this.namespaces.filter(ns => 
+    this.filteredSearchNamespaces = this.namespaces.filter(ns =>
       ns.toLowerCase().startsWith(filterValue)
     );
     if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
@@ -194,9 +155,6 @@ export class AgentsComponent implements OnInit {
     return value || '';
   }
 
-  /**
-   * Inicializa o componente carregando namespaces e lista de agentes.
-   */
   ngOnInit(): void {
     console.log('AgentsComponent ngOnInit');
     this.loadNamespaces();
@@ -204,9 +162,6 @@ export class AgentsComponent implements OnInit {
     this.loadTemplates();
   }
 
-  /**
-   * Carrega a lista de agentes do backend com paginação.
-   */
   loadAgents(): void {
     console.log('Loading agents...');
     this.loading = true;
@@ -215,7 +170,6 @@ export class AgentsComponent implements OnInit {
       next: (response) => {
         this.ngZone.run(() => {
           console.log('API response:', response);
-          // Backend returns { agents: [], currentPage, totalElements, totalPages }
           if (response && Array.isArray(response.agents)) {
             this.agents = response.agents;
           } else if (Array.isArray(response)) {
@@ -242,9 +196,6 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Busca agentes por nome e/ou namespace.
-   */
   search(): void {
     if (this.searchTerm.trim() || this.searchNamespace.trim()) {
       this.currentPage = 0;
@@ -278,9 +229,6 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Limpa os filtros de busca e recarrega a lista completa de agentes.
-   */
   clearSearch(): void {
     this.searchTerm = '';
     this.searchNamespace = '';
@@ -288,10 +236,6 @@ export class AgentsComponent implements OnInit {
     this.loadAgents();
   }
 
-  /**
-   * Manipula mudança de página no componente de paginação.
-   * @param event - Evento de mudança de página
-   */
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
@@ -302,10 +246,6 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Seleciona um agente da lista e preenche o formulário com seus dados.
-   * @param agent - Agente selecionado
-   */
   selectAgent(agent: Agent): void {
     this.cdr.markForCheck();
     this.selectedAgent = { ...agent };
@@ -313,9 +253,6 @@ export class AgentsComponent implements OnInit {
     this.statusMessage = `Agent selected: ${agent.name}`;
   }
 
-  /**
-   * Salva (cria ou atualiza) um agente no backend.
-   */
   saveAgent(): void {
     if (!this.formAgent.name) {
       this.statusMessage = 'Error: Name is required';
@@ -338,8 +275,8 @@ export class AgentsComponent implements OnInit {
             this.statusMessage = `Agent '${updated.name}' updated successfully`;
             this.selectedAgent = { ...updated };
             this.formAgent = { ...updated };
-            this.loadAgents();
             this.cdr.detectChanges();
+            this.loadAgents();
           });
         },
         error: (err) => {
@@ -357,8 +294,8 @@ export class AgentsComponent implements OnInit {
             this.statusMessage = `Agent '${created.name}' created successfully`;
             this.selectedAgent = { ...created };
             this.formAgent = { ...created };
-            this.loadAgents();
             this.cdr.detectChanges();
+            this.loadAgents();
           });
         },
         error: (err) => {
@@ -371,9 +308,6 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Exclui o agente atualmente selecionado.
-   */
   deleteAgent(): void {
     if (!this.selectedAgent?.id) {
       this.statusMessage = 'No agent selected to delete';
@@ -399,28 +333,23 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Exclui um agente da lista (modo inline com confirmação).
-   * @param agent - Agente a ser excluído
-   * @param event - Evento do clique para stopPropagation
-   */
   deleteAgentInline(agent: Agent, event: Event): void {
     event.stopPropagation();
-    
+
     if (!agent.id) {
       return;
     }
 
     const agentName = agent.name;
     const agentId = agent.id;
-    
+
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir o agente "${agentName}"?`,
+        message: `Do you really want to delete the agent "${agentName}"?`,
         showConfirm: true,
-        confirmText: 'Excluir',
-        cancelText: 'Cancelar'
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
@@ -430,7 +359,7 @@ export class AgentsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: true,
-                  message: `Agente "${agentName}" excluído com sucesso!`
+                  message: `Agent "${agentName}" deleted successfully!`
                 }
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {
@@ -457,19 +386,12 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Limpa o formulário, resetando para um novo agente vazio.
-   */
   clearForm(): void {
     this.selectedAgent = null;
     this.formAgent = this.getEmptyAgent();
     this.statusMessage = 'Form cleared - ready for new agent';
   }
 
-  /**
-   * Retorna a classe CSS para estilização da mensagem de status.
-   * @returns Classe CSS ('success', 'error' ou 'info')
-   */
   getStatusClass(): string {
     if (!this.statusMessage) return '';
     if (this.statusMessage.includes('Error')) return 'error';
@@ -477,11 +399,6 @@ export class AgentsComponent implements OnInit {
     return 'info';
   }
 
-  /**
-   * Gera uma prévia do prompt com até 15 palavras.
-   * @param prompt - Texto completo do prompt
-   * @returns Preview do prompt truncado
-   */
   getPromptPreview(prompt: string | undefined): string {
     if (!prompt) return '';
     const words = prompt.trim().split(/\s+/);
@@ -489,9 +406,6 @@ export class AgentsComponent implements OnInit {
     return words.length > 15 ? preview + '...' : preview;
   }
 
-  /**
-   * Abre o editor de prompt em um modal para edição do prompt do agente.
-   */
   openPromptEditor(): void {
     const dialogRef = this.dialog.open(PromptEditorModalComponent, {
       width: '800px',
@@ -515,9 +429,6 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Copia o conteúdo do prompt para o clipboard.
-   */
   async copyToClipboard(text: string | undefined): Promise<void> {
     if (!text) return;
     try {
@@ -529,9 +440,6 @@ export class AgentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Abre o dialog para criar um novo projeto.
-   */
   newProject(): void {
     const dialogRef = this.dialog.open(NewProjectDialogComponent, {
       width: '500px',
@@ -563,9 +471,6 @@ export class AgentsComponent implements OnInit {
     });
   }
 
-  /**
-   * Abre o dialog para selecionar e abrir um projeto existente.
-   */
   openProject(): void {
     const dialogRef = this.dialog.open(OpenProjectDialogComponent, {
       width: '900px',
@@ -578,16 +483,11 @@ export class AgentsComponent implements OnInit {
         this.ngZone.run(() => {
           this.statusMessage = `Project '${selectedProject.name}' opened successfully`;
           this.cdr.detectChanges();
-          // Here you would typically load the project data or switch to project view
-          // For now, just show a message
         });
       }
     });
   }
 
-  /**
-   * Fecha a janela atual do aplicativo.
-   */
   exit(): void {
     window.close();
   }

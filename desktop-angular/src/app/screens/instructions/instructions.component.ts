@@ -1487,10 +1487,10 @@ export class InstructionsComponent implements OnInit {
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir a instruction "${instructionName}"?`,
+        message: `Do you really want to delete the instruction "${instructionName}"?`,
         showConfirm: true,
-        confirmText: 'Excluir',
-        cancelText: 'Cancelar'
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
@@ -1500,7 +1500,7 @@ export class InstructionsComponent implements OnInit {
               this.dialog.open(PipelineResultDialogComponent, {
                 data: {
                   success: true,
-                  message: `Instruction "${instructionName}" excluída com sucesso!`
+                  message: `Instruction "${instructionName}" deleted successfully!`
                 }
               }).afterClosed().subscribe(() => {
                 setTimeout(() => {

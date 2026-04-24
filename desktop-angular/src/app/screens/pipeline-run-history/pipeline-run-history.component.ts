@@ -102,7 +102,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                   </div>
                   <div class="step-info">
                     <span class="step-name">{{ step.agentName || step.scriptName || 'Unknown' }}</span>
-                    <span class="step-category">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
+                    <span class="step-namespace">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
                   </div>
                 </div>
                 <div class="step-connector" *ngIf="i < selectedRun.steps!.length - 1">
@@ -556,7 +556,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       text-overflow: ellipsis;
     }
     
-    .step-category {
+    .step-namespace {
       font-size: 0.7rem;
       color: #888;
       text-transform: capitalize;

@@ -77,9 +77,9 @@
                             </div>
                             <div class="step-info">
                                 <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
-                                <span class="step-category" *ngIf="step.agent?.namespace">{{ step.agent?.namespace
+                                <span class="step-namespace" *ngIf="step.agent?.namespace">{{ step.agent?.namespace
                                     }}</span>
-                                <span class="step-category" *ngIf="step.script?.namespace">{{ step.script?.namespace
+                                <span class="step-name" *ngIf="step.script?.namespace">{{ step.script?.namespace
                                     }}</span>
                             </div>
                         </div>

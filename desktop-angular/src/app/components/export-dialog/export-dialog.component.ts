@@ -224,11 +224,7 @@ interface ExportItem {
 export class ExportDialogComponent {
   exportItems: ExportItem[] = [
     { key: 'agents', label: 'Agents', selected: false },
-    { key: 'skills', label: 'Skills', selected: false },
     { key: 'instructions', label: 'Instructions', selected: false },
-    { key: 'plugins', label: 'Plugins', selected: false },
-    { key: 'tools', label: 'Tools', selected: false },
-    { key: 'commands', label: 'Commands', selected: false },
     { key: 'scripts', label: 'Scripts', selected: false },
     { key: 'templates', label: 'Templates', selected: false }
   ];

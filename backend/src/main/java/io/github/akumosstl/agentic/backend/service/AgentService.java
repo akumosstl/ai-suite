@@ -8,6 +8,8 @@ import io.github.akumosstl.agentic.backend.repository.AgentRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,11 +35,11 @@ import java.util.List;
 @Service
 public class AgentService {
     
-    @Autowired
-    private AgentRepository agentRepository;
-    
-    @Autowired
-    private ProjectRepository projectRepository;
+@Autowired
+  private AgentRepository agentRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
     
     @Autowired
     private TargetRepository targetRepository;
@@ -137,6 +139,7 @@ public class AgentService {
         return agentRepository.save(agent);
     }
     
+    @Transactional
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
         
@@ -149,15 +152,15 @@ public class AgentService {
             }
         }
         
-        // Check if agent has pipeline relations
-        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByAgent_Id(id);
-        if (!pipelineSteps.isEmpty()) {
-            PipelineStep step = pipelineSteps.get(0);
-            String pipelineName = step.getPipeline() != null ? step.getPipeline().getName() : "Unknown";
-            throw new RuntimeException("Cannot delete agent because it is associated with pipeline: " + pipelineName);
-        }
+// Check if agent has pipeline relations
+    List<PipelineStep> pipelineSteps = pipelineStepRepository.findByAgent_Id(id);
+    if (!pipelineSteps.isEmpty()) {
+      PipelineStep step = pipelineSteps.get(0);
+      String pipelineName = step.getPipeline() != null ? step.getPipeline().getName() : "Unknown";
+      throw new RuntimeException("Cannot delete agent because it is associated with pipeline: " + pipelineName);
+    }
 
-        agentRepository.deleteById(id);
+    agentRepository.deleteById(id);
     }
     
     public List<Agent> searchAgents(String searchTerm, String namespace, int page, int size) {

@@ -7,7 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService, ProjectFile } from '../../services/api.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
 export interface CreateFileDialogData {
   projectId: number;
@@ -29,7 +31,8 @@ export interface CreateFileDialogData {
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatListModule
+    MatListModule,
+    ConfirmDialogComponent
   ],
   template: `
     <div class="file-dialog">
@@ -48,9 +51,12 @@ export interface CreateFileDialogData {
               <mat-icon>add_circle</mat-icon>
               <span>Create New File</span>
             </div>
-            <div class="file-option" *ngFor="let f of data.files" (click)="selectFile(f)">
+            <div class="file-option" *ngFor="let f of files" (click)="selectFile(f)">
               <mat-icon>description</mat-icon>
               <span>{{ f.fileName }}</span>
+              <button class="delete-btn" (click)="deleteFile(f, $event)" title="Delete file">
+                <mat-icon>delete</mat-icon>
+              </button>
             </div>
           </div>
         </mat-dialog-content>
@@ -291,6 +297,10 @@ export interface CreateFileDialogData {
       border-color: #4fc3f7;
     }
 
+    .file-option span {
+      flex: 1;
+    }
+
     .file-option.new-file {
       border-color: #4fc3f7;
       color: #4fc3f7;
@@ -307,6 +317,24 @@ export interface CreateFileDialogData {
     .file-option.new-file mat-icon {
       color: #4fc3f7;
     }
+
+    .delete-btn {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .delete-btn:hover {
+      background: #d32f2f;
+      color: #fff;
+    }
   `]
 })
 export class CreateFileDialogComponent {
@@ -315,11 +343,14 @@ export class CreateFileDialogComponent {
   saving = false;
   selectedFile: ProjectFile | null = null;
   showForm = false;
+  deleting = false;
+  files: ProjectFile[] = [];
 
   constructor(
     public dialogRef: MatDialogRef<CreateFileDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: CreateFileDialogData,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private dialog: MatDialog
   ) {
     if (data.fileName) {
       this.fileName = data.fileName;
@@ -327,6 +358,7 @@ export class CreateFileDialogComponent {
     if (data.content) {
       this.content = data.content;
     }
+    this.files = data.files ? [...data.files] : [];
   }
 
   selectFile(file: ProjectFile) {
@@ -384,5 +416,41 @@ export class CreateFileDialogComponent {
 
   close() {
     this.dialogRef.close();
+  }
+
+  deleteFile(file: ProjectFile, event: Event) {
+    event.stopPropagation();
+    if (!file.id || this.deleting) {
+      return;
+    }
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Delete File',
+      message: `Are you sure you want to delete "${file.fileName}"? This action cannot be undone.`
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: dialogData,
+      panelClass: 'custom-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || !file.id) {
+        return;
+      }
+
+      this.deleting = true;
+      this.apiService.deleteProjectFile(this.data.projectId, file.id).subscribe({
+        next: () => {
+          this.deleting = false;
+          this.files = this.files.filter(f => f.id !== file.id);
+        },
+        error: (err) => {
+          console.error('Error deleting file:', err);
+          this.deleting = false;
+        }
+      });
+    });
   }
 }

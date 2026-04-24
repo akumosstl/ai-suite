@@ -42,7 +42,7 @@ interface ClearResult {
 
 /**
  * Componente de gerenciamento de namespaces.
- * Exibe uma visão geral dos namespaces organizados por tipo (agents, skills, commands, scripts)
+ * Exibe uma visão geral dos namespaces organizados por tipo (agents, scripts)
  * e permite visualizar detalhes, limpar itens e buscar por namespace.
  * 
  * @componentName NamespacesComponent
@@ -82,14 +82,6 @@ interface ClearResult {
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'skills'" (click)="selectType('skills')">
-              <mat-icon>psychology</mat-icon>
-              <span>Skills</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'commands'" (click)="selectType('commands')">
-              <mat-icon>terminal</mat-icon>
-              <span>Commands</span>
-            </button>
             <button class="type-btn" [class.active]="selectedType === 'scripts'" (click)="selectType('scripts')">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
@@ -97,14 +89,6 @@ interface ClearResult {
             <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
               <mat-icon>description</mat-icon>
               <span>Instructions</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'plugins'" (click)="selectType('plugins')">
-              <mat-icon>extension</mat-icon>
-              <span>Plugins</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'tools'" (click)="selectType('tools')">
-              <mat-icon>build</mat-icon>
-              <span>Tools</span>
             </button>
           </div>
           
@@ -775,12 +759,8 @@ export class NamespacesComponent implements OnInit {
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
-      'skills': 'Skills',
-      'commands': 'Commands',
       'scripts': 'Scripts',
-      'instructions': 'Instructions',
-      'plugins': 'Plugins',
-      'tools': 'Tools'
+      'instructions': 'Instructions'
     };
     return labels[this.selectedType] || 'Unknown';
   }
@@ -806,9 +786,6 @@ export class NamespacesComponent implements OnInit {
     this.loadNamespaces();
   }
   
-  /**
-   * Carrega a lista de namespaces do tipo selecionado.
-   */
   /**
    * Carrega a lista de namespaces do tipo selecionado.
    */

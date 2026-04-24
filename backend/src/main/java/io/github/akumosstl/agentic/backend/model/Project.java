@@ -9,9 +9,6 @@ import java.util.List;
 
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Instruction;
-import io.github.akumosstl.agentic.backend.model.Plugin;
-import io.github.akumosstl.agentic.backend.model.Tool;
-import io.github.akumosstl.agentic.backend.model.ProjectFile;
 
 /**
  * Entidade que representa um Projeto no sistema.
@@ -50,47 +47,26 @@ public class Project {
     private String status; // "active", "completed", "archived"
     
     @Column(name = "readme", columnDefinition = "TEXT")
-    private String readme;
-    
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-    
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @OrderBy("createdAt DESC")
-    @JsonIgnore
-    private List<Pipeline> pipelines = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @OrderBy("createdAt DESC")
-    @JsonIgnore
-    private List<ProjectFile> files = new ArrayList<>();
-    
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_skills",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "skill_id")
-    )
-    private List<Skill> skills = new ArrayList<>();
-    
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_commands",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "command_id")
-    )
-    private List<Command> commands = new ArrayList<>();
-    
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_scripts",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "script_id")
-    )
-    private List<Script> scripts = new ArrayList<>();
+  private String readme;
+
+  @Column(name = "created_at")
+  private LocalDateTime createdAt;
+
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
+
+  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+  @OrderBy("createdAt DESC")
+  @JsonIgnore
+  private List<Pipeline> pipelines = new ArrayList<>();
+
+  @ManyToMany(fetch = FetchType.EAGER)
+  @JoinTable(
+    name = "project_scripts",
+    joinColumns = @JoinColumn(name = "project_id"),
+    inverseJoinColumns = @JoinColumn(name = "script_id")
+  )
+  private List<Script> scripts = new ArrayList<>();
     
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -107,22 +83,6 @@ public class Project {
         inverseJoinColumns = @JoinColumn(name = "instruction_id")
     )
     private List<Instruction> instructions = new ArrayList<>();
-    
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_plugins",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "plugin_id")
-    )
-    private List<Plugin> plugins = new ArrayList<>();
-    
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_tools",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "tool_id")
-    )
-    private List<Tool> tools = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -179,47 +139,16 @@ public class Project {
     public List<Pipeline> getPipelines() { return pipelines; }
     public void setPipelines(List<Pipeline> pipelines) { this.pipelines = pipelines; }
     
-    public List<Skill> getSkills() { return skills; }
-    public void setSkills(List<Skill> skills) { this.skills = skills; }
-    
-    public List<Command> getCommands() { return commands; }
-    public void setCommands(List<Command> commands) { this.commands = commands; }
-    
     public List<Script> getScripts() { return scripts; }
     public void setScripts(List<Script> scripts) { this.scripts = scripts; }
     
     public List<Agent> getAgents() { return agents; }
     public void setAgents(List<Agent> agents) { this.agents = agents; }
     
-    public List<Instruction> getInstructions() { return instructions; }
-    public void setInstructions(List<Instruction> instructions) { this.instructions = instructions; }
-    
-    public List<Plugin> getPlugins() { return plugins; }
-    public void setPlugins(List<Plugin> plugins) { this.plugins = plugins; }
-    
-    public List<Tool> getTools() { return tools; }
-    public void setTools(List<Tool> tools) { this.tools = tools; }
-    
-    public List<ProjectFile> getFiles() { return files; }
-    public void setFiles(List<ProjectFile> files) { this.files = files; }
-    
-    public void addSkill(Skill skill) {
-        skills.add(skill);
-    }
-    
-    public void removeSkill(Skill skill) {
-        skills.remove(skill);
-    }
-    
-    public void addCommand(Command command) {
-        commands.add(command);
-    }
-    
-    public void removeCommand(Command command) {
-        commands.remove(command);
-    }
-    
-    public void addScript(Script script) {
+  public List<Instruction> getInstructions() { return instructions; }
+  public void setInstructions(List<Instruction> instructions) { this.instructions = instructions; }
+
+  public void addScript(Script script) {
         scripts.add(script);
     }
     
@@ -243,39 +172,13 @@ public class Project {
         instructions.remove(instruction);
     }
     
-    public void addPlugin(Plugin plugin) {
-        plugins.add(plugin);
-    }
-    
-    public void removePlugin(Plugin plugin) {
-        plugins.remove(plugin);
-    }
-    
-    public void addTool(Tool tool) {
-        tools.add(tool);
-    }
-    
-    public void removeTool(Tool tool) {
-        tools.remove(tool);
-    }
-    
     public void addPipeline(Pipeline pipeline) {
         pipelines.add(pipeline);
         pipeline.setProject(this);
     }
     
-    public void removePipeline(Pipeline pipeline) {
-        pipelines.remove(pipeline);
-        pipeline.setProject(null);
-    }
-    
-    public void addFile(ProjectFile file) {
-        files.add(file);
-        file.setProject(this);
-    }
-    
-    public void removeFile(ProjectFile file) {
-        files.remove(file);
-        file.setProject(null);
-    }
+  public void removePipeline(Pipeline pipeline) {
+    pipelines.remove(pipeline);
+    pipeline.setProject(null);
+  }
 }

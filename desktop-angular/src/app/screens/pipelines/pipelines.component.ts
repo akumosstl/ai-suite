@@ -90,14 +90,6 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                 <span class="run-project">{{ run.projectName || 'Project #' + run.projectId }}</span>
                 <span class="run-date">{{ formatDate(run.createdAt) }}</span>
               </div>
-              <div class="run-actions">
-                <button *ngIf="run.status === 'running'" 
-                        class="icon-btn view-running-btn" 
-                        (click)="viewRunningPipeline(run, $event)"
-                        title="View Running Pipeline">
-                  <mat-icon>visibility</mat-icon>
-                </button>
-              </div>
               <div class="run-status-badge" [class]="run.status || 'pending'">
                 {{ run.status || 'pending' }}
               </div>
@@ -152,7 +144,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                   </div>
                   <div class="step-info">
                     <span class="step-name">{{ step.agentName || step.scriptName || 'Unknown' }}</span>
-                    <span class="step-category">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
+                    <span class="step-namespace">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
                   </div>
                 </div>
                 <div class="step-connector" *ngIf="i < selectedRun.steps!.length - 1">
@@ -784,7 +776,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       text-overflow: ellipsis;
     }
     
-    .step-category {
+    .step-namespace {
       font-size: 0.7rem;
       color: #888;
       text-transform: capitalize;
