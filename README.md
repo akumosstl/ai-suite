@@ -142,8 +142,12 @@ cd desktop-angular
 npm test
 ```
 
-## Notes
+## Version
 
-- The backend must be running on port 8080 for the Angular proxy to work
-- The Angular dev server proxies `/api` requests to `http://localhost:8080`
-- H2 console is available at `http://localhost:8080/h2-console`
+2.0.0 - AI Pipeline Execution System
+
+Release Date: 2026-04-24
+
+## Documentation
+
+User documentation is available in the [docs](docs/) folder. See [docs/README.md](docs/README.md) for the full index.

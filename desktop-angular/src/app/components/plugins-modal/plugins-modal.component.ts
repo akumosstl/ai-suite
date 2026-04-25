@@ -129,7 +129,7 @@ interface PluginRegistry {
               </a>
               <a 
                 mat-button
-                *ngIf="selectedPlugin.downloadUrl"
+                *ngIf="selectedPlugin.downloadUrl && selectedPlugin.downloadUrl !== ''"
                 [href]="selectedPlugin.downloadUrl"
                 target="_blank"
                 class="download-link">

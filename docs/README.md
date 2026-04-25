@@ -1,252 +1,201 @@
-# AI Suite - User Documentation
+# Agentic - User Guide
 
-Welcome to **AI Suite**, a powerful pipeline execution system designed for creating, managing, and executing AI-powered workflows. This documentation provides everything you need to get started as an end user.
-
----
-
-## What is AI Suite?
-
-AI Suite is a **hybrid pipeline execution system** that allows you to:
-
-- **Create and manage AI agents** - Build intelligent agents with custom prompts
-- **Define pipelines** - Orchestrate sequences of steps (agents, scripts, skills, commands, etc.)
-- **Execute pipelines in real-time** - Monitor progress with live status updates
-- **Organize resources** - Use namespaces to categorize and manage your entities
-- **Reuse templates** - Start quickly with predefined patterns
-
-### Key Features
-
-| Feature | Description |
-|---------|-------------|
-| Real-time Execution | Server-Sent Events (SSE) for live pipeline progress |
-| Polling Fallback | Reliable status updates even when SSE is unavailable |
-| Rich Entity Types | Supports agents, skills, commands, scripts, plugins, tools, and instructions |
-| Namespace Organization | Group entities by category for better management |
-| Template System | Quick-start with reusable patterns |
-| Target Configuration | Define custom resource paths for different environments |
+Welcome to **Agentic**, a pipeline execution system for building and managing AI agents. This guide helps you get started.
 
 ---
 
 ## Getting Started
 
-### Accessing the Application
+### Starting the Application
 
-Open your browser and navigate to:
-
-```
-http://localhost:4200
-```
-
-### Navigation Menu
-
-The main menu provides access to all features:
-
-| Menu Item | Description |
-|----------|-------------|
-| Menu | Main navigation hub |
-| Agents | Create and manage AI agents |
-| Skills | Define AI skills |
-| Commands | Manage CLI commands |
-| Scripts | Create executable scripts |
-| Instructions | Define instruction sets |
-| Plugins | Manage plugins |
-| Tools | Create utility tools |
-| Templates | Manage reusable templates |
-| Namespaces | View and organize entity namespaces |
-| Projects | Manage projects and pipelines |
-| Pipelines | View all pipeline executions |
-| Config | Configure targets and paths |
+1. Download the application package
+2. Extract the ZIP file
+3. Run `backend.exe`
+4. Open your browser to `http://localhost:4200`
 
 ---
 
-## Quick Start Guide
+## Overview
 
-### 1. Create Your First Agent
+Agentic allows you to:
 
-1. Navigate to **Agents** (`/agents`)
-2. Click the **Add** button
-3. Fill in the agent details:
+- **Create AI Agents** - Build intelligent agents with custom prompts
+- **Define Instructions** - Create reusable instruction sets with supporting files
+- **Write Scripts** - Develop executable scripts for automation
+- **Build Pipelines** - Orchestrate sequences of agents and scripts
+- **Organize Projects** - Group everything by project with namespaces
+
+---
+
+## Main Menu
+
+The menu provides:
+
+| Option | Description |
+|--------|-------------|
+| Project > New | Create a new project |
+| Project > Open | Open an existing project |
+| Config | Configure application settings |
+| Exit | Close the application |
+
+---
+
+## Stack Menu
+
+The Stack menu contains your core entities:
+
+| Option | Description |
+|--------|-------------|
+| Agents | AI agents with custom prompts |
+| Instructions | Reusable instruction sets |
+| Scripts | Executable scripts |
+| Pipelines | View all pipelines |
+
+---
+
+## Management Menu
+
+| Option | Description |
+|--------|-------------|
+| Templates | Reusable templates |
+| Namespace | Organize entities by category |
+| Export | Export project data |
+| Import | Import project data |
+| Backup | Backup your data |
+| Update | Check for updates |
+
+---
+
+## Quick Start
+
+### 1. Create a Project
+
+1. Click **Project > New**
+2. Enter project name
+3. Click **Create**
+
+### 2. Create an Agent
+
+1. Go to **Stack > Agents**
+2. Click **Add**
+3. Fill in:
    - **Name** - Agent identifier
    - **Namespace** - Category (optional)
    - **Prompt** - Instructions for the agent
-4. Click **Create Agent**
+4. Click **Create**
 
-### 2. Create a Pipeline
+### 3. Create Instructions
 
-1. Navigate to **Projects** (`/project`)
-2. Click **New Pipeline**
-3. Add steps to your pipeline:
-   - Select the entity type (Agent, Script, Skill, etc.)
-   - Configure each step
-4. Set the execution order via drag-and-drop
+1. Go to **Stack > Instructions**
+2. Click **Add**
+3. Fill in:
+   - **Name** - Instruction set name
+   - **Namespace** - Category (optional)
+   - **Instructions** - The instruction text
+4. Optionally add files for reference
+5. Click **Create**
 
-### 3. Run a Pipeline
+### 4. Write a Script
+
+1. Go to **Stack > Scripts**
+2. Click **Add**
+3. Fill in:
+   - **Name** - Script name
+   - **Namespace** - Category (optional)
+   - **Script** - Your executable code
+4. Click **Create**
+
+### 5. Build a Pipeline
+
+1. Go to **Stack > Pipelines**
+2. Click **Add**
+3. Add steps:
+   - Select entity type (Agent, Script, Instruction)
+   - Select the specific entity
+   - Configure step settings
+4. Arrange order via drag-and-drop
+5. Click **Save**
+
+### 6. Run a Pipeline
 
 1. Select your pipeline
 2. Click **Run**
-3. Monitor progress in real-time at `/runpipelines`
+3. Monitor progress in real-time
 4. View step outputs as they execute
 
 ---
 
-## Documentation Index
+## Interface Layout
 
-Each feature has its own detailed guide:
+Most screens use a two-panel layout:
 
-### Core Features
-
-| Guide | Description | Link |
-|-------|-------------|------|
-| Agents | Create AI agents with custom prompts | [agents-guide.md](./agents-guide.md) |
-| Projects | Manage projects and pipelines | [project-guide.md](./project-guide.md) |
-| Pipeline Steps | Create and configure pipeline steps | [pipeline-steps.md](./pipeline-steps.md) |
-| Pipelines | View executed pipelines | [pipelines-guide.md](./pipelines-guide.md) |
-| Run Pipelines | Execute pipelines with real-time updates | [runpipelines-guide.md](./runpipelines-guide.md) |
-| Pipeline History | View past executions | [pipeline-run-history-guide.md](./pipeline-run-history-guide.md) |
-
-### Entity Types
-
-| Guide | Description | Link |
-|-------|-------------|------|
-| Skills | AI skill definitions | [skills-guide.md](./skills-guide.md) |
-| Commands | CLI commands | [commands-guide.md](./commands-guide.md) |
-| Scripts | Executable scripts | [scripts-guide.md](./scripts-guide.md) |
-| Instructions | Instruction sets | [instructions-guide.md](./instructions-guide.md) |
-| Plugins | Plugin extensions | [plugins-guide.md](./plugins-guide.md) |
-| Tools | Utility tools | [tools-guide.md](./tools-guide.md) |
-
-### Organization & Configuration
-
-| Guide | Description | Link |
-|-------|-------------|------|
-| Templates | Reusable templates | [templates-guide.md](./templates-guide.md) |
-| Namespaces | Entity organization | [namespaces-guide.md](./namespaces-guide.md) |
-| Config | Target configuration | [config-guide.md](./config-guide.md) |
-| Agentic Folder | .agentic folder and agentic.json | [agentic-folder-guide.md](./agentic-folder-guide.md) |
+```
++------------------+------------------------+
+|   Left Panel     |    Right Panel         |
+|  - List        |  - Details         |
+|  - Search      |  - Forms          |
+|  - Pagination  |  - Actions        |
++------------------+------------------------+
+```
 
 ---
 
-## Understanding the Interface
-
-### Common Layout
-
-Most screens follow a two-panel layout:
-
-```
-+------------------+------------------------+
-|                  |                        |
-|   Left Panel     |    Right Panel         |
-|                  |                        |
-|  - List of      |  - Details           |
-|    items        |  - Forms            |
-|  - Search      |  - Actions          |
-|  - Pagination |                     |
-+------------------+------------------------+
-```
-
-### Status Indicators
+## Status Indicators
 
 | Status | Color | Meaning |
-|--------|-------|---------|
+|--------|-------|--------|
 | Completed | Green | Successfully finished |
 | Running | Orange | Currently executing |
 | Pending | Gray | Waiting to execute |
 | Failed | Red | Error occurred |
 
-### Entity Fields
+---
+
+## Common Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | Name | Yes | Unique identifier |
 | Namespace | No | Category grouping |
-| Description | No | Purpose description |
-| Path | No | File/resource location |
-| Content | Varies | Main content (prompt, script, etc.) |
+| Description | No | Purpose explanation |
+| Content | Varies | Main content |
 
 ---
 
-## Best Practices
+## Documentation Index
 
-### Organizing Entities
+Detailed guides for each feature:
 
-- **Use namespaces** to group related entities
-- **Add descriptions** so others understand purpose
-- **Use templates** for common patterns
+### Core Guides
 
-### Pipeline Design
-
-- **Start simple** - begin with sequential pipelines
-- **Add error handling** - check outputs between steps
-- **Use meaningful names** - for pipelines and steps
-
-### Execution Monitoring
-
-- **Watch real-time** - use `/runpipelines` for live updates
-- **Check outputs** - review console output per step
-- **Review history** - use pipeline-run-history for analysis
+| Guide | Description |
+|-------|-------------|
+| [Agents](docs/agents-guide.md) | Create AI agents with custom prompts |
+| [Instructions](docs/instructions-guide.md) | Reusable instruction sets |
+| [Scripts](docs/scripts-guide.md) | Executable scripts |
+| [Pipelines](docs/pipelines-guide.md) | View executed pipelines |
+| [Pipeline Steps](docs/pipeline-steps.md) | Create and configure pipeline steps |
+| [Run Pipelines](docs/runpipelines-guide.md) | Execute pipelines with real-time updates |
+| [Pipeline History](docs/pipeline-run-history-guide.md) | View past executions |
+| [Project](docs/project-guide.md) | Manage projects |
+| [Templates](docs/templates-guide.md) | Reusable templates |
+| [Namespaces](docs/namespaces-guide.md) | Organize entities by category |
+| [Config](docs/config-guide.md) | Application configuration |
+| [Plugins](docs/plugins-guide.md) | Tool extensions |
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
-
 | Issue | Solution |
-|-------|----------|
-| Pipeline not running | Check backend is running on port 8080 |
-| SSE not working | System falls back to polling automatically |
-| Can't find entity | Check namespace filter |
-| Delete failed | Entity may be in use by pipeline |
-
-### Getting Help
-
-- Review the specific guide for each feature
-- Check API endpoints in backend documentation
-- Examine browser console for errors
+|-------|---------|
+| App not loading | Ensure `backend.exe` is running |
+| Pipeline fails | Check step configuration |
+| Entity not found | Check namespace filter |
+| Can't delete | Entity may be in use |
 
 ---
 
-## Additional Resources
+## Version
 
-### System Requirements
-
-- **Frontend**: Angular 16+ (runs on port 4200)
-- **Backend**: Spring Boot (runs on port 8080)
-- **Database**: H2 in-memory database
-
-### Starting the Application
-
-```bash
-# Terminal 1: Start backend
-cd backend && mvn spring-boot:run
-
-# Terminal 2: Start frontend
-cd desktop-angular && npm start
-```
-
----
-
-## Glossary
-
-| Term | Definition |
-|------|-----------|
-| **Agent** | AI entity with a custom prompt that performs tasks |
-| **Pipeline** | Sequence of steps executed in order |
-| **Step** | Individual task in a pipeline (agent, script, skill, etc.) |
-| **Namespace** | Category for grouping entities |
-| **Template** | Reusable starting point for entities |
-| **Target** | Configuration defining resource paths |
-| **SSE** | Server-Sent Events for real-time updates |
-
----
-
-## Support
-
-For additional help:
-- Check the detailed guide for your specific feature
-- Review the troubleshooting section
-- Examine the application logs
-
----
-
-*AI Suite - Empowering your AI workflow automation*
+**2.0.0** - Release Date: 2026-04-24
