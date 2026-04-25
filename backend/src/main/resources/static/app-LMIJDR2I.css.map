@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/app.scss"],
+  "sourcesContent": [".plugins-modal {\n  .mat-mdc-dialog-surface {\n    background: #1e1e1e !important;\n    border-radius: 12px !important;\n    overflow: hidden;\n  }\n}\n"],
+  "mappings": "AACE,CAAA,cAAA,CAAA,uBACE,WAAA,kBADF,cAEE,eACA,SAAA",
+  "names": []
+}

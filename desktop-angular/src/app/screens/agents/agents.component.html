@@ -125,24 +125,24 @@
                     <mat-icon matPrefix>description</mat-icon>
                 </mat-form-field>
                 <div class="textarea-actions">
-                    <button mat-icon-button type="button" (click)="copyToClipboard(formAgent.prompt)" 
+                    <button mat-icon-button type="button" (click)="copyToClipboard(formAgent.prompt)"
                         [disabled]="!formAgent.prompt" title="Copy to clipboard">
                         <mat-icon>content_copy</mat-icon>
                     </button>
-                    <button mat-icon-button type="button" (click)="openPromptEditor()" 
-                        title="Open in editor">
+                    <button mat-icon-button type="button" (click)="openPromptEditor()" title="Open in editor">
                         <mat-icon>open_in_new</mat-icon>
                     </button>
                 </div>
 
-<mat-form-field class="full-width prompt-field" appearance="outline">
-  <mat-label>Prompt</mat-label>
-  <textarea matInput [(ngModel)]="formAgent.prompt" rows="10"
-    placeholder="Enter the prompt content"></textarea>
-  <mat-icon matPrefix>code</mat-icon>
-</mat-form-field>
+                <mat-form-field class="full-width prompt-field" appearance="outline">
+                    <mat-label>Prompt</mat-label>
+                    <textarea matInput [(ngModel)]="formAgent.prompt" rows="10"
+                        placeholder="Enter the prompt content"
+                        [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
+                    <mat-icon matPrefix>code</mat-icon>
+                </mat-form-field>
 
-<div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+                <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
                     <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
                     {{ statusMessage }}
                 </div>

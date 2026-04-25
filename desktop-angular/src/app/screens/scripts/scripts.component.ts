@@ -197,7 +197,8 @@ import { ProjectContextService } from '../../services/project-context.service';
             
             <mat-form-field class="full-width" appearance="outline">
               <mat-label>Script Content</mat-label>
-              <textarea matInput [(ngModel)]="formScript.content" rows="10" placeholder="Enter the script content"></textarea>
+              <textarea matInput [(ngModel)]="formScript.content" rows="10" placeholder="Enter the script content"
+                [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
               <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
             <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">

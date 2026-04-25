@@ -198,3 +198,10 @@ body {
     overflow: hidden !important;
   }
 }
+
+// Global font for form inputs and textareas
+.mat-mdc-form-field input,
+.mat-mdc-form-field textarea {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
+}
