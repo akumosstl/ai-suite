@@ -290,3 +290,49 @@ onOpenInEditor(): void {
 2. [x] Create sync dialog modal for file selection
 3. [x] Add backend endpoint for filesystem sync
 4. [ ] Test sync functionality end-to-end
+
+---
+
+## ⚠️ Native Build Error - Spring AOT Process
+
+### Problema
+Ao rodar `clean-binaries.bat` (mvn -Pnative clean package), o build falha com:
+
+```
+org.springframework.boot.SpringApplication$AbandonedRunException
+java.lang.IllegalStateException: No application context available after calling main method
+```
+
+### Causa Raiz
+- O Maven `process-aot` goal executa a aplicação para gerar metadados AOT
+- O Spring detecta isso como "execução abandonada" (quando Maven termina forcibly)
+- O erro `AbandonedRunException` é lançado
+
+### Solução Implementada (2026-04-26)
+
+**BackendApplication.java** - No catch:
+1. Se for `AbandonedRunException` (AOT): return normalmente
+2. Se for erro real: mostra erro no terminal + System.exit(1)
+
+```java
+} catch (Exception e) {
+    if (e instanceof org.springframework.boot.SpringApplication.AbandonedRunException) {
+        return;  // AOT - sai com 0
+    }
+    // Erro real: mostra erro e sai com 1
+    System.err.println("=== ERRO AO INICIAR APLICACAO ===");
+    System.err.println("Tipo: " + e.getClass().getName());
+    System.err.println("Mensagem: " + e.getMessage());
+    e.printStackTrace(System.err);
+    System.err.println("==============================");
+    System.err.println("A aplicacao nao foi iniciada. Verifique o erro acima.");
+    System.exit(1);
+}
+```
+
+**Importante:** O System.exit(1) é necessário para o Maven process-aot detectar falha (AOT espera exit 0 only em sucesso).
+
+### Error Handler Template
+- Template: `src/main/resources/error-template.html`
+- Output: `<user_home>/.agentic/logs/erro.html`
+- Abre com: `Desktop.getDesktop().browse(file.toUri())`

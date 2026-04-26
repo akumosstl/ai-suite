@@ -40,9 +40,10 @@ if exist "%DIST_DIR%" (
 )
 
 echo.
+
 echo Building native backend...
 cd /d C:\Users\USER\projects\github\ai-suite\backend
-call mvn -Pnative clean package -DskipTests
+call mvn -X -Pnative clean package
 if errorlevel 1 (
     echo.
     echo ERROR: Maven build failed!
@@ -54,4 +55,4 @@ echo.
 echo Starting backend application...
 cd /d C:\Users\USER\projects\github\ai-suite\backend
 rem java -Dspring.aot.enabled=true -jar target\backend-3.5.0.jar
-call mvn -Pnative native:compile
+call mvn -X native:compile -Pnative

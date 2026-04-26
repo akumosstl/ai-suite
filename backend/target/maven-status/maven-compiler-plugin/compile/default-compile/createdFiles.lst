@@ -53,6 +53,7 @@ io\github\akumosstl\agentic\backend\service\PipelineRecoveryService.class
 io\github\akumosstl\agentic\backend\service\PipelineRunService.class
 io\github\akumosstl\agentic\backend\controller\PipelineRunController.class
 io\github\akumosstl\agentic\backend\model\InstructionFile.class
+io\github\akumosstl\agentic\backend\config\StartupErrorListener.class
 io\github\akumosstl\agentic\backend\service\TargetService.class
 io\github\akumosstl\agentic\backend\controller\ScriptController.class
 io\github\akumosstl\agentic\backend\controller\PipelineStepController.class

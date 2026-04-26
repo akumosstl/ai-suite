@@ -52,6 +52,7 @@ C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\exception\GlobalExceptionHandler.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\SseService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\Event.java
+C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\config\StartupErrorListener.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\ScriptRepository.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\InstructionController.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\Target.java
