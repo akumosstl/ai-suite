@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -63,11 +63,11 @@ import { ApiService, Template } from '../../services/api.service';
           </div>
           
           <div class="search-section">
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Search by name...</mat-label>
-              <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
-              <mat-icon matPrefix>search</mat-icon>
-            </mat-form-field>
+<mat-form-field class="search-field" appearance="outline" floatLabel="always">
+          <mat-label>Search by name...</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
               <mat-icon>search</mat-icon>
             </button>
@@ -137,23 +137,23 @@ import { ApiService, Template } from '../../services/api.service';
           </div>
           
           <div class="form-container">
-            <mat-form-field class="full-width" appearance="outline">
-              <mat-label>Name</mat-label>
-              <input matInput [(ngModel)]="formTemplate.name" placeholder="Enter template name">
-              <mat-icon matPrefix>badge</mat-icon>
-            </mat-form-field>
-            
-            <mat-form-field class="full-width" appearance="outline">
-              <mat-label>Description</mat-label>
-              <textarea matInput [(ngModel)]="formTemplate.description" rows="3" placeholder="Describe this template"></textarea>
-              <mat-icon matPrefix>description</mat-icon>
-            </mat-form-field>
-            
-            <mat-form-field class="full-width template-field" appearance="outline">
-              <mat-label>Template</mat-label>
-              <textarea matInput [(ngModel)]="formTemplate.template" rows="15" placeholder="Enter the template content"></textarea>
-              <mat-icon matPrefix>code</mat-icon>
-            </mat-form-field>
+<mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="formTemplate.name">
+            <mat-icon matPrefix>badge</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <textarea matInput [(ngModel)]="formTemplate.description" rows="3"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field class="full-width template-field" appearance="outline" floatLabel="always">
+            <mat-label>Template</mat-label>
+            <textarea matInput [(ngModel)]="formTemplate.template" rows="15"></textarea>
+            <mat-icon matPrefix>code</mat-icon>
+          </mat-form-field>
             
             <div class="button-row">
               <button class="btn btn-primary" (click)="saveTemplate()" [disabled]="!formTemplate.name || !formTemplate.template || !selectedType">
@@ -192,9 +192,9 @@ import { ApiService, Template } from '../../services/api.service';
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                  min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.08s ease-out, 
+                  min-width 0.08s ease-out,
+                  opacity 0.08s ease-out;
     }
     
     .left-panel.collapsed {
@@ -691,7 +691,7 @@ import { ApiService, Template } from '../../services/api.service';
     }
   `]
 })
-export class TemplatesComponent implements OnInit {
+export class TemplatesComponent implements OnInit, OnDestroy {
   templates: Template[] = [];
   selectedTemplate: Template | null = null;
   formTemplate: Template = this.getEmptyTemplate();
@@ -714,6 +714,11 @@ export class TemplatesComponent implements OnInit {
 
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
+  }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
   }
 
   private getEmptyTemplate(): Template {
@@ -748,6 +753,9 @@ export class TemplatesComponent implements OnInit {
     this.selectedType = 'agents';
     this.clearForm();
     this.loadTemplates();
+  }
+
+  ngOnDestroy(): void {
   }
 
   loadTemplates(): void {

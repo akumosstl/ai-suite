@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -53,7 +53,7 @@ import { ProjectContextService } from '../../services/project-context.service';
   templateUrl: './agents.component.html',
   styleUrls: ['./agents.component.css']
 })
-export class AgentsComponent implements OnInit {
+export class AgentsComponent implements OnInit, OnDestroy {
   fromHome = false;
   agents: Agent[] = [];
   selectedAgent: Agent | null = null;
@@ -93,8 +93,20 @@ export class AgentsComponent implements OnInit {
     this.router.navigate(['/menu'])
   }
 
-  toggleLeftPanel(): void {
+toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
+  }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
+  }
+
+  @HostListener('document:keydown.control.e')
+  onOpenInEditor(): void {
+    if (this.selectedAgent) {
+      this.openPromptEditor();
+    }
   }
 
   private getEmptyAgent(): Agent {
@@ -160,6 +172,9 @@ export class AgentsComponent implements OnInit {
     this.loadNamespaces();
     this.loadAgents();
     this.loadTemplates();
+  }
+
+  ngOnDestroy(): void {
   }
 
   loadAgents(): void {

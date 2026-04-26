@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -228,7 +228,12 @@ export class EditPipelineDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  onSave(): void {
+onSave(): void {
     this.dialogRef.close(this.pipeline);
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
   }
 }

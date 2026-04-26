@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core'
+import { Component, Inject, HostListener } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog'
 import { MatButtonModule } from '@angular/material/button'
@@ -150,5 +150,10 @@ export class UpdateDialogComponent {
 
   onClose(): void {
     this.dialogRef.close()
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onClose();
   }
 }

@@ -1,0 +1,119 @@
+# 🧠 PROJECT MEMORY (Java/Angular)
+
+## 🎯 General Context
+- **Project:** Agentic Code Pipeline Execution System
+- **Backend:** Java 21, Spring Boot (Maven)
+- **Frontend:** Angular 21.2.8, TypeScript, RxJS
+- **Database:** H2 Database (Console available at `/h2-console`)
+- **Architecture:** REST API (JSON) with SSE for real-time updates
+
+## 🛠 Architecture Decisions & Patterns
+- **Standardization:** DTOs for input/output; Clean Controllers
+- **Service Layer:** All business logic in @Service classes
+- **Angular:** Standalone Components, Signals for reactive state
+- **H2:** Keep data.sql and schema.sql updated
+
+## 📍 Current State (Session: 2026-04-25)
+
+### Issues Resolved This Session
+
+1. **npm install ERESOLVE**
+   - Problem: Dependency version conflicts between Angular packages
+   - Solution: Aligned all @angular/* packages to version 21.2.8
+
+2. **Ctrl+B Panel Toggle Slow Response (~2 seconds)**
+   Attempts made:
+   - A) Animation speed adjustment (0.3s → 0.2s → 0.15s → 0.08s) - animation was fast, but recognition still slow
+   - B) Added preventDefault to shortcut config
+   - C) Added Alt+B alternative
+   - D) HostListener approach - didn't work
+   - E) **Final solution: DOM global keydown listener in keyboard-shortcuts.service.ts**
+     - Uses window.addEventListener('keydown', handleKeyDown)
+     - Works across ALL pages that register registerLeftPanelToggle()
+     - Instant response time
+   - Note: Other pages (agents, scripts, instructions, templates, namespaces) still use the service-based callback - need to be updated to match project implementation
+
+3. **Ctrl+Enter for Modal Confirm**
+   - Added global shortcut that calls dialogRef.close(true)
+   - Works on any open modal
+
+4. **Ctrl+Shift+R for Run Pipelines**
+   - Previously opened in same tab without parameters ("No steps")
+   - Fixed to work like the Run button:
+     - Gets projectId and pipelineId from ProjectContextService
+     - Opens /runpipelines?pipelineId=X&projectId=Y in new tab (_blank)
+   - Uses registerActionCallback pattern in app.ts
+
+5. **Left Panel Animation**
+   - Transition reduced from 0.3s to 0.08s for fast toggle
+   - Files modified:
+     * agents.component.css
+     * project.component.css
+     * scripts.component.ts
+     * namespaces.component.ts
+     * templates.component.ts
+     * instructions.component.ts
+     * panel-toggle.component.ts
+
+### Key Implementation Details
+
+**Global Ctrl+B in keyboard-shortcuts.service.ts:**
+```typescript
+constructor(private router: Router, private dialog: MatDialog) {
+  this.registerDefaultShortcuts()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', this.handleKeyDown.bind(this))
+  }
+}
+
+private handleKeyDown(event: KeyboardEvent): void {
+  if (event.ctrlKey && event.key === 'b') {
+    event.preventDefault()
+    if (this.leftPanelToggleCallback) {
+      this.leftPanelToggleCallback()
+    }
+  }
+}
+```
+
+**Ctrl+Shift+R in app.ts:**
+```typescript
+this.keyboardShortcutsService.registerActionCallback('runProjectPipelines', () => {
+  const projectId = this.projectContext.getProjectId()
+  const pipelineId = this.projectContext.getSelectedPipelineId()
+  if (projectId && pipelineId) {
+    const url = `/runpipelines?pipelineId=${pipelineId}&projectId=${projectId}`
+    window.open(url, '_blank')
+  }
+})
+```
+
+## 📝 Style & Coding Rules
+
+- **Java:** Follow Google Java Style; use Lombok
+- **Angular:** TS Interfaces; use AsyncPipe; Standalone Components
+- **Endpoints:** Plural and kebab-case
+
+## 🚀 Next Steps (Immediate Backlog)
+
+1. [x] All pages (agents, scripts, instructions, templates, namespaces) already use same global Ctrl+B listener pattern as project - verified working
+2. [ ] Test all shortcuts work correctly
+3. [ ] Verify no ExpressionChangedAfterItHasBeenCheckedError in console
+
+---
+
+## 📋 Keyboard Shortcuts Summary
+
+| Shortcut | Action | Status |
+|----------|--------|--------|
+| Ctrl+B | Toggle Left Panel | ✅ Working (fast on project, slow elsewhere) |
+| Alt+B | Toggle Left Panel (alt) | ✅ Working |
+| Ctrl+Enter | Confirm Modal | ✅ Working |
+| Ctrl+Shift+R | Run Pipelines | ✅ Working with params |
+| Ctrl+Shift+H | Go to Home | ✅ Working |
+| Ctrl+Shift+P | Go to Project | ✅ Working |
+| Ctrl+Shift+A | Go to Agents | ✅ Working |
+| Ctrl+Shift+S | Go to Scripts | ✅ Working |
+| Ctrl+Shift+I | Go to Instructions | ✅ Working |
+| Ctrl+Shift+L | Go to Pipelines | ✅ Working |
+| ? | Show Shortcuts Help | ✅ Working |

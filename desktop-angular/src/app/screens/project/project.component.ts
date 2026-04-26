@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgClass } from '@angular/common';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -18,11 +18,6 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ApiService, Project, Pipeline, PipelineStep, Agent, Target, ProjectFile } from '../../services/api.service';
 import { SelectAgentDialogComponent, SelectedStep } from '../../components/select-agent-dialog/select-agent-dialog.component';
-import { SelectScriptDialogComponent } from '../../components/select-script-dialog/select-script-dialog.component';
-import { SelectInstructionDialogComponent } from '../../components/select-instruction-dialog/select-instruction-dialog.component';
-import { ProjectAgentsDialogComponent } from '../../components/project-agents-dialog/project-agents-dialog.component';
-import { ProjectScriptsDialogComponent } from '../../components/project-scripts-dialog/project-scripts-dialog.component';
-import { ProjectInstructionsDialogComponent } from '../../components/project-instructions-dialog/project-instructions-dialog.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-dialog.component';
@@ -43,7 +38,7 @@ import { ProjectReadmeDialogComponent } from '../../components/project-readme-di
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, ProjectScriptsDialogComponent, ProjectAgentsDialogComponent, ProjectInstructionsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -100,7 +95,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
-    private projectContext: ProjectContextService
+    private projectContext: ProjectContextService,
+    private ngZone: NgZone
   ) { }
 
   /**
@@ -177,9 +173,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Limpa o intervalo de verificação quando o componente é destruído.
-   */
   ngOnDestroy() {
     if (this.runningCheckInterval) {
       clearInterval(this.runningCheckInterval);
@@ -326,26 +319,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
-  syncProjectToFileSystem() {
-    if (!this.project?.id) {
-      return;
-    }
-
-    this.isSavingProject = true;
-    this.apiService.syncProjectToFileSystem(this.project.id).subscribe({
-      next: (response: any) => {
-        this.isSavingProject = false;
-        this.showMessage('Project synced to filesystem successfully', 'success');
-        console.log('Sync result:', response.message);
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        this.isSavingProject = false;
-        this.showMessage('Failed to sync project: ' + (error.error?.message || error.message), 'error');
-        this.cdr.detectChanges();
-      }
-    });
-  }
 
   /**
    * Exibe uma mensagem temporária na interface.
@@ -431,6 +404,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
    */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
+  }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
   }
 
   /**
@@ -663,170 +641,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
                   message: 'Failed to add step to pipeline. Please try again.'
                 }
               });
-}
+            }
           });
         }
-      }
-});
-  }
-
-  /**
-   * Abre o diálogo para visualizar os scripts do projeto.
-   */
-  openViewScriptsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open scripts dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectScriptsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar um script ao projeto.
-   */
-  openAddScriptDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open add script dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectScriptDialogComponent, {
-      width: '600px',
-      data: { projectId: this.project.id }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedScripts) => {
-      if (selectedScripts && selectedScripts.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedScripts.length} script(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar os agentes do projeto.
-   */
-  openViewAgentsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open agents dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectAgentsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar um agente ao projeto.
-   */
-  openAddAgentDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add agent dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
-      width: '600px',
-      data: { projectId, mode: 'project' }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedAgents: Agent[]) => {
-      if (selectedAgents && selectedAgents.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedAgents.length} agent(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar as instruções do projeto.
-   */
-  openViewInstructionsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open instructions dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectInstructionsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar uma instrução ao projeto.
-   */
-  openAddInstructionDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add instruction dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectInstructionDialogComponent, {
-      width: '600px',
-      data: { projectId }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedInstructions) => {
-      if (selectedInstructions && selectedInstructions.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedInstructions.length} instruction(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  openCreateFileDialog(file?: ProjectFile) {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open create file dialog: project not loaded');
-      return;
-    }
-
-    if (this.projectFiles.length > 0 && !file) {
-      const dialogRef = this.dialog.open(CreateFileDialogComponent, {
-        width: '600px',
-        data: { 
-          projectId,
-          files: this.projectFiles,
-          showFileList: true
-        }
-      });
-
-      dialogRef.afterClosed().subscribe((result) => {
-        if (result) {
-          this.loadProjectFiles(projectId);
-        }
-      });
-      return;
-    }
-
-    const dialogRef = this.dialog.open(CreateFileDialogComponent, {
-      width: '600px',
-      data: { 
-        projectId,
-        fileId: file?.id,
-        fileName: file?.fileName,
-        content: file?.content
-      }
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loadProjectFiles(projectId);
       }
     });
   }

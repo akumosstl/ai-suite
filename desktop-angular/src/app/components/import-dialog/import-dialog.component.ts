@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -424,5 +424,10 @@ export class ImportDialogComponent {
     formData.append('file', this.selectedFile);
     
     this.dialogRef.close({ file: this.selectedFile, formData });
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onImport();
   }
 }

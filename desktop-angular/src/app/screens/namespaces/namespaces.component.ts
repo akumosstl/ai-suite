@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -93,7 +93,7 @@ interface ClearResult {
           </div>
           
           <div class="search-section">
-            <mat-form-field class="search-field" appearance="outline">
+            <mat-form-field class="search-field" appearance="outline" floatLabel="always">
               <mat-label>Search by namespace...</mat-label>
               <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
               <mat-icon matPrefix>search</mat-icon>
@@ -265,9 +265,9 @@ interface ClearResult {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                  min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.08s ease-out, 
+                  min-width 0.08s ease-out,
+                  opacity 0.08s ease-out;
     }
     
     .left-panel.collapsed {
@@ -722,7 +722,7 @@ interface ClearResult {
     }
   `]
 })
-export class NamespacesComponent implements OnInit {
+export class NamespacesComponent implements OnInit, OnDestroy {
   namespaces: string[] = [];
   allNamespaces: string[] = [];
   selectedNamespace: string | null = null;
@@ -750,6 +750,11 @@ export class NamespacesComponent implements OnInit {
    */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
+  }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
   }
   
   /**
@@ -780,10 +785,13 @@ export class NamespacesComponent implements OnInit {
     this.pipelines = [];
     this.projects = [];
     this.loadNamespaces();
-  }
-  
-  ngOnInit(): void {
+}
+
+ngOnInit(): void {
     this.loadNamespaces();
+  }
+
+  ngOnDestroy(): void {
   }
   
   /**

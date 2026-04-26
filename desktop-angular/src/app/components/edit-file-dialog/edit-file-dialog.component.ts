@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, OnInit, ViewEncapsulation, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -587,5 +587,10 @@ export class EditFileDialogComponent implements OnInit {
 
   onSave(): void {
     this.dialogRef.close({ content: this.editedContent });
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
   }
 }

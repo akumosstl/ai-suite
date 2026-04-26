@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -318,6 +318,11 @@ export class BackupDialogComponent {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onBackup();
   }
 
   private getTimestamp(): string {

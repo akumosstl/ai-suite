@@ -205,3 +205,9 @@ body {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
   font-size: 0.9rem !important;
 }
+
+.mat-mdc-form-field input::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
+}

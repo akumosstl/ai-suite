@@ -1,0 +1,5 @@
+SYNCHRONIZATION ROUTINE:
+1. At the start of every session, read the `.opencode-context` file to understand the current progress and the tech stack (Spring/Angular).
+2. After every successful implementation, update the 'Current State' and 'Next Steps' sections in the `.opencode-context` file.
+3. If there are any changes to the H2 database schema, remind me to update the initialization .sql files.
+4. Always maintain consistency with the architecture decisions documented in the memory file.

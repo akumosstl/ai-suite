@@ -111,35 +111,43 @@ import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
             <span>Management</span>
             <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
           </button>
-          <mat-menu #managementMenu="matMenu" class="custom-menu">
-            <button mat-menu-item routerLink="/templates" class="menu-item">
-              <mat-icon>description</mat-icon>
-              <span>Templates</span>
-            </button>
-            <button mat-menu-item routerLink="/namespaces" class="menu-item">
-              <mat-icon>dns</mat-icon>
-              <span>Namespace</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item (click)="openExport()" class="menu-item">
-              <mat-icon>file_download</mat-icon>
-              <span>Export</span>
-            </button>
-            <button mat-menu-item (click)="openImport()" class="menu-item">
-              <mat-icon>file_upload</mat-icon>
-              <span>Import</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item (click)="openBackup()" class="menu-item">
-              <mat-icon>backup</mat-icon>
-              <span>Backup</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item (click)="checkUpdate()" class="menu-item">
-              <mat-icon>system_update</mat-icon>
-              <span>Update</span>
-            </button>
-          </mat-menu>
+<mat-menu #managementMenu="matMenu" class="custom-menu">
+        <button mat-menu-item routerLink="/templates" class="menu-item">
+          <mat-icon>description</mat-icon>
+          <span>Templates</span>
+        </button>
+        <button mat-menu-item routerLink="/namespaces" class="menu-item">
+          <mat-icon>dns</mat-icon>
+          <span>Namespace</span>
+        </button>
+        <div class="menu-separator"></div>
+        <button mat-menu-item (click)="openExport()" class="menu-item">
+          <mat-icon>file_download</mat-icon>
+          <span>Export</span>
+        </button>
+        <button mat-menu-item (click)="openImport()" class="menu-item">
+          <mat-icon>file_upload</mat-icon>
+          <span>Import</span>
+        </button>
+        <div class="menu-separator"></div>
+        <button mat-menu-item (click)="openBackup()" class="menu-item">
+          <mat-icon>backup</mat-icon>
+          <span>Backup</span>
+        </button>
+        <div class="menu-separator"></div>
+        <button mat-menu-item (click)="checkUpdate()" class="menu-item">
+          <mat-icon>system_update</mat-icon>
+          <span>Update</span>
+        </button>
+      </mat-menu>
+
+      <button class="menu-button" [matMenuTriggerFor]="infoMenu">
+        <mat-icon>info</mat-icon>
+        <span>Info</span>
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #infoMenu="matMenu" class="custom-menu">
+      </mat-menu>
         </ng-container>
         
         <ng-container *ngIf="isMainPage(); else homeButton">

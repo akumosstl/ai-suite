@@ -41,7 +41,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
       color: #b0b0b0;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.08s ease-out;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
       padding: 0;
       position: absolute;
@@ -61,7 +61,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       font-size: 18px;
       width: 18px;
       height: 18px;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.08s ease-out;
     }
 
     .panel-toggle-btn:hover .toggle-icon {

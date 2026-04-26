@@ -379,4 +379,9 @@ export class PromptEditorModalComponent implements OnInit {
   onSave(): void {
     this.dialogRef.close({ prompt: this.editedPrompt });
   }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
+  }
 }

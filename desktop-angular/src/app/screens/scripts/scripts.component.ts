@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -67,18 +67,17 @@ import { ProjectContextService } from '../../services/project-context.service';
           </div>
           
           <div class="search-section">
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Search by name...</mat-label>
-              <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
-              <mat-icon matPrefix>search</mat-icon>
-            </mat-form-field>
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Namespace</mat-label>
-              <input matInput 
-                     [(ngModel)]="searchNamespace" 
-                     placeholder="Search by namespace">
-              <mat-icon matPrefix>category</mat-icon>
-            </mat-form-field>
+<mat-form-field class="search-field" appearance="outline" floatLabel="always">
+            <mat-label>Search by name...</mat-label>
+            <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+          <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+            <mat-label>Namespace</mat-label>
+            <input matInput
+                   [(ngModel)]="searchNamespace">
+            <mat-icon matPrefix>category</mat-icon>
+          </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
               <mat-icon>search</mat-icon>
             </button>
@@ -149,34 +148,33 @@ import { ProjectContextService } from '../../services/project-context.service';
           
           <div class="form-container">
             <div class="form-row">
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="formScript.name" placeholder="Enter script name">
-                <mat-icon matPrefix>badge</mat-icon>
-              </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Namespace</mat-label>
-                <input matInput 
-                       [(ngModel)]="formScript.namespace" 
-                       placeholder="Enter namespace">
-                <mat-icon matPrefix>category</mat-icon>
-              </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
-                <mat-label>Path</mat-label>
-                <input matInput [(ngModel)]="formScript.path" placeholder="Enter path">
-                <mat-icon matPrefix>link</mat-icon>
-              </mat-form-field>
+<mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Name</mat-label>
+              <input matInput [(ngModel)]="formScript.name">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Namespace</mat-label>
+              <input matInput
+                     [(ngModel)]="formScript.namespace">
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Path</mat-label>
+              <input matInput [(ngModel)]="formScript.path">
+              <mat-icon matPrefix>link</mat-icon>
+            </mat-form-field>
             </div>
             
-            <mat-form-field class="full-width" appearance="outline">
+<mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Description</mat-label>
-              <textarea matInput [(ngModel)]="formScript.description" rows="3" placeholder="Describe this script's purpose"></textarea>
+              <textarea matInput [(ngModel)]="formScript.description" rows="3"></textarea>
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
-            
-            <mat-form-field class="full-width" appearance="outline">
+
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Template</mat-label>
               <mat-select (selectionChange)="onTemplateSelect($event)">
                 <mat-option [value]="null">-- Select a template --</mat-option>
@@ -195,10 +193,10 @@ import { ProjectContextService } from '../../services/project-context.service';
               </button>
             </div>
             
-            <mat-form-field class="full-width" appearance="outline">
+<mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Script Content</mat-label>
-              <textarea matInput [(ngModel)]="formScript.content" rows="10" placeholder="Enter the script content"
-                [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
+              <textarea matInput [(ngModel)]="formScript.content" rows="10"
+              [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
               <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
             <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
@@ -244,9 +242,9 @@ import { ProjectContextService } from '../../services/project-context.service';
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                  min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.08s ease-out, 
+                  min-width 0.08s ease-out,
+                  opacity 0.08s ease-out;
     }
     
     .left-panel.collapsed {
@@ -799,7 +797,7 @@ import { ProjectContextService } from '../../services/project-context.service';
  * @component
  * @description Componente de tela para operações com scripts customizados.
  */
-export class ScriptsComponent implements OnInit {
+export class ScriptsComponent implements OnInit, OnDestroy {
   scripts: Script[] = [];
   selectedScript: Script | null = null;
   namespaces: string[] = [];
@@ -843,26 +841,6 @@ export class ScriptsComponent implements OnInit {
   }
 
   /**
-   * Carrega a lista de namespaces de scripts disponíveis.
-   */
-  loadNamespaces(): void {
-    this.apiService.getScriptNamespaces().subscribe({
-      next: (namespaces) => {
-        this.namespaces = namespaces;
-        this.filteredNamespaces = [...this.namespaces];
-        this.filteredSearchNamespaces = [...this.namespaces];
-        if (this.namespaces.length > 0 && !this.formScript.namespace) {
-          this.formScript.namespace = this.namespaces[0];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading namespaces:', err);
-      }
-    });
-  }
-
-  /**
    * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
    * @param value - Valor digitado pelo usuário
    */
@@ -895,9 +873,11 @@ export class ScriptsComponent implements OnInit {
    */
   ngOnInit(): void {
     console.log('ScriptsComponent ngOnInit');
-    this.loadNamespaces();
     this.loadScripts();
     this.loadTemplates();
+  }
+
+  ngOnDestroy(): void {
   }
 
   loadTemplates(): void {
@@ -933,6 +913,18 @@ export class ScriptsComponent implements OnInit {
    */
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
+  }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
+  }
+
+  @HostListener('document:keydown.control.e')
+  onOpenInEditor(): void {
+    if (this.selectedScript) {
+      this.openContentEditor();
+    }
   }
 
   /**

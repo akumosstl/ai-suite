@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError, firstValueFrom } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { Observable, firstValueFrom, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 /**
@@ -502,63 +502,6 @@ export class ApiService {
     );
   }
 
-  // Project Skills
-  getProjectSkills(projectId: number): Observable<Skill[]> {
-    return this.http.get<Skill[]>(`${this.baseUrl}/projects/${projectId}/skills`).pipe(
-      catchError(this.handleError('getProjectSkills', []))
-    );
-  }
-
-  addSkillsToProject(projectId: number, skillIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/skills`, skillIds).pipe(
-      catchError(this.handleError('addSkillsToProject', {} as Project))
-    );
-  }
-
-  removeSkillFromProject(projectId: number, skillId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/skills/${skillId}`).pipe(
-      catchError(this.handleError('removeSkillFromProject', {} as Project))
-    );
-  }
-
-  // Project Commands
-  getProjectCommands(projectId: number): Observable<Command[]> {
-    return this.http.get<Command[]>(`${this.baseUrl}/projects/${projectId}/commands`).pipe(
-      catchError(this.handleError('getProjectCommands', []))
-    );
-  }
-
-  addCommandsToProject(projectId: number, commandIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/commands`, commandIds).pipe(
-      catchError(this.handleError('addCommandsToProject', {} as Project))
-    );
-  }
-
-  removeCommandFromProject(projectId: number, commandId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/commands/${commandId}`).pipe(
-      catchError(this.handleError('removeCommandFromProject', {} as Project))
-    );
-  }
-
-  // Project Scripts
-  getProjectScripts(projectId: number): Observable<Script[]> {
-    return this.http.get<Script[]>(`${this.baseUrl}/projects/${projectId}/scripts`).pipe(
-      catchError(this.handleError('getProjectScripts', []))
-    );
-  }
-
-  addScriptsToProject(projectId: number, scriptIds: number[], force: boolean = false): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/scripts`, { scriptIds, force }).pipe(
-      catchError(this.handleError('addScriptsToProject', {} as Project))
-    );
-  }
-
-  removeScriptFromProject(projectId: number, scriptId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/scripts/${scriptId}`).pipe(
-      catchError(this.handleError('removeScriptFromProject', {} as Project))
-    );
-  }
-
   // Project Agents
   getProjectAgents(projectId: number): Observable<Agent[]> {
     return this.http.get<Agent[]>(`${this.baseUrl}/projects/${projectId}/agents`).pipe(
@@ -578,63 +521,6 @@ export class ApiService {
     );
   }
 
-  // Project Instructions
-  getProjectInstructions(projectId: number): Observable<Instruction[]> {
-    return this.http.get<Instruction[]>(`${this.baseUrl}/projects/${projectId}/instructions`).pipe(
-      catchError(this.handleError('getProjectInstructions', []))
-    );
-  }
-
-  addInstructionsToProject(projectId: number, instructionIds: number[], force: boolean = false): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/instructions`, { instructionIds, force }).pipe(
-      catchError(this.handleError('addInstructionsToProject', {} as Project))
-    );
-  }
-
-  removeInstructionFromProject(projectId: number, instructionId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/instructions/${instructionId}`).pipe(
-      catchError(this.handleError('removeInstructionFromProject', {} as Project))
-    );
-  }
-
-  // Project Plugins
-  getProjectPlugins(projectId: number): Observable<Plugin[]> {
-    return this.http.get<Plugin[]>(`${this.baseUrl}/projects/${projectId}/plugins`).pipe(
-      catchError(this.handleError('getProjectPlugins', []))
-    );
-  }
-
-  addPluginsToProject(projectId: number, pluginIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/plugins`, pluginIds).pipe(
-      catchError(this.handleError('addPluginsToProject', {} as Project))
-    );
-  }
-
-  removePluginFromProject(projectId: number, pluginId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/plugins/${pluginId}`).pipe(
-      catchError(this.handleError('removePluginFromProject', {} as Project))
-    );
-  }
-
-  // Project Tools
-  getProjectTools(projectId: number): Observable<Tool[]> {
-    return this.http.get<Tool[]>(`${this.baseUrl}/projects/${projectId}/tools`).pipe(
-      catchError(this.handleError('getProjectTools', []))
-    );
-  }
-
-  addToolsToProject(projectId: number, toolIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/tools`, toolIds).pipe(
-      catchError(this.handleError('addToolsToProject', {} as Project))
-    );
-  }
-
-removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/tools/${toolId}`).pipe(
-      catchError(this.handleError('removeToolFromProject', {} as Project))
-    );
-  }
-  
   createProjectFile(projectId: number, fileName: string, content: string): Observable<ProjectFile> {
     console.log('API createProjectFile called:', { projectId, fileName, contentLength: content?.length });
     return this.http.post<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
@@ -706,15 +592,6 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`).pipe(
       catchError((error) => {
         console.error('deleteProjectFileByName error:', error);
-        throw error;
-      })
-    );
-  }
-
-  syncProjectToFileSystem(projectId: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/sync-to-fs`, {}).pipe(
-      catchError((error) => {
-        console.error('syncProjectToFileSystem error:', error);
         throw error;
       })
     );

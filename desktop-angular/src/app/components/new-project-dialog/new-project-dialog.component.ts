@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -326,5 +326,10 @@ export class NewProjectDialogComponent implements OnInit {
       this.dialogRef.close(this.project);
       this.router.navigate(['/project']);
     }
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
   }
 }

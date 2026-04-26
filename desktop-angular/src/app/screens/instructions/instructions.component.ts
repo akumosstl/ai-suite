@@ -5,7 +5,7 @@
  * @Component InstructionsComponent
  * selector: app-instructions
  */
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -51,11 +51,11 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatDialogModule,
     MatMenuModule,
     MatIconModule,
-MenuBarComponent,
-     PipelineResultDialogComponent,
-     PromptEditorModalComponent,
-     EditFileDialogComponent,
-     PanelToggleComponent
+    MenuBarComponent,
+    PipelineResultDialogComponent,
+    PromptEditorModalComponent,
+    EditFileDialogComponent,
+    PanelToggleComponent
   ],
   template: `
     <div class="instructions-container">
@@ -74,18 +74,17 @@ MenuBarComponent,
           </div>
           
           <div class="search-section">
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Search by name...</mat-label>
-              <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
-              <mat-icon matPrefix>search</mat-icon>
-            </mat-form-field>
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Namespace</mat-label>
-              <input matInput 
-                     [(ngModel)]="searchNamespace" 
-                     placeholder="Search by namespace">
-              <mat-icon matPrefix>category</mat-icon>
-            </mat-form-field>
+<mat-form-field class="search-field" appearance="outline" floatLabel="always">
+            <mat-label>Search by name...</mat-label>
+            <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+          <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+            <mat-label>Namespace</mat-label>
+            <input matInput
+                   [(ngModel)]="searchNamespace">
+            <mat-icon matPrefix>category</mat-icon>
+          </mat-form-field>
             <button class="icon-btn search-btn" (click)="search()" title="Search">
               <mat-icon>search</mat-icon>
             </button>
@@ -156,34 +155,33 @@ MenuBarComponent,
           
           <div class="form-container">
             <div class="form-row">
-              <mat-form-field class="form-field" appearance="outline">
+<mat-form-field class="form-field" appearance="outline" floatLabel="always">
                 <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="formInstruction.name" placeholder="Enter instruction name">
+                <input matInput [(ngModel)]="formInstruction.name">
                 <mat-icon matPrefix>badge</mat-icon>
               </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
+
+              <mat-form-field class="form-field" appearance="outline" floatLabel="always">
                 <mat-label>Namespace</mat-label>
-                <input matInput 
-                       [(ngModel)]="formInstruction.namespace" 
-                       placeholder="Enter namespace">
+                <input matInput
+                       [(ngModel)]="formInstruction.namespace">
                 <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
-              
-              <mat-form-field class="form-field" appearance="outline">
+
+              <mat-form-field class="form-field" appearance="outline" floatLabel="always">
                 <mat-label>Path</mat-label>
-                <input matInput [(ngModel)]="formInstruction.path" placeholder="Enter path">
+                <input matInput [(ngModel)]="formInstruction.path">
                 <mat-icon matPrefix>link</mat-icon>
               </mat-form-field>
             </div>
             
-            <mat-form-field class="full-width" appearance="outline">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Description</mat-label>
-              <textarea matInput [(ngModel)]="formInstruction.description" rows="3" placeholder="Describe this instruction's purpose"></textarea>
+              <textarea matInput [(ngModel)]="formInstruction.description" rows="3"></textarea>
               <mat-icon matPrefix>description</mat-icon>
             </mat-form-field>
             
-            <mat-form-field class="full-width" appearance="outline">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Template</mat-label>
               <mat-select (selectionChange)="onTemplateSelect($event)">
                 <mat-option [value]="null">-- Select a template --</mat-option>
@@ -202,9 +200,9 @@ MenuBarComponent,
               </button>
             </div>
             
-            <mat-form-field class="full-width" appearance="outline">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Instructions</mat-label>
-              <textarea matInput [(ngModel)]="formInstruction.instructions" rows="10" placeholder="Enter the instructions content"></textarea>
+              <textarea matInput [(ngModel)]="formInstruction.instructions" rows="10"></textarea>
               <mat-icon matPrefix>code</mat-icon>
             </mat-form-field>
             
@@ -287,9 +285,9 @@ MenuBarComponent,
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                  min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.08s ease-out, 
+                  min-width 0.08s ease-out,
+                  opacity 0.08s ease-out;
     }
     
     .left-panel.collapsed {
@@ -957,7 +955,7 @@ MenuBarComponent,
    `]
 
 })
-export class InstructionsComponent implements OnInit {
+export class InstructionsComponent implements OnInit, OnDestroy {
   fromHome = false;
   instructions: Instruction[] = [];
   selectedInstruction: Instruction | null = null;
@@ -1009,6 +1007,18 @@ export class InstructionsComponent implements OnInit {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
+  }
+
+  @HostListener('document:keydown.control.e')
+  onOpenInEditor(): void {
+    if (this.selectedInstruction) {
+      this.openInstructionsEditor();
+    }
+  }
+
   private getEmptyInstruction(): Instruction {
     return {
       name: '',
@@ -1020,32 +1030,12 @@ export class InstructionsComponent implements OnInit {
   }
 
   /**
-   * Carrega a lista de namespaces disponíveis para instruções.
-   */
-  loadNamespaces(): void {
-    this.apiService.getInstructionNamespaces().subscribe({
-      next: (namespaces) => {
-        this.namespaces = namespaces;
-        this.filteredNamespaces = [...this.namespaces];
-        this.filteredSearchNamespaces = [...this.namespaces];
-        if (this.namespaces.length > 0 && !this.formInstruction.namespace) {
-          this.formInstruction.namespace = this.namespaces[0];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading namespaces:', err);
-      }
-    });
-  }
-
-  /**
    * Filtra os namespaces disponíveis com base no valor digitado no campo de namespace.
    * @param value - Valor digitado pelo usuário para filtrar namespaces
    */
   onNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
-    this.filteredNamespaces = this.namespaces.filter(ns => 
+    this.filteredNamespaces = this.namespaces.filter(ns =>
       ns.toLowerCase().startsWith(filterValue)
     );
     if (filterValue && !this.filteredNamespaces.includes(value)) {
@@ -1059,7 +1049,7 @@ export class InstructionsComponent implements OnInit {
    */
   onSearchNamespaceChange(value: string): void {
     const filterValue = value.toLowerCase();
-    this.filteredSearchNamespaces = this.namespaces.filter(ns => 
+    this.filteredSearchNamespaces = this.namespaces.filter(ns =>
       ns.toLowerCase().startsWith(filterValue)
     );
     if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
@@ -1091,10 +1081,10 @@ export class InstructionsComponent implements OnInit {
     });
   }
 
-/**
-   * Remove um arquivo da lista de arquivos da instrução.
-   * @param index - Índice do arquivo a ser removido
-   */
+  /**
+     * Remove um arquivo da lista de arquivos da instrução.
+     * @param index - Índice do arquivo a ser removido
+     */
   isEditableFile(fileName: string): boolean {
     const editableExtensions = ['.txt', '.json', '.md', '.yml'];
     const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'));
@@ -1162,9 +1152,11 @@ export class InstructionsComponent implements OnInit {
    */
   ngOnInit(): void {
     console.log('InstructionsComponent ngOnInit');
-    this.loadNamespaces();
     this.loadInstructions();
     this.loadTemplates();
+  }
+
+  ngOnDestroy(): void {
   }
 
   loadTemplates(): void {
@@ -1331,7 +1323,7 @@ export class InstructionsComponent implements OnInit {
     const syncInstructionFiles = (instructionId: number, isNew: boolean) => {
       const originalIds = this.originalInstructionFiles.filter(f => f.id).map(f => f.id);
       const currentIds = this.formInstructionFiles.filter(f => f.id).map(f => f.id);
-      
+
       const filesToDelete = this.originalInstructionFiles.filter(f => f.id && !currentIds.includes(f.id));
       const filesToAdd = this.formInstructionFiles.filter(f => !f.id);
 
@@ -1340,7 +1332,7 @@ export class InstructionsComponent implements OnInit {
       console.log('Sync files - To delete:', filesToDelete);
       console.log('Sync files - To add:', filesToAdd);
 
-      const deletePromises = filesToDelete.map(file => 
+      const deletePromises = filesToDelete.map(file =>
         new Promise<void>((resolve) => {
           if (file.id) {
             console.log('Deleting file:', file.id, file.fileName);
@@ -1354,7 +1346,7 @@ export class InstructionsComponent implements OnInit {
         })
       );
 
-      const addPromises = filesToAdd.map(file => 
+      const addPromises = filesToAdd.map(file =>
         new Promise<void>((resolve) => {
           this.apiService.addInstructionFile(instructionId, file.path, file.fileName, file.content).subscribe({
             next: () => resolve(),
@@ -1476,14 +1468,14 @@ export class InstructionsComponent implements OnInit {
    */
   deleteInstructionInline(instruction: Instruction, event: Event): void {
     event.stopPropagation();
-    
+
     if (!instruction.id) {
       return;
     }
 
     const instructionName = instruction.name;
     const instructionId = instruction.id;
-    
+
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
