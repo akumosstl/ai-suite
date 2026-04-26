@@ -15,6 +15,88 @@
 
 ## 📍 Current State (Session: 2026-04-26)
 
+### Dynamic Port Configuration
+
+#### Development Mode
+- Created script `scripts/setup-proxy.js` that reads port from `~/.agentic/agentic.json`
+- Added to package.json: `"prestart": "node scripts/setup-proxy.js"`
+- Runs before `npm start`, updating `proxy.conf.json` automatically
+
+#### Backend - Endpoint `/api/config`
+- Created `ConfigService.java` - provides app configuration including port
+- Created `SimpleConfigController.java` - exposes `/api/config` endpoint
+- Returns: `{ port, version, apiUrl }`
+
+#### Production Mode
+- Angular served from same JAR, calls to `/api/*` work via relative URLs
+- No proxy needed
+
+---
+
+### Port Change: 8080 → 1488
+
+All configurations updated to use port 1488 instead of 8080:
+
+**Backend files modified:**
+- `application.properties` - server.port=1488
+- `application-local.properties` - server.port=1488
+- `AgenticConfigLoader.java` - default port changed to 1488
+
+**Frontend files modified:**
+- `proxy.conf.json` - target changed to localhost:1488
+- `project.component.ts` - baseUrl changed to http://localhost:1488/
+- `runpipelines.component.ts` - baseUrl changed to http://localhost:1488
+
+**Browser auto-open:** Backend opens browser at localhost:1488 (via BackendApplication.java using AgenticConfigLoader)
+
+### File Output & Run Directory Feature Implementation
+
+#### [TASK1] Pipeline Pages - File Output Button
+Added "File output" button to Step Details area in both pages:
+
+**Pages modified:**
+- `/pipelines` - PipelinesComponent
+- `/pipeline-run-history` - PipelineRunHistoryComponent
+
+**Changes:**
+1. Added `File output` button next to existing `Output` button
+2. Button disabled when pipeline status is "running"
+3. Click opens modal with file content OR shows alert if file doesn't exist
+
+**File output path pattern:**
+```
+<project_path>\.agentic\pipelines\<pipeline_name>\<timestamp>\step<stepOrder>-result.<extension>
+```
+
+Example: `.agentic\pipelines\helloworld\20260421-220826\step1-result.json`
+
+#### [TASK2] Pipeline Run Directory Display
+Added display of pipeline run directory path in both pages:
+
+**Changes:**
+- Added `pipeline-directory` section showing: `<mat-icon>folder</mat-icon> <runDir>`
+- Located above Pipeline Flow area
+- Shows path like: `.agentic\pipelines\hellowolrd\20260421-220826\`
+
+#### Backend Changes
+
+**PipelineRun.java:**
+- Added `runDir` field to store run directory path
+- New column: `run_dir` in `pipeline_run` table
+
+**PipelineService.java:**
+- Modified to save `runDir` when creating pipeline run
+- Saves path like: `<project_path>\.agentic\pipelines\<pipeline_name>\<timestamp>`
+
+**PipelineRunService.java:**
+- Added `saveRun()` method to persist run with runDir
+
+**PipelineRunController.java:**
+- New endpoint: `GET /api/pipeline-runs/{runId}/steps/{stepOrder}/file-output`
+- Returns file content OR error if file doesn't exist
+
+---
+
 ### Major Changes: Keyboard Shortcuts - Full Implementation
 
 #### Library Removal (2026-04-26)

@@ -128,7 +128,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
    */
   connectSse(runId: number) {
     this.disconnectSse();
-    const baseUrl = 'http://localhost:8080';
+    const baseUrl = 'http://localhost:1488';
     const sseUrl = `${baseUrl}/api/pipeline-runs/${runId}/stream`;
     console.log('Connecting to SSE:', sseUrl);
     this.eventSource = new EventSource(sseUrl);

@@ -97,6 +97,7 @@ export interface PipelineRun {
   completedAt?: string;
   createdAt?: string;
   steps?: PipelineRunStep[];
+  runDir?: string;
 }
 
 /**
@@ -431,19 +432,18 @@ export interface SprintReview {
 @Injectable({
   providedIn: 'root'
 })
-/**
- * Serviço responsável pela comunicação com a API backend.
- * Fornece métodos para requisições HTTP relacionadas a projetos, agentes, skills, etc.
- *
- * @author Seu Nome
- * @since 2024
- * @service
- * @description Serviço de integração com endpoints REST do backend.
- */
 export class ApiService {
   private baseUrl = '/api';
-
+  
   constructor(private http: HttpClient) {}
+  
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+  
+  setBaseUrl(url: string): void {
+    this.baseUrl = url;
+  }
 
   async getVersion(): Promise<string> {
     try {
@@ -760,6 +760,12 @@ export class ApiService {
   getPipelineRunById(runId: number): Observable<PipelineRun> {
     return this.http.get<PipelineRun>(`${this.baseUrl}/pipeline-runs/${runId}`).pipe(
       catchError(this.handleError('getPipelineRunById', {} as PipelineRun))
+    );
+  }
+
+  getStepFileOutput(runId: number, stepOrder: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/pipeline-runs/${runId}/steps/${stepOrder}/file-output`).pipe(
+      catchError(this.handleError('getStepFileOutput', { fileExists: false, message: 'Error fetching file output' }))
     );
   }
 

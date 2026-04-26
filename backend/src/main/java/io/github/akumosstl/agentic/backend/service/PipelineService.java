@@ -166,6 +166,12 @@ Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
         
         String outputExtension = pipeline.getOutputExtension() != null ? pipeline.getOutputExtension() : "txt";
         
+        PipelineRun runForDir = getPipelineRunService().getRunById(runId);
+        if (runForDir != null) {
+            runForDir.setRunDir(runDirPath);
+            getPipelineRunService().saveRun(runForDir);
+        }
+        
         final String runDirFinal = runDirPath;
         final Long finalRunId = runId;
         final Long finalPipelineIdUsed = finalPipelineId;

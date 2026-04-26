@@ -8,6 +8,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
 import { OutputDialogComponent } from '../../components/output-dialog/output-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-pipeline-run-history',
@@ -17,7 +18,9 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    OutputDialogComponent,
+    ConfirmDialogComponent
   ],
   template: `
     <div class="history-screen">
@@ -80,6 +83,11 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
         </div>
         
         <div class="right-panel">
+          <div class="pipeline-directory" *ngIf="selectedRun?.runDir">
+            <mat-icon>folder</mat-icon>
+            <span class="dir-path">{{ selectedRun?.runDir }}</span>
+          </div>
+          
           <div class="pipeline-visualization" *ngIf="selectedRun && selectedRun.steps?.length">
             <div class="pipeline-header">
               <mat-icon>alt_route</mat-icon>
@@ -124,6 +132,10 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
               <button class="output-btn" (click)="openOutputModal()">
                 <mat-icon>output</mat-icon>
                 <span>Output</span>
+              </button>
+              <button class="file-output-btn" (click)="openFileOutputModal()" [disabled]="selectedRun?.status === 'running'">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span>File output</span>
               </button>
             </div>
           </div>
@@ -663,6 +675,58 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       color: #4fc3f7;
     }
     
+    .file-output-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .file-output-btn:hover:not(:disabled) {
+      background: #3a3a3a;
+      border-color: #ff9800;
+    }
+    
+    .file-output-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .file-output-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #ff9800;
+    }
+    
+    .pipeline-directory {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .pipeline-directory mat-icon {
+      color: #ff9800;
+    }
+    
+    .dir-path {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.85rem;
+      color: #888;
+      word-break: break-all;
+    }
+    
     .console-output {
       flex: 1;
       display: flex;
@@ -875,7 +939,53 @@ export class PipelineRunHistoryComponent implements OnInit {
       });
     }
   }
-  
+
+  openFileOutputModal() {
+    if (!this.selectedStep || !this.selectedRun || !this.selectedRun.id) {
+      return;
+    }
+
+    this.apiService.getStepFileOutput(this.selectedRun.id, this.selectedStep.stepOrder!).subscribe({
+      next: (response: any) => {
+        if (response.fileExists === false) {
+          const dialogData: ConfirmDialogData = {
+            title: 'File Not Found',
+            message: response.message || 'Output file no longer exists. Expected path: ' + response.expectedPath
+          };
+          this.dialog.open(ConfirmDialogComponent, {
+            width: '450px',
+            data: dialogData
+          });
+        } else {
+          this.dialog.open(OutputDialogComponent, {
+            width: '80vw',
+            height: '70vh',
+            maxWidth: '900px',
+            data: {
+              step: {
+                ...this.selectedStep,
+                outputContent: response.content
+              },
+              type: 'output'
+            },
+            panelClass: 'output-dialog-panel'
+          });
+        }
+      },
+      error: (err: any) => {
+        console.error('Error fetching file output:', err);
+        const dialogData: ConfirmDialogData = {
+          title: 'Error',
+          message: 'Failed to fetch file output: ' + (err.message || 'Unknown error')
+        };
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '400px',
+          data: dialogData
+        });
+      }
+    });
+  }
+
   formatDate(dateStr?: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);

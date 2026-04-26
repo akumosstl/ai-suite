@@ -120,6 +120,11 @@ public class PipelineRunService {
     }
     
     @Transactional
+    public PipelineRun saveRun(PipelineRun run) {
+        return pipelineRunRepository.save(run);
+    }
+    
+    @Transactional
     public void deleteRun(Long id) {
         PipelineRun run = getRunById(id);
         run.getSteps().clear();

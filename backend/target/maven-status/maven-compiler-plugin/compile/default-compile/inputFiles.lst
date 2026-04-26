@@ -9,6 +9,7 @@ C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\TargetRepository.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\repository\AgentRepository.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\VersionController.java
+C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\ConfigService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\ProjectService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\model\PipelineRun.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\BackendApplication.java
@@ -35,6 +36,7 @@ C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\AgentService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\NamespaceController.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\ExitController.java
+C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\SimpleConfigController.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\service\InstructionService.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\PluginRegistryController.java
 C:\Users\USER\projects\github\ai-suite\backend\src\main\java\io\github\akumosstl\agentic\backend\controller\TargetController.java

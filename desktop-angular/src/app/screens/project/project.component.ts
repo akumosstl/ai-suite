@@ -64,7 +64,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   message: string = '';
   messageType: 'success' | 'error' = 'success';
   leftPanelCollapsed = false;
-  baseUrl = 'http://localhost:8080/';
+  baseUrl = 'http://localhost:1488/';
   newPipeline: Pipeline = {
     name: '',
     description: '',

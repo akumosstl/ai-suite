@@ -27,6 +27,7 @@ io\github\akumosstl\agentic\backend\controller\TargetController$ErrorResponse.cl
 io\github\akumosstl\agentic\backend\model\PipelineRun.class
 io\github\akumosstl\agentic\backend\model\Event.class
 io\github\akumosstl\agentic\backend\repository\PipelineRunRepository.class
+io\github\akumosstl\agentic\backend\service\ConfigService.class
 io\github\akumosstl\agentic\backend\controller\SseController.class
 io\github\akumosstl\agentic\backend\model\Instruction.class
 io\github\akumosstl\agentic\backend\controller\ExitController.class
@@ -34,6 +35,7 @@ io\github\akumosstl\agentic\backend\model\Target.class
 io\github\akumosstl\agentic\backend\service\InstructionService.class
 io\github\akumosstl\agentic\backend\model\Agent.class
 io\github\akumosstl\agentic\backend\service\AgentService.class
+io\github\akumosstl\agentic\backend\controller\SimpleConfigController.class
 io\github\akumosstl\agentic\backend\repository\PipelineRepository.class
 io\github\akumosstl\agentic\backend\model\PipelineStep.class
 io\github\akumosstl\agentic\backend\repository\ScriptRepository.class

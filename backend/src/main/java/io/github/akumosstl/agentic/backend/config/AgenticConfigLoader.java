@@ -18,7 +18,7 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
     private static final String AGENTIC_JSON_PATH = AGENTIC_DIR + File.separator + "agentic.json";
 
     private static String databasePath;
-    private static int serverPort = 8080;
+    private static int serverPort = 1488;
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -49,7 +49,7 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
         String defaultConfig = """
             {
               "version": "1.0.0",
-              "port": 8080,
+              "port": 1488,
               "database": {
                 "path": "db/agentic_db"
               }
