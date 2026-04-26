@@ -18,11 +18,12 @@ import { ApiService } from '../../services/api.service'
 import { UpdateService } from '../../services/update.service'
 import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
 import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
+import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.component'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, BackupDialogComponent, UpdateDialogComponent, PluginsModalComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, BackupDialogComponent, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -141,13 +142,10 @@ import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
         </button>
       </mat-menu>
 
-      <button class="menu-button" [matMenuTriggerFor]="infoMenu">
+      <button class="menu-button" (click)="openShortcuts()">
         <mat-icon>info</mat-icon>
         <span>Info</span>
-        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
       </button>
-      <mat-menu #infoMenu="matMenu" class="custom-menu">
-      </mat-menu>
         </ng-container>
         
         <ng-container *ngIf="isMainPage(); else homeButton">
@@ -344,6 +342,7 @@ selectedProjectId: number | null = null;
  * Subscription para eventos de navegação do Angular Router.
  */
 private routerSubscription: Subscription | null = null;
+  private keydownHandler!: (event: KeyboardEvent) => void;
 
   /**
  * Injeta dependências necessárias para navegação, diálogos, contexto de projeto, API e notificações.
@@ -377,6 +376,60 @@ ngOnInit(): void {
     });
     
     this.updateNavigationState(this.router.url);
+
+    this.keydownHandler = (event: KeyboardEvent) => {
+      if (!event.ctrlKey || !event.shiftKey) return;
+      
+      const key = event.key.toLowerCase();
+      
+      switch (key) {
+        case 'a':
+          event.preventDefault();
+          this.router.navigate(['/agents']);
+          break;
+        case 's':
+          event.preventDefault();
+          this.router.navigate(['/scripts']);
+          break;
+        case 't':
+          event.preventDefault();
+          this.router.navigate(['/templates']);
+          break;
+        case 'n':
+          event.preventDefault();
+          this.router.navigate(['/namespaces']);
+          break;
+        case 'i':
+          event.preventDefault();
+          this.router.navigate(['/instructions']);
+          break;
+        case 'l':
+          event.preventDefault();
+          this.router.navigate(['/pipelines']);
+          break;
+        case 'p':
+          event.preventDefault();
+          if (!this.isMainPage() && !this.isProjectPage()) {
+            this.goToProject();
+          }
+          break;
+        case 'q':
+          event.preventDefault();
+          this.openShortcuts();
+          break;
+        case 'x':
+          event.preventDefault();
+          this.openPluginsModal();
+          break;
+        case 'h':
+          if (event.altKey && event.ctrlKey) {
+            event.preventDefault();
+            this.goHome();
+          }
+          break;
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler);
   }
 
   /**
@@ -385,6 +438,9 @@ ngOnInit(): void {
 ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
+    }
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
     }
   }
 
@@ -551,5 +607,9 @@ ngOnDestroy(): void {
         this.snackBar.open('Backup completed successfully!', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  openShortcuts(): void {
+    this.dialog.open(ShortcutsDialogComponent);
   }
 }

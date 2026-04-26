@@ -25,6 +25,7 @@ import { PipelineResultDialogComponent } from '../../components/pipeline-result-
 import { AddInstructionFileDialogComponent, InstructionFileData } from '../../components/add-instruction-file-dialog/add-instruction-file-dialog.component';
 import { EditFileDialogComponent } from '../../components/edit-file-dialog/edit-file-dialog.component';
 import { PromptEditorModalComponent } from '../../components/prompt-editor-modal/prompt-editor-modal.component';
+import { SyncInstructionFilesDialogComponent } from '../../components/sync-instruction-files-dialog/sync-instruction-files-dialog.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -54,6 +55,7 @@ import { ProjectContextService } from '../../services/project-context.service';
     MenuBarComponent,
     PipelineResultDialogComponent,
     PromptEditorModalComponent,
+    SyncInstructionFilesDialogComponent,
     EditFileDialogComponent,
     PanelToggleComponent
   ],
@@ -213,6 +215,10 @@ import { ProjectContextService } from '../../services/project-context.service';
                 <button mat-stroked-button class="add-file-btn" (click)="openAddFileDialog()">
                   <mat-icon>add</mat-icon>
                   Add File
+                </button>
+                <button mat-stroked-button class="sync-btn" (click)="openSyncDialog()" [disabled]="formInstructionFiles.length === 0">
+                  <mat-icon>sync</mat-icon>
+                  Sync
                 </button>
               </div>
               
@@ -703,7 +709,23 @@ import { ProjectContextService } from '../../services/project-context.service';
     .add-file-btn:hover {
       background: rgba(79, 195, 247, 0.1);
     }
-    
+
+    .sync-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #ffb74d !important;
+      border-color: #ffb74d !important;
+    }
+
+    .sync-btn:hover {
+      background: rgba(255, 183, 77, 0.1);
+    }
+
+    .sync-btn:disabled {
+      opacity: 0.5;
+    }
+
     .files-table {
       border: 1px solid #2a2a2a;
       border-radius: 6px;
@@ -1012,10 +1034,17 @@ export class InstructionsComponent implements OnInit, OnDestroy {
     this.toggleLeftPanel();
   }
 
-  @HostListener('document:keydown.control.e')
+  @HostListener('document:keydown.control.shift.e')
   onOpenInEditor(): void {
     if (this.selectedInstruction) {
       this.openInstructionsEditor();
+    }
+  }
+
+  @HostListener('document:keydown.control.shift.k')
+  onCopyToClipboard(): void {
+    if (this.selectedInstruction?.instructions) {
+      this.copyToClipboard(this.selectedInstruction.instructions);
     }
   }
 
@@ -1076,6 +1105,48 @@ export class InstructionsComponent implements OnInit, OnDestroy {
           };
           this.formInstructionFiles.push(newFile);
           this.cdr.detectChanges();
+        }
+      });
+    });
+  }
+
+  openSyncDialog(): void {
+    if (this.formInstructionFiles.length === 0) {
+      this.statusMessage = 'No files to sync. Add files first.';
+      return;
+    }
+
+    const dialogRef = this.dialog.open(SyncInstructionFilesDialogComponent, {
+      width: '550px',
+      panelClass: 'custom-dialog',
+      data: {
+        files: [...this.formInstructionFiles],
+        instructionName: this.formInstruction.name,
+        targetPath: '',
+        loading: false
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.ngZone.run(() => {
+        if (result && result.selectedFiles.length > 0) {
+          this.apiService.syncInstructionFilesToFilesystem(
+            result.targetPath,
+            result.selectedFiles
+          ).subscribe({
+            next: (response) => {
+              this.ngZone.run(() => {
+                this.statusMessage = `Successfully synced ${result.selectedFiles.length} files to ${result.targetPath}`;
+                this.cdr.detectChanges();
+              });
+            },
+            error: (err) => {
+              this.ngZone.run(() => {
+                this.statusMessage = 'Error syncing files: ' + err.message;
+                this.cdr.detectChanges();
+              });
+            }
+          });
         }
       });
     });

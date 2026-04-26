@@ -102,10 +102,17 @@ toggleLeftPanel(): void {
     this.toggleLeftPanel();
   }
 
-  @HostListener('document:keydown.control.e')
+  @HostListener('document:keydown.control.shift.e')
   onOpenInEditor(): void {
     if (this.selectedAgent) {
       this.openPromptEditor();
+    }
+  }
+
+  @HostListener('document:keydown.control.shift.k')
+  onCopyToClipboard(): void {
+    if (this.selectedAgent?.prompt) {
+      this.copyToClipboard(this.selectedAgent.prompt);
     }
   }
 

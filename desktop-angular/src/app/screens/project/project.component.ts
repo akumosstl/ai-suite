@@ -88,6 +88,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   projectFiles: ProjectFile[] = [];
 
   private runningCheckInterval: any;
+  private keydownHandler!: (event: KeyboardEvent) => void;
 
   constructor(
     private route: ActivatedRoute,
@@ -171,11 +172,33 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.pipelines = [];
       }
     });
+
+    this.keydownHandler = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'r') {
+          event.preventDefault();
+          event.stopPropagation();
+          console.log('Shortcut Ctrl+Shift+R detected');
+          this.runPipeline();
+        }
+      }
+      if (!event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === 'x' && this.isRunningPipeline) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('Shortcut Ctrl+X detected');
+        this.stopPipeline();
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler);
   }
 
   ngOnDestroy() {
     if (this.runningCheckInterval) {
       clearInterval(this.runningCheckInterval);
+    }
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
     }
   }
 
@@ -409,6 +432,34 @@ export class ProjectComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown.control.b')
   onToggleLeftPanel(): void {
     this.toggleLeftPanel();
+  }
+
+  @HostListener('document:keydown.control.alt.r')
+  onRunPipelineBackground(): void {
+    this.runPipelineBackground();
+  }
+
+  runPipelineBackground() {
+    if (!this.selectedPipeline?.id || this.pipelineSteps.length === 0 || !this.project?.id) {
+      return;
+    }
+
+    this.isRunningPipeline = true;
+    this.runningPipelineId = this.selectedPipeline.id;
+    const pipelineId = this.selectedPipeline.id;
+    const projectId = this.project.id;
+
+    this.apiService.runPipeline(projectId, pipelineId).subscribe({
+      next: () => {
+        this.showMessage('Pipeline started in background', 'success');
+      },
+      error: (err) => {
+        console.error('Error running pipeline:', err);
+        this.isRunningPipeline = false;
+        this.runningPipelineId = null;
+        this.showMessage('Error running pipeline: ' + err.message, 'error');
+      }
+    });
   }
 
   /**

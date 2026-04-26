@@ -1131,6 +1131,17 @@ export class ApiService {
     }).pipe(catchError(this.handleError<InstructionFile>('updateInstructionFile', {} as InstructionFile)));
   }
 
+  syncInstructionFilesToFilesystem(targetPath: string, files: InstructionFile[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/instruction-files/sync-to-filesystem`, {
+      targetPath,
+      files: files.map(f => ({
+        path: f.path,
+        fileName: f.fileName,
+        content: f.content
+      }))
+    }).pipe(catchError(this.handleError('syncInstructionFilesToFilesystem', { success: false })));
+  }
+
   // Plugins
   getPlugins(page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/plugins`, {

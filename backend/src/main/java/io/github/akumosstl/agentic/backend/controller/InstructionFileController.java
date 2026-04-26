@@ -45,4 +45,12 @@ public class InstructionFileController {
         String content = request.get("content");
         return instructionFileService.updateFile(id, path, fileName, content);
     }
+
+    @PostMapping("/sync-to-filesystem")
+    public ResponseEntity<Map<String, Object>> syncToFilesystem(@RequestBody Map<String, Object> request) {
+        String targetPath = (String) request.get("targetPath");
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> files = (List<Map<String, String>>) request.get("files");
+        return ResponseEntity.ok(instructionFileService.syncToFilesystem(targetPath, files));
+    }
 }

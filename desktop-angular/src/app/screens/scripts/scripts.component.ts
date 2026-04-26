@@ -920,10 +920,17 @@ export class ScriptsComponent implements OnInit, OnDestroy {
     this.toggleLeftPanel();
   }
 
-  @HostListener('document:keydown.control.e')
+  @HostListener('document:keydown.control.shift.e')
   onOpenInEditor(): void {
     if (this.selectedScript) {
       this.openContentEditor();
+    }
+  }
+
+  @HostListener('document:keydown.control.shift.k')
+  onCopyToClipboard(): void {
+    if (this.selectedScript?.content) {
+      this.copyToClipboard(this.selectedScript.content);
     }
   }
 

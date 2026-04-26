@@ -11,7 +11,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class InstructionFileService {
@@ -92,5 +95,55 @@ public class InstructionFileService {
         if (content != null) instructionFile.setContent(content);
         
         return instructionFileRepository.save(instructionFile);
+    }
+
+    public Map<String, Object> syncToFilesystem(String targetPath, List<Map<String, String>> files) {
+        Map<String, Object> result = new HashMap<>();
+        int successCount = 0;
+        int errorCount = 0;
+        List<String> errors = new java.util.ArrayList<>();
+
+        try {
+            Path basePath = Paths.get(targetPath);
+            Files.createDirectories(basePath);
+
+            for (Map<String, String> file : files) {
+                String filePath = file.get("path");
+                String fileName = file.get("fileName");
+                String content = file.get("content");
+
+                try {
+                    Path fullPath;
+                    if (filePath != null && !filePath.isEmpty()) {
+                        fullPath = basePath.resolve(filePath).resolve(fileName);
+                    } else {
+                        fullPath = basePath.resolve(fileName);
+                    }
+
+                    Files.createDirectories(fullPath.getParent());
+                    Files.writeString(fullPath, content != null ? content : "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    successCount++;
+                    System.out.println("File synced to filesystem: " + fullPath);
+                } catch (Exception e) {
+                    errorCount++;
+                    errors.add("Error syncing " + fileName + ": " + e.getMessage());
+                    System.err.println("Error syncing file " + fileName + ": " + e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            result.put("success", false);
+            result.put("message", "Error creating target directory: " + e.getMessage());
+            return result;
+        }
+
+        result.put("success", errorCount == 0);
+        result.put("message", "Synced " + successCount + " files" + (errorCount > 0 ? ", " + errorCount + " errors" : ""));
+        result.put("successCount", successCount);
+        result.put("errorCount", errorCount);
+        if (!errors.isEmpty()) {
+            result.put("errors", errors);
+        }
+
+        return result;
     }
 }

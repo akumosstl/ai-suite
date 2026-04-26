@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -1003,6 +1003,16 @@ export class PipelinesComponent implements OnInit {
     } else {
       this.router.navigate(['/project']);
     }
+  }
+
+  @HostListener('document:keydown.control.alt.p')
+  onGoBack(): void {
+    this.goBack();
+  }
+
+  @HostListener('document:keydown.control.shift.u')
+  onRefresh(): void {
+    this.loadRuns();
   }
   
   loadRuns(page = 0, projectName?: string) {
