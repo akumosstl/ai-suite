@@ -1,6 +1,7 @@
 package io.github.akumosstl.agentic.backend.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -59,8 +60,9 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
     }
 
     private void loadConfig(File file) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> config = mapper.readValue(file, Map.class);
+        Gson gson = new Gson();
+        String content = Files.readString(file.toPath());
+        Map<String, Object> config = gson.fromJson(content, new TypeToken<Map<String, Object>>() {}.getType());
         
         Object portObj = config.get("port");
         if (portObj != null) {

@@ -142,6 +142,25 @@ cd desktop-angular
 npm test
 ```
 
+## MCP Server (opencode)
+
+Add this to your `opencode.json` to connect opencode to the Agentic MCP server:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "agentic-mcp": {
+      "type": "remote",
+      "url": "http://localhost:1488/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+The MCP server exposes 67 tools for managing projects, pipelines, agents, scripts, instructions, targets, templates, and system operations. It is enabled by default when `mcp.enabled=true` in `application.properties`.
+
 ## Version
 
 2.0.0 - AI Pipeline Execution System
