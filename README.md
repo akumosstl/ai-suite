@@ -161,6 +161,32 @@ Add this to your `opencode.json` to connect opencode to the Agentic MCP server:
 
 The MCP server exposes 67 tools for managing projects, pipelines, agents, scripts, instructions, targets, templates, and system operations. It is enabled by default when `mcp.enabled=true` in `application.properties`.
 
+### MCP Usage Examples
+
+**Example 1 — Check how many pipelines are currently running:**
+
+```
+@list_all_pipeline_runs
+```
+
+Returns all pipeline runs across every project. Filter the results by `"status": "running"` to see which pipelines are actively executing. To get detailed step-by-step results for a specific run:
+
+```
+@get_pipeline_run id=3
+```
+
+**Example 2 — View project details with pipelines:**
+
+```
+@list_projects_with_pipelines
+```
+
+Returns every project along with its pipelines (names, statuses, step counts). For full details on a single project (agents, scripts, instructions):
+
+```
+@get_project id=1
+```
+
 ## Version
 
 2.0.0 - AI Pipeline Execution System
