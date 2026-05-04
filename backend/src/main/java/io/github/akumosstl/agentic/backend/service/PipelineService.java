@@ -2,6 +2,7 @@ package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
@@ -17,7 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class PipelineService {
@@ -109,6 +113,91 @@ public class PipelineService {
 
     public List<Pipeline> getAllPipelines() {
         return pipelineRepository.findAll();
+    }
+
+    @Transactional
+    public Pipeline duplicatePipeline(Long sourcePipelineId, String newName) {
+        Pipeline source = getPipelineById(sourcePipelineId);
+
+        Project project = source.getProject();
+        Long projectId = project.getId();
+
+        String finalName;
+        if (newName != null && !newName.trim().isEmpty()) {
+            finalName = newName.trim();
+        } else {
+            finalName = generateDuplicateName(projectId, source.getName());
+        }
+
+        Pipeline duplicate = new Pipeline();
+        duplicate.setName(finalName);
+        duplicate.setDescription(source.getDescription());
+        duplicate.setStatus("pending");
+        duplicate.setOutputExtension(source.getOutputExtension());
+        duplicate.setType(source.getType());
+        duplicate.setProject(project);
+
+        List<PipelineStep> sourceSteps = source.getSteps();
+        List<PipelineStep> newSteps = new ArrayList<>();
+        for (PipelineStep sourceStep : sourceSteps) {
+            PipelineStep newStep = new PipelineStep();
+            newStep.setPipeline(duplicate);
+            newStep.setAgent(sourceStep.getAgent());
+            newStep.setScript(sourceStep.getScript());
+            newStep.setStepOrder(sourceStep.getStepOrder());
+            newStep.setStatus("pending");
+            newStep.setInputContent(sourceStep.getInputContent());
+            newStep.setInputType(sourceStep.getInputType());
+            newStep.setOutputContent(sourceStep.getOutputContent());
+            newStep.setOutputType(sourceStep.getOutputType());
+            newStep.setStepOutput(sourceStep.getStepOutput());
+            newStep.setStepOutputType(sourceStep.getStepOutputType());
+            newStep.setCli(sourceStep.getCli());
+            newStep.setParameters(sourceStep.getParameters());
+            newStep.setArguments(sourceStep.getArguments());
+            newStep.setType(sourceStep.getType());
+            newStep.setRuntime(sourceStep.getRuntime());
+            newSteps.add(newStep);
+        }
+        duplicate.setSteps(newSteps);
+
+        return pipelineRepository.save(duplicate);
+    }
+
+    private String generateDuplicateName(Long projectId, String baseName) {
+        String candidate = baseName + "copy";
+        List<Pipeline> existing = pipelineRepository.findByProject_IdAndNameStartingWith(projectId, candidate);
+
+        if (existing.isEmpty()) {
+            if (!pipelineRepository.findByProject_IdAndName(projectId, candidate).isEmpty()) {
+                return candidate + "(1)";
+            }
+            return candidate;
+        }
+
+        Pattern pattern = Pattern.compile("^" + Pattern.quote(candidate) + "(?:\\((\\d+)\\))?$");
+        int maxNumber = 0;
+        boolean exactMatch = false;
+
+        for (Pipeline p : existing) {
+            Matcher m = pattern.matcher(p.getName());
+            if (m.matches()) {
+                if (m.group(1) == null) {
+                    exactMatch = true;
+                } else {
+                    maxNumber = Math.max(maxNumber, Integer.parseInt(m.group(1)));
+                }
+            }
+        }
+
+        if (!exactMatch) {
+            List<Pipeline> exactPipelines = pipelineRepository.findByProject_IdAndName(projectId, candidate);
+            if (exactPipelines.isEmpty()) {
+                return candidate;
+            }
+        }
+
+        return candidate + "(" + (maxNumber + 1) + ")";
     }
     
     public void runPipeline(Long pipelineId) {

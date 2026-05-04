@@ -40,10 +40,14 @@
                                 {{ pipeline.status || 'pending' }}
                             </span>
                         </div>
-                        <button class="icon-btn delete-btn" (click)="deletePipeline(pipeline, $event)"
-                            title="Delete pipeline">
-                            <mat-icon>delete</mat-icon>
-                        </button>
+          <button class="icon-btn duplicate-btn" (click)="duplicatePipeline(pipeline, $event)"
+            title="Duplicate pipeline">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <button class="icon-btn delete-btn" (click)="deletePipeline(pipeline, $event)"
+            title="Delete pipeline">
+            <mat-icon>delete</mat-icon>
+          </button>
                     </div>
                 </li>
             </ul>

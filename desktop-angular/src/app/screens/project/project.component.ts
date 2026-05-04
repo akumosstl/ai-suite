@@ -26,6 +26,7 @@ import { StepSettingsDialogComponent } from '../../components/step-settings-dial
 import { CreateFileDialogComponent } from '../../components/create-file-dialog/create-file-dialog.component';
 import { EditPipelineDialogComponent } from '../../components/edit-pipeline-dialog/edit-pipeline-dialog.component';
 import { ProjectReadmeDialogComponent } from '../../components/project-readme-dialog/project-readme-dialog.component';
+import { DuplicatePipelineDialogComponent } from '../../components/duplicate-pipeline-dialog/duplicate-pipeline-dialog.component';
 
 /**
  * Componente principal de gerenciamento de projetos e pipelines.
@@ -38,7 +39,7 @@ import { ProjectReadmeDialogComponent } from '../../components/project-readme-di
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent, DuplicatePipelineDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -917,6 +918,64 @@ export class ProjectComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  duplicatePipeline(pipeline: Pipeline, event: Event) {
+    event.stopPropagation();
+
+    if (!pipeline.id || !this.project?.id) {
+      return;
+    }
+
+    const suggestedName = this.generateDuplicateName(pipeline.name);
+    const projectId = this.project.id;
+
+    this.dialog.open(DuplicatePipelineDialogComponent, {
+      width: '500px',
+      data: { name: suggestedName }
+    }).afterClosed().subscribe((newName: string | undefined) => {
+      if (newName && this.project?.id) {
+        this.apiService.duplicatePipeline(this.project.id, pipeline.id!, newName).subscribe({
+          next: (duplicated) => {
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: true,
+                message: `Pipeline "${newName}" created successfully!`
+              }
+            }).afterClosed().subscribe(() => {
+              if (this.project) {
+                this.loadPipelines(this.project.id!);
+              }
+              this.pipelinesExpanded = true;
+            });
+          },
+          error: (error) => {
+            console.error('Error duplicating pipeline:', error);
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: false,
+                message: 'Failed to duplicate pipeline. Please try again.'
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  generateDuplicateName(baseName: string): string {
+    const candidate = baseName + 'copy';
+    const existingNames = this.pipelines.map(p => p.name.toLowerCase());
+
+    if (!existingNames.includes(candidate.toLowerCase())) {
+      return candidate;
+    }
+
+    let counter = 1;
+    while (existingNames.includes((candidate + '(' + counter + ')').toLowerCase())) {
+      counter++;
+    }
+    return candidate + '(' + counter + ')';
   }
 
   openInput(step: PipelineStep): void {

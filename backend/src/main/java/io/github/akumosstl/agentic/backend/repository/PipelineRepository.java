@@ -28,6 +28,10 @@ public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
     
     List<Pipeline> findByProject_IdOrderByCreatedAtDesc(Long projectId);
     
+    List<Pipeline> findByProject_IdAndName(Long projectId, String name);
+
+    List<Pipeline> findByProject_IdAndNameStartingWith(Long projectId, String namePrefix);
+
     List<Pipeline> findByProject_IdAndStatus(Long projectId, String status);
     
     List<Pipeline> findByStatus(String status);

@@ -174,17 +174,17 @@ public class PipelineController {
     @PostMapping("/{id}/stop")
     public Map<String, Object> stopPipeline(@PathVariable Long projectId, @PathVariable Long id) {
         pipelineStepService.stopPipelineExecution(id);
-        
+
         var pipeline = pipelineService.getPipelineById(id);
         pipeline.setStatus("stopped");
         pipelineService.getPipelineRepository().save(pipeline);
-        
+
         List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(id);
         if (runs != null && !runs.isEmpty()) {
             PipelineRun run = runs.get(0);
             run.setStatus("stopped");
             pipelineRunRepository.save(run);
-            
+
             for (PipelineRunStep step : run.getSteps()) {
                 if ("running".equals(step.getStatus()) || "ready".equals(step.getStatus())) {
                     step.setStatus("stopped");
@@ -192,11 +192,20 @@ public class PipelineController {
             }
             pipelineRunRepository.save(run);
         }
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Pipeline stopped");
         response.put("pipelineId", id);
-        
+
         return response;
+    }
+
+    @PostMapping("/{id}/duplicate")
+    public Pipeline duplicatePipeline(
+            @PathVariable Long projectId,
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String newName = body != null ? body.get("name") : null;
+        return pipelineService.duplicatePipeline(id, newName);
     }
 }

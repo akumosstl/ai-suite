@@ -648,6 +648,12 @@ export class ApiService {
     );
   }
 
+  duplicatePipeline(projectId: number, pipelineId: number, name: string): Observable<Pipeline> {
+    return this.http.post<Pipeline>(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/duplicate`, { name }).pipe(
+      catchError(this.handleError('duplicatePipeline', {} as Pipeline))
+    );
+  }
+
   // Pipeline Steps
   getPipelineSteps(pipelineId: number): Observable<PipelineStep[]> {
     return this.http.get<PipelineStep[]>(`${this.baseUrl}/pipelines/${pipelineId}/steps`).pipe(

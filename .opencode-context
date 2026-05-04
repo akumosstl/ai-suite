@@ -15,6 +15,8 @@
 
 ## 📍 Current State (Session: 2026-04-26)
 
+## 📍 Current State (Session: 2026-05-03)
+
 ### Dynamic Port Configuration
 
 #### Development Mode
@@ -290,6 +292,28 @@ onOpenInEditor(): void {
 2. [x] Create sync dialog modal for file selection
 3. [x] Add backend endpoint for filesystem sync
 4. [ ] Test sync functionality end-to-end
+
+---
+
+### Duplicate Pipeline Feature (Session: 2026-05-03)
+
+Added "Duplicate Pipeline" button on the project page, next to the delete button in the pipeline list.
+
+**Backend changes:**
+- `PipelineRepository.java` - Added `findByProject_IdAndName()` and `findByProject_IdAndNameStartingWith()` methods
+- `PipelineService.java` - Added `duplicatePipeline(sourcePipelineId, newName)` method with smart name generation:
+  - Suggests `Acopy` for pipeline `A`
+  - If `Acopy` exists, suggests `Acopy(1)`, then `Acopy(2)`, etc.
+  - Copies all steps with their configuration (agent, script, I/O, CLI, parameters, etc.)
+  - New pipeline status is always "pending"
+- `PipelineController.java` - New endpoint: `POST /api/projects/{projectId}/pipelines/{id}/duplicate` (body: `{ "name": "..." }`)
+
+**Frontend changes:**
+- `duplicate-pipeline-dialog/` - New dialog component for naming the duplicated pipeline
+- `api.service.ts` - Added `duplicatePipeline(projectId, pipelineId, name)` method
+- `project.component.ts` - Added `duplicatePipeline()` method and `generateDuplicateName()` helper
+- `project.component.html` - Added duplicate button (content_copy icon) next to delete button
+- `project.component.css` - Added `.icon-btn.duplicate-btn` styles
 
 ---
 

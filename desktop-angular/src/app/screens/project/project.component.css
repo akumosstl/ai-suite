@@ -98,12 +98,22 @@
       color: #ffffff;
     }
     
-    .icon-btn.delete-btn {
-      margin-left: auto;
-      opacity: 0.6;
-    }
-    
-    .icon-btn.delete-btn:hover {
+.icon-btn.delete-btn {
+  opacity: 0.6;
+}
+
+.icon-btn.duplicate-btn {
+  opacity: 0.6;
+}
+
+.icon-btn.duplicate-btn:hover {
+  background: #1565c0;
+  border-color: #1976d2;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.icon-btn.delete-btn:hover {
       background: #c62828;
       border-color: #f44336;
       color: #ffffff;

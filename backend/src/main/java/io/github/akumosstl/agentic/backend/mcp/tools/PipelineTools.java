@@ -30,9 +30,10 @@ public class PipelineTools {
 		tools.add(createPipeline());
 		tools.add(updatePipeline());
 		tools.add(deletePipeline());
-		tools.add(runPipeline());
-		tools.add(stopPipeline());
-		return tools;
+    tools.add(runPipeline());
+        tools.add(stopPipeline());
+        tools.add(duplicatePipeline());
+        return tools;
 	}
 
 	private SyncToolSpecification listPipelines() {
@@ -218,7 +219,35 @@ public class PipelineTools {
 			.build();
 	}
 
-	private SyncToolSpecification stopPipeline() {
+    private SyncToolSpecification duplicatePipeline() {
+        return SyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder()
+                        .name("duplicate_pipeline")
+                        .description("Duplicate a pipeline, copying all steps and configurations. A new name can be provided; if omitted, a default name like 'OriginalNamecopy' is generated.")
+                        .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
+                                "id", Map.of("type", "integer", "description", "Pipeline ID to duplicate (required)"),
+                                "name", Map.of("type", "string", "description", "Name for the duplicated pipeline (optional, auto-generated if omitted)")
+                        ), List.of("id")))
+                        .build())
+                .callHandler((exchange, request) -> {
+                    try {
+                        Long id = ((Number) request.arguments().get("id")).longValue();
+                        String newName = (String) request.arguments().get("name");
+                        Pipeline duplicated = pipelineService.duplicatePipeline(id, newName);
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(McpResponseFormatter.text("Pipeline duplicated successfully.\n\n" + McpResponseFormatter.formatPipeline(duplicated))))
+                                .build();
+                    } catch (Exception e) {
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(McpResponseFormatter.text("Error duplicating pipeline: " + e.getMessage())))
+                                .isError(true)
+                                .build();
+                    }
+                })
+                .build();
+    }
+
+    private SyncToolSpecification stopPipeline() {
 		return SyncToolSpecification.builder()
 			.tool(McpSchema.Tool.builder()
 				.name("stop_pipeline")
