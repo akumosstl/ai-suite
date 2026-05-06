@@ -103,13 +103,14 @@ public class BackupService {
         if (agents.isEmpty()) return "";
         
         sql.append("-- Agents\n");
-        sql.append("INSERT INTO agent (id, name, namespace, description, prompt, path, created_at, updated_at) VALUES\n");
-        
+        sql.append("INSERT INTO agent (id, name, namespace, category, description, prompt, path, created_at, updated_at) VALUES\n");
+
         for (int i = 0; i < agents.size(); i++) {
             Agent a = agents.get(i);
             sql.append("(").append(a.getId()).append(", ");
             sql.append("'").append(escape(a.getName())).append("', ");
             sql.append("'").append(escape(a.getNamespace())).append("', ");
+            sql.append("'").append(escape(a.getCategory())).append("', ");
             sql.append("'").append(escape(a.getDescription())).append("', ");
             sql.append("'").append(escape(a.getPrompt())).append("', ");
             sql.append("'").append(escape(a.getPath())).append("', ");

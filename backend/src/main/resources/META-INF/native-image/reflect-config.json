@@ -84,5 +84,41 @@
     "allPublicMethods": true,
     "allDeclaredConstructors": true,
     "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpError",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpError$Builder",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCRequest",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCResponse",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCResponse$JSONRPCError",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCNotification",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
   }
 ]

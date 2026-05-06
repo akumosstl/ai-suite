@@ -54,6 +54,7 @@ io\github\akumosstl\agentic\backend\repository\ScriptRepository.class
 io\github\akumosstl\agentic\backend\service\ProjectService.class
 io\github\akumosstl\agentic\backend\controller\AgentController.class
 io\github\akumosstl\agentic\backend\mcp\JsonSchemaBuilder.class
+io\github\akumosstl\agentic\backend\config\NativeImageReflectionConfig.class
 io\github\akumosstl\agentic\backend\service\ExportImportService.class
 io\github\akumosstl\agentic\backend\config\AgenticConfigLoader$1.class
 io\github\akumosstl\agentic\backend\controller\PluginRegistryController$2.class

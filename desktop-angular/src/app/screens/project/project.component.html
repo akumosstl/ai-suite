@@ -186,10 +186,16 @@
                     <mat-icon>alt_route</mat-icon>
                     <h2>Pipeline Details</h2>
                     <div class="header-actions">
-                        <button class="icon-btn edit-btn" (click)="openEditPipelineDialog()" title="Edit pipeline">
-                            <mat-icon>edit</mat-icon>
-                        </button>
-                        <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
+          <button class="icon-btn edit-btn" (click)="openEditPipelineDialog()" title="Edit pipeline">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button class="icon-btn duplicate-btn" (click)="duplicatePipeline(selectedPipeline, $event)" title="Duplicate pipeline">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <button class="icon-btn delete-btn" (click)="deletePipeline(selectedPipeline, $event)" title="Delete pipeline">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <button class="icon-btn run-btn" (click)="runPipeline()" title="Run pipeline"
                             [disabled]="pipelineSteps.length === 0 || isRunningPipeline" *ngIf="!isRunningPipeline">
                             <mat-icon>play_arrow</mat-icon>
                             <span class="btn-text">Run</span>
