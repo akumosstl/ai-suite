@@ -11,7 +11,7 @@ export interface EditFileDialogData {
   fileName: string;
   path: string;
   content: string;
-  type: 'skill' | 'tool' | 'instruction' | 'plugin';
+  type: 'skill' | 'tool' | 'plugin';
 }
 
 export interface EditFileDialogResult {

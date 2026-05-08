@@ -360,3 +360,102 @@ java.lang.IllegalStateException: No application context available after calling 
 - Template: `src/main/resources/error-template.html`
 - Output: `<user_home>/.agentic/logs/erro.html`
 - Abre com: `Desktop.getDesktop().browse(file.toUri())`
+
+---
+
+### Recipe Engine (Session: 2026-05-08)
+
+A declarative YAML recipe system that creates and manages all system resources (projects, agents, scripts, pipelines, targets, templates) and executes pipeline operations without GUI interaction.
+
+**Package:** `io.github.akumosstl.agentic.backend.recipe`
+
+**Backend files created:**
+- `recipe/RecipeYaml.java` - Top-level YAML model
+- `recipe/RecipeHeader.java` - Recipe metadata (name, version, description)
+- `recipe/RecipeTarget.java` - Target definition
+- `recipe/RecipeProject.java` - Project definition
+- `recipe/RecipeAgent.java` - Agent definition
+- `recipe/RecipeScript.java` - Script definition
+- `recipe/RecipeTemplate.java` - Template definition
+- `recipe/RecipePipeline.java` - Pipeline definition
+- `recipe/RecipeStep.java` - Step definition
+- `recipe/RecipeStepIO.java` - Step I/O definition
+- `recipe/RecipeTask.java` - Task definition (create/run/stop/call)
+- `recipe/RecipeRetry.java` - Retry config
+- `recipe/RecipeLoop.java` - Loop config (always/until_success/until_failure)
+- `recipe/RecipeParser.java` - YAML parsing + validation (circular dep detection, ref existence)
+- `recipe/RecipeParameterResolver.java` - Resolves {{param:X}}, {{env:VAR}}, {{file:path}}, {{task:ID:result}}
+- `recipe/RecipeExecutor.java` - Core execution engine (topological sort, background thread, retry, loop)
+- `model/Recipe.java` - JPA entity for recipe runs
+- `model/RecipeTaskResult.java` - JPA entity for task results
+- `repository/RecipeRepository.java` - findTop20ByOrderByCreatedAtDesc, findByStatus
+- `repository/RecipeTaskResultRepository.java` - findByRecipeIdOrderByTaskId, findByRecipeIdAndStatus
+- `controller/RecipeController.java` - REST API: /api/recipes (execute, validate, list, get, stop, delete)
+- `mcp/tools/RecipeTools.java` - MCP tools: execute_recipe, execute_recipe_from_path, validate_recipe, list_recipes, get_recipe, stop_recipe
+
+**Backend files modified:**
+- `pom.xml` - Added jackson-dataformat-yaml dependency
+- `service/PipelineStepService.java` - Added saveStep() method; prompt override (inputContent takes priority over agent.getPrompt())
+- `mcp/McpConfig.java` - Registered RecipeTools
+
+**Recipe template:**
+- `backend/recipes/recipe-template.yml` - Full example recipe with all resource types
+
+**REST API Endpoints:**
+- `POST /api/recipes/execute` - Execute recipe from YAML content
+- `POST /api/recipes/execute-from-path` - Execute recipe from file path
+- `POST /api/recipes/validate` - Validate recipe YAML without execution
+- `GET /api/recipes` - List 20 most recent recipes
+- `GET /api/recipes/{id}` - Get recipe details
+- `GET /api/recipes/{id}/tasks` - Get recipe task results
+- `DELETE /api/recipes/{id}` - Delete recipe
+- `POST /api/recipes/{id}/stop` - Stop running recipe
+
+### Recipe File Visual Editor (Session: 2026-05-08)
+
+A visual editor for creating and managing recipe YAML files, accessible from the Stack > Recipe menu.
+
+**Backend files created:**
+- `model/RecipeFile.java` - JPA entity for saved recipe YAML files (name, version, description, yamlContent, timestamps)
+- `repository/RecipeFileRepository.java` - Pagination + search by name
+- `controller/RecipeFileController.java` - REST API: `/api/recipe-files` (CRUD + search with pagination)
+
+**REST API Endpoints (Recipe Files):**
+- `GET /api/recipe-files?page=&size=` - List recipe files (paginated)
+- `GET /api/recipe-files/search?term=&page=&size=` - Search recipe files by name
+- `GET /api/recipe-files/{id}` - Get recipe file by ID
+- `POST /api/recipe-files` - Create recipe file
+- `PUT /api/recipe-files/{id}` - Update recipe file
+- `DELETE /api/recipe-files/{id}` - Delete recipe file
+
+**Frontend files created:**
+- `screens/recipe/recipe.component.ts` - Component with visual/raw toggle editor
+- `screens/recipe/recipe.component.html` - Template with left panel (list+search+pagination) and right panel (visual form + raw YAML editor)
+- `screens/recipe/recipe.component.css` - Dark theme styles matching app pattern
+
+**Frontend files modified:**
+- `services/api.service.ts` - Added RecipeFile interface + CRUD API methods
+- `app.routes.ts` - Added `/recipe` route
+- `components/menu-bar/menu-bar.component.ts` - Added Recipe menu item under Stack menu, Ctrl+Shift+Y shortcut
+
+**Features:**
+- Left panel: paginated list of saved recipes with search by name
+- Visual editor: form fields for recipe metadata (name, version, description) and dynamic parameter key-value pairs
+- Raw editor: monospace YAML textarea with syntax-appropriate formatting
+- Toggle between Visual and Raw modes (converts between form and YAML)
+- Copy button in raw mode to copy YAML to clipboard
+- Save button persists recipe to database
+- Ctrl+B toggles left panel, Ctrl+Shift+Y navigates to recipe page
+
+### Recipe Form Bug Fix (Session: 2026-05-08)
+
+**Problem:** Clicking a recipe in the list didn't populate form fields (name, version, description) because `yamlContentToForm()` parsed YAML `recipe:` section but the entity's own `name`/`version`/`description` fields were ignored.
+
+**Fix (Frontend - recipe.component.ts):**
+- `selectRecipeFile()`: After YAML parsing, override form fields with entity's `name`/`version`/`description` from the DB
+- `saveRecipeFile()`: Always use form field values (`recipeName`, `recipeVersion`, `recipeDescription`) as source of truth for the RecipeFile entity data; sync raw YAML before saving
+- `switchToVisual()`: Apply entity metadata after YAML parsing
+- After create/update responses, also override form fields from the returned entity
+
+**Fix (Backend - RecipeFileController.java):**
+- `updateRecipeFile()`: Changed from replacing the entire entity (which could null out `createdAt`) to selectively updating only `name`, `version`, `description`, `yamlContent` on the existing entity

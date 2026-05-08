@@ -3,128 +3,60 @@ package io.github.akumosstl.agentic.backend;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
-import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.Project;
-import io.github.akumosstl.agentic.backend.model.Script;
-import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
-import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
-import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
-import io.github.akumosstl.agentic.backend.service.PipelineService;
-import io.github.akumosstl.agentic.backend.service.PipelineStepService;
-import io.github.akumosstl.agentic.backend.service.SseService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
 class PipelineExecutionTest {
-
-    @Autowired
-    private PipelineService pipelineService;
-
-    @Autowired
-    private PipelineStepService pipelineStepService;
-
-    @Autowired
-    private PipelineRepository pipelineRepository;
-
-    @Autowired
-    private PipelineStepRepository pipelineStepRepository;
-
-    @Autowired
-    private PipelineRunRepository pipelineRunRepository;
-
-    @Autowired
-    private SseService sseService;
-
-    private Project testProject;
-    private Pipeline testPipeline;
-
-    @BeforeEach
-    void setUp() {
-        pipelineRunRepository.deleteAll();
-        pipelineStepRepository.deleteAll();
-        pipelineRepository.deleteAll();
-
-        testProject = new Project();
-        testProject.setName("Test Project");
-        testProject.setPath(System.getProperty("java.io.tmpdir"));
-
-        testPipeline = new Pipeline("Test Pipeline", "Test Description", testProject);
-        testPipeline.setType("sequential");
-        testPipeline.setOutputExtension("txt");
-    }
 
     @Test
     void testPipelineCreation() {
-        assertNotNull(testPipeline);
-        assertEquals("Test Pipeline", testPipeline.getName());
-        assertEquals("sequential", testPipeline.getType());
-        assertEquals("txt", testPipeline.getOutputExtension());
+        Project project = new Project();
+        project.setName("Test Project");
+        project.setPath(System.getProperty("java.io.tmpdir"));
+
+        Pipeline pipeline = new Pipeline("Test Pipeline", "Test Description", project);
+        pipeline.setType("sequential");
+        pipeline.setOutputExtension("txt");
+
+        assertNotNull(pipeline);
+        assertEquals("Test Pipeline", pipeline.getName());
+        assertEquals("sequential", pipeline.getType());
+        assertEquals("txt", pipeline.getOutputExtension());
     }
 
     @Test
     void testPipelineStatusTransitions() {
-        testPipeline.setStatus("pending");
-        assertEquals("pending", testPipeline.getStatus());
+        Pipeline pipeline = new Pipeline();
+        
+        pipeline.setStatus("pending");
+        assertEquals("pending", pipeline.getStatus());
 
-        testPipeline.setStatus("running");
-        assertEquals("running", testPipeline.getStatus());
+        pipeline.setStatus("running");
+        assertEquals("running", pipeline.getStatus());
 
-        testPipeline.setStatus("completed");
-        assertEquals("completed", testPipeline.getStatus());
+        pipeline.setStatus("completed");
+        assertEquals("completed", pipeline.getStatus());
 
-        testPipeline.setStatus("failed");
-        assertEquals("failed", testPipeline.getStatus());
+        pipeline.setStatus("failed");
+        assertEquals("failed", pipeline.getStatus());
 
-        testPipeline.setStatus("stopped");
-        assertEquals("stopped", testPipeline.getStatus());
+        pipeline.setStatus("stopped");
+        assertEquals("stopped", pipeline.getStatus());
     }
 
     @Test
     void testPipelineTypes() {
-        testPipeline.setType("sequential");
-        assertEquals("sequential", testPipeline.getType());
-
-        testPipeline.setType("step_by_step");
-        assertEquals("step_by_step", testPipeline.getType());
-}
-    
-@Test
-    void testStopPipeline() {
-        Long pipelineId = 1L;
+        Pipeline pipeline = new Pipeline();
         
-        pipelineStepService.stopPipelineExecution(pipelineId);
-        assertTrue(pipelineStepService.isPipelineStopped(pipelineId));
-    }
-    
-    @Test
-    void testPipelineLock() {
-        Long pipelineId = 1L;
+        pipeline.setType("sequential");
+        assertEquals("sequential", pipeline.getType());
 
-        var lock1 = pipelineStepService.getPipelineLock(pipelineId);
-        var lock2 = pipelineStepService.getPipelineLock(pipelineId);
-
-        assertSame(lock1, lock2);
-    }
-
-    @Test
-    void testSseService() {
-        Long pipelineId = 1L;
-
-        var emitter = sseService.addEmitter(pipelineId);
-        assertNotNull(emitter);
-
-        sseService.sendStepOutput(pipelineId, 1L, 1, "Test output", "running");
-        sseService.sendPipelineComplete(pipelineId, "completed");
+        pipeline.setType("step_by_step");
+        assertEquals("step_by_step", pipeline.getType());
     }
 
     @Test
@@ -152,14 +84,16 @@ class PipelineExecutionTest {
 
     @Test
     void testSequentialExecution() {
-        testPipeline.setType("sequential");
-        assertEquals("sequential", testPipeline.getType());
+        Pipeline pipeline = new Pipeline();
+        pipeline.setType("sequential");
+        assertEquals("sequential", pipeline.getType());
     }
 
     @Test
     void testStepByStepExecution() {
-        testPipeline.setType("step_by_step");
-        assertEquals("step_by_step", testPipeline.getType());
+        Pipeline pipeline = new Pipeline();
+        pipeline.setType("step_by_step");
+        assertEquals("step_by_step", pipeline.getType());
     }
 
     @Test

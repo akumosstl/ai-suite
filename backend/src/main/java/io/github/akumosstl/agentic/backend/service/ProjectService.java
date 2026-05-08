@@ -6,15 +6,11 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Target;
-import io.github.akumosstl.agentic.backend.model.Instruction;
-import io.github.akumosstl.agentic.backend.model.InstructionFile;
 import io.github.akumosstl.agentic.backend.exception.FileAlreadyExistsException;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
 import io.github.akumosstl.agentic.backend.repository.AgentRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
-import io.github.akumosstl.agentic.backend.repository.InstructionRepository;
-import io.github.akumosstl.agentic.backend.repository.InstructionFileRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,14 +51,8 @@ public class ProjectService {
     @Autowired
     private TargetRepository targetRepository;
     
-    @Autowired
-    private InstructionRepository instructionRepository;
-
-    @Autowired
-    private InstructionFileRepository instructionFileRepository;
-
-    @Autowired
-    private PipelineRepository pipelineRepository;
+  @Autowired
+  private PipelineRepository pipelineRepository;
 
     @Autowired
     private PipelineRunRepository pipelineRunRepository;
@@ -333,170 +323,4 @@ public class ProjectService {
         return projectRepository.save(project);
     }
     
-    // Instructions management
-    @Transactional(readOnly = true)
-    public List<Instruction> getProjectInstructions(Long projectId) {
-        Project project = getProjectById(projectId);
-        return project.getInstructions();
-    }
-    
-    @Transactional
-    public Project addInstructionsToProject(Long projectId, List<Long> instructionIds) {
-        return addInstructionsToProject(projectId, instructionIds, false);
-    }
-
-    @Transactional
-    public Project addInstructionsToProject(Long projectId, List<Long> instructionIds, boolean force) {
-        Project project = getProjectById(projectId);
-        
-        if (project.getPath() == null || project.getPath().isEmpty()) {
-            throw new RuntimeException("Project does not have a path defined");
-        }
-        
-        String targetInstructionsPath = "instructions";
-        Target target = null;
-        if (project.getTargetId() != null) {
-            target = targetRepository.findById(project.getTargetId()).orElse(null);
-        } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
-            List<Target> targets = targetRepository.findAll();
-            target = targets.stream()
-                    .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (target != null && target.getInstructionsPath() != null && !target.getInstructionsPath().isEmpty()) {
-            targetInstructionsPath = target.getInstructionsPath();
-        }
-        
-        for (Long instructionId : instructionIds) {
-            Instruction instruction = instructionRepository.findById(instructionId)
-                    .orElseThrow(() -> new RuntimeException("Instruction not found: " + instructionId));
-
-            boolean alreadyAdded = project.getInstructions().stream()
-                    .anyMatch(i -> i.getId().equals(instructionId));
-            if (alreadyAdded) {
-                continue;
-            }
-            
-            String fullPath = project.getPath() + File.separator + targetInstructionsPath;
-            if (instruction.getPath() != null && !instruction.getPath().isEmpty()) {
-                fullPath = fullPath + File.separator + instruction.getPath();
-            }
-            
-            Path instructionPathObj = Paths.get(fullPath);
-            try {
-                if (!Files.exists(instructionPathObj) || !Files.isDirectory(instructionPathObj)) {
-                    Files.createDirectories(instructionPathObj);
-                }
-                String fileName = instruction.getName();
-                Path filePath = instructionPathObj.resolve(fileName);
-                if (!force && Files.exists(filePath)) {
-                    throw new FileAlreadyExistsException(fileName, fullPath);
-                }
-                Files.deleteIfExists(filePath);
-                String content = instruction.getInstructions() != null ? instruction.getInstructions() : "";
-                Files.write(filePath, content.getBytes());
-                
-                List<InstructionFile> instructionFiles = instructionFileRepository.findByInstructionId(instructionId);
-                for (InstructionFile instructionFile : instructionFiles) {
-                    String fileDirPath = fullPath;
-                    if (instructionFile.getPath() != null && !instructionFile.getPath().isEmpty()) {
-                        fileDirPath = fileDirPath + File.separator + instructionFile.getPath();
-                    }
-                    Path fileDirPathObj = Paths.get(fileDirPath);
-                    if (!Files.exists(fileDirPathObj) || !Files.isDirectory(fileDirPathObj)) {
-                        Files.createDirectories(fileDirPathObj);
-                    }
-                    
-                    String attachedFileName = instructionFile.getFileName();
-                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
-                    if (!force && Files.exists(attachedFilePath)) {
-                        throw new FileAlreadyExistsException(attachedFileName, fileDirPath);
-                    }
-                    Files.deleteIfExists(attachedFilePath);
-                    String fileContent = instructionFile.getContent() != null ? instructionFile.getContent() : "";
-                    Files.write(attachedFilePath, fileContent.getBytes());
-                }
-                
-                if (!project.getInstructions().contains(instruction)) {
-                    project.addInstruction(instruction);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to create instruction file: " + e.getMessage(), e);
-            }
-        }
-        return projectRepository.save(project);
-    }
-    
-    @Transactional
-    public Project removeInstructionFromProject(Long projectId, Long instructionId) {
-        Project project = getProjectById(projectId);
-        
-        Instruction instructionToRemove = project.getInstructions().stream()
-                .filter(i -> i.getId().equals(instructionId))
-                .findFirst()
-                .orElse(null);
-        
-        if (instructionToRemove != null && project.getPath() != null && !project.getPath().isEmpty()) {
-            String targetInstructionsPath = "instructions";
-            Target target = null;
-            if (project.getTargetId() != null) {
-                target = targetRepository.findById(project.getTargetId()).orElse(null);
-            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
-                List<Target> targets = targetRepository.findAll();
-                target = targets.stream()
-                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
-                        .findFirst()
-                        .orElse(null);
-            }
-            if (target != null && target.getInstructionsPath() != null && !target.getInstructionsPath().isEmpty()) {
-                targetInstructionsPath = target.getInstructionsPath();
-            }
-            
-            String fullPath = project.getPath() + File.separator + targetInstructionsPath;
-            if (instructionToRemove.getPath() != null && !instructionToRemove.getPath().isEmpty()) {
-                fullPath = fullPath + File.separator + instructionToRemove.getPath();
-            }
-            
-            Path instructionPathObj = Paths.get(fullPath);
-            try {
-                String fileName = instructionToRemove.getName();
-                Path filePath = instructionPathObj.resolve(fileName);
-                Files.deleteIfExists(filePath);
-
-                List<InstructionFile> instructionFiles = instructionFileRepository.findByInstructionId(instructionId);
-                for (InstructionFile instructionFile : instructionFiles) {
-                    String fileDirPath = fullPath;
-                    if (instructionFile.getPath() != null && !instructionFile.getPath().isEmpty()) {
-                        fileDirPath = fileDirPath + File.separator + instructionFile.getPath();
-                    }
-                    Path fileDirPathObj = Paths.get(fileDirPath);
-                    String attachedFileName = instructionFile.getFileName();
-                    Path attachedFilePath = fileDirPathObj.resolve(attachedFileName);
-                    Files.deleteIfExists(attachedFilePath);
-
-                    File attachedDir = fileDirPathObj.toFile();
-                    if (attachedDir.exists() && attachedDir.isDirectory()) {
-                        File[] files = attachedDir.listFiles();
-                        if (files != null && files.length == 0) {
-                            Files.delete(attachedDir.toPath());
-                        }
-                    }
-                }
-
-                File instructionDir = instructionPathObj.toFile();
-                if (instructionDir.exists() && instructionDir.isDirectory()) {
-                    File[] files = instructionDir.listFiles();
-        if (files != null && files.length == 0) {
-          Files.delete(instructionDir.toPath());
-        }
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to delete instruction file: " + e.getMessage(), e);
-    }
-  }
-
-  project.getInstructions().removeIf(i -> i.getId().equals(instructionId));
-  return projectRepository.save(project);
-}
 }

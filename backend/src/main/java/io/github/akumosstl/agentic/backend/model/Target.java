@@ -6,7 +6,7 @@ import jakarta.persistence.*;
  * Entidade que representa um Alvo (Target) no sistema.
  * 
  * Um target define as configurações de caminhos para diferentes
- * tipos de recursos (scripts, agents, instructions)
+ * tipos de recursos (scripts, agents)
  * e o CLI padrão a ser usado.
  * 
  * @author Sistema Agentic
@@ -29,20 +29,16 @@ public class Target {
   @Column(name = "scripts_path")
   private String scriptsPath;
 
-  @Column(name = "instructions_path")
-  private String instructionsPath;
-
   @Column(name = "cli")
   private String cli;
 
     public Target() {
     }
 
-  public Target(String name, String agentsPath, String scriptsPath, String instructionsPath, String cli) {
+  public Target(String name, String agentsPath, String scriptsPath, String cli) {
     this.name = name;
     this.agentsPath = agentsPath;
     this.scriptsPath = scriptsPath;
-    this.instructionsPath = instructionsPath;
     this.cli = cli;
   }
 
@@ -76,14 +72,6 @@ public class Target {
 
   public void setScriptsPath(String scriptsPath) {
     this.scriptsPath = scriptsPath;
-  }
-
-  public String getInstructionsPath() {
-    return instructionsPath;
-  }
-
-  public void setInstructionsPath(String instructionsPath) {
-    this.instructionsPath = instructionsPath;
   }
 
   public String getCli() {

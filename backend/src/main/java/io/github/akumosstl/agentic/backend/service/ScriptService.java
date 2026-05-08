@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ScriptService {
@@ -40,11 +41,13 @@ public class ScriptService {
     }
 
     public Script createScript(Script script) {
+        checkDuplicateNameNamespace(script, null);
         return scriptRepository.save(script);
     }
 
     public Script updateScript(Long id, Script scriptDetails) {
         Script script = getScriptById(id);
+        checkDuplicateNameNamespace(scriptDetails, id);
         script.setName(scriptDetails.getName());
         script.setNamespace(scriptDetails.getNamespace());
         script.setPath(scriptDetails.getPath());
@@ -100,5 +103,14 @@ public class ScriptService {
     
     public List<Script> getScriptsByNamespace(String namespace) {
         return scriptRepository.findByNamespace(namespace);
+    }
+
+    private void checkDuplicateNameNamespace(Script script, Long excludeId) {
+        String name = script.getName();
+        String namespace = script.getNamespace() != null ? script.getNamespace() : "";
+        Optional<Script> existing = scriptRepository.findByNameAndNamespace(name, namespace);
+        if (existing.isPresent() && !existing.get().getId().equals(excludeId)) {
+            throw new IllegalArgumentException("Script with name '" + name + "' and namespace '" + namespace + "' already exists");
+        }
     }
 }

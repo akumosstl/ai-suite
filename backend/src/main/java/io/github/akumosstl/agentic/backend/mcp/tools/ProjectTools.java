@@ -39,13 +39,10 @@ public class ProjectTools {
         tools.add(deleteProject());
         tools.add(getProjectAgents());
         tools.add(getProjectScripts());
-        tools.add(getProjectInstructions());
         tools.add(addAgentToProject());
         tools.add(addScriptToProject());
-        tools.add(addInstructionToProject());
         tools.add(removeAgentFromProject());
         tools.add(removeScriptFromProject());
-        tools.add(removeInstructionFromProject());
         return tools;
     }
 
@@ -271,33 +268,7 @@ public class ProjectTools {
                 .build();
     }
 
-    private SyncToolSpecification getProjectInstructions() {
-        return SyncToolSpecification.builder()
-                .tool(McpSchema.Tool.builder()
-                        .name("get_project_instructions")
-                        .description("List all instructions associated with a project.")
-                        .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
-                                "projectId", Map.of("type", "integer", "description", "Project ID (required)")
-                        ), List.of("projectId")))
-                        .build())
-                .callHandler((exchange, request) -> {
-                    try {
-                        Long projectId = ((Number) request.arguments().get("projectId")).longValue();
-                        var instructions = projectService.getProjectInstructions(projectId);
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text(McpResponseFormatter.formatInstructionsList(instructions))))
-                                .build();
-                    } catch (Exception e) {
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text("Error: " + e.getMessage())))
-                                .isError(true)
-                                .build();
-                    }
-                })
-                .build();
-    }
-
-    private SyncToolSpecification addAgentToProject() {
+  private SyncToolSpecification addAgentToProject() {
         return SyncToolSpecification.builder()
                 .tool(McpSchema.Tool.builder()
                         .name("add_agent_to_project")
@@ -353,35 +324,7 @@ public class ProjectTools {
                 .build();
     }
 
-    private SyncToolSpecification addInstructionToProject() {
-        return SyncToolSpecification.builder()
-                .tool(McpSchema.Tool.builder()
-                        .name("add_instruction_to_project")
-                        .description("Add an instruction to a project.")
-                        .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
-                                "projectId", Map.of("type", "integer", "description", "Project ID (required)"),
-                                "instructionId", Map.of("type", "integer", "description", "Instruction ID to add (required)")
-                        ), List.of("projectId", "instructionId")))
-                        .build())
-                .callHandler((exchange, request) -> {
-                    try {
-                        Long projectId = ((Number) request.arguments().get("projectId")).longValue();
-                        Long instructionId = ((Number) request.arguments().get("instructionId")).longValue();
-                        projectService.addInstructionsToProject(projectId, List.of(instructionId));
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text("Instruction " + instructionId + " added to project " + projectId + ".")))
-                                .build();
-                    } catch (Exception e) {
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text("Error: " + e.getMessage())))
-                                .isError(true)
-                                .build();
-                    }
-                })
-                .build();
-    }
-
-    private SyncToolSpecification removeAgentFromProject() {
+  private SyncToolSpecification removeAgentFromProject() {
         return SyncToolSpecification.builder()
                 .tool(McpSchema.Tool.builder()
                         .name("remove_agent_from_project")
@@ -437,31 +380,4 @@ public class ProjectTools {
                 .build();
     }
 
-    private SyncToolSpecification removeInstructionFromProject() {
-        return SyncToolSpecification.builder()
-                .tool(McpSchema.Tool.builder()
-                        .name("remove_instruction_from_project")
-                        .description("Remove an instruction from a project.")
-                        .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
-                                "projectId", Map.of("type", "integer", "description", "Project ID (required)"),
-                                "instructionId", Map.of("type", "integer", "description", "Instruction ID to remove (required)")
-                        ), List.of("projectId", "instructionId")))
-                        .build())
-                .callHandler((exchange, request) -> {
-                    try {
-                        Long projectId = ((Number) request.arguments().get("projectId")).longValue();
-                        Long instructionId = ((Number) request.arguments().get("instructionId")).longValue();
-                        projectService.removeInstructionFromProject(projectId, instructionId);
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text("Instruction " + instructionId + " removed from project " + projectId + ".")))
-                                .build();
-                    } catch (Exception e) {
-                        return McpSchema.CallToolResult.builder()
-                                .content(List.of(McpResponseFormatter.text("Error: " + e.getMessage())))
-                                .isError(true)
-                                .build();
-                    }
-                })
-                .build();
-    }
 }

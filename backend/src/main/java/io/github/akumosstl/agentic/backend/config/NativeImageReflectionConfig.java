@@ -2,8 +2,6 @@ package io.github.akumosstl.agentic.backend.config;
 
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Event;
-import io.github.akumosstl.agentic.backend.model.Instruction;
-import io.github.akumosstl.agentic.backend.model.InstructionFile;
 import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineRunStep;
@@ -191,11 +189,9 @@ import org.springframework.context.annotation.Configuration;
 		PipelineStep.class,
 		PipelineRun.class,
 		PipelineRunStep.class,
-		Agent.class,
-		Script.class,
-		Instruction.class,
-		InstructionFile.class,
-		Target.class,
+  Agent.class,
+  Script.class,
+  Target.class,
 		Template.class,
 		Event.class
 })

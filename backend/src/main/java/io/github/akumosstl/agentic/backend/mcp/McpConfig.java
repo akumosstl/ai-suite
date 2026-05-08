@@ -1,11 +1,11 @@
 package io.github.akumosstl.agentic.backend.mcp;
 
 import io.github.akumosstl.agentic.backend.mcp.tools.AgentTools;
-import io.github.akumosstl.agentic.backend.mcp.tools.InstructionTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.PipelineRunTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.PipelineStepTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.PipelineTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.ProjectTools;
+import io.github.akumosstl.agentic.backend.mcp.tools.RecipeTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.ScriptTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.SystemTools;
 import io.github.akumosstl.agentic.backend.mcp.tools.TargetTools;
@@ -81,12 +81,12 @@ public class McpConfig {
             PipelineTools pipelineTools,
             PipelineRunTools pipelineRunTools,
             PipelineStepTools pipelineStepTools,
-            AgentTools agentTools,
-            ScriptTools scriptTools,
-            InstructionTools instructionTools,
-            TargetTools targetTools,
-            TemplateTools templateTools,
-            SystemTools systemTools) {
+    AgentTools agentTools,
+    ScriptTools scriptTools,
+    TargetTools targetTools,
+        TemplateTools templateTools,
+        RecipeTools recipeTools,
+        SystemTools systemTools) {
 
         List<io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification> allTools = new ArrayList<>();
         allTools.addAll(projectTools.getToolSpecifications());
@@ -94,10 +94,10 @@ public class McpConfig {
         allTools.addAll(pipelineRunTools.getToolSpecifications());
         allTools.addAll(pipelineStepTools.getToolSpecifications());
         allTools.addAll(agentTools.getToolSpecifications());
-        allTools.addAll(scriptTools.getToolSpecifications());
-        allTools.addAll(instructionTools.getToolSpecifications());
-        allTools.addAll(targetTools.getToolSpecifications());
+    allTools.addAll(scriptTools.getToolSpecifications());
+    allTools.addAll(targetTools.getToolSpecifications());
         allTools.addAll(templateTools.getToolSpecifications());
+        allTools.addAll(recipeTools.getToolSpecifications());
         allTools.addAll(systemTools.getToolSpecifications());
 
         McpSyncServer server = McpServer.sync(transportProvider)

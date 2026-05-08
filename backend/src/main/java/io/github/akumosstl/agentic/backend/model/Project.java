@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.akumosstl.agentic.backend.model.Agent;
-import io.github.akumosstl.agentic.backend.model.Instruction;
 
 /**
  * Entidade que representa um Projeto no sistema.
  * 
  * Um projeto é a unidade principal de organização que agrupaseriais,
- * pipelines, agentes, scripts, commands, skills, instructions, plugins e tools.
+ * pipelines, agentes, scripts, commands, skills, plugins e tools.
  * Cada projeto pode ter um target associado e um caminho no sistema de arquivos.
  * 
  * @author Sistema Agentic
@@ -76,15 +75,7 @@ public class Project {
     )
     private List<Agent> agents = new ArrayList<>();
     
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "project_instructions",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "instruction_id")
-    )
-    private List<Instruction> instructions = new ArrayList<>();
-    
-    @PrePersist
+  @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -145,34 +136,23 @@ public class Project {
     public List<Agent> getAgents() { return agents; }
     public void setAgents(List<Agent> agents) { this.agents = agents; }
     
-  public List<Instruction> getInstructions() { return instructions; }
-  public void setInstructions(List<Instruction> instructions) { this.instructions = instructions; }
-
   public void addScript(Script script) {
-        scripts.add(script);
-    }
-    
-    public void removeScript(Script script) {
-        scripts.remove(script);
-    }
-    
-    public void addAgent(Agent agent) {
-        agents.add(agent);
-    }
-    
-    public void removeAgent(Agent agent) {
-        agents.remove(agent);
-    }
-    
-    public void addInstruction(Instruction instruction) {
-        instructions.add(instruction);
-    }
-    
-    public void removeInstruction(Instruction instruction) {
-        instructions.remove(instruction);
-    }
-    
-    public void addPipeline(Pipeline pipeline) {
+    scripts.add(script);
+  }
+
+  public void removeScript(Script script) {
+    scripts.remove(script);
+  }
+
+  public void addAgent(Agent agent) {
+    agents.add(agent);
+  }
+
+  public void removeAgent(Agent agent) {
+    agents.remove(agent);
+  }
+
+  public void addPipeline(Pipeline pipeline) {
         pipelines.add(pipeline);
         pipeline.setProject(this);
     }

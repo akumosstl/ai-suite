@@ -93,21 +93,19 @@ public class TargetTools {
                         .name("create_target")
                         .description("Create a new target configuration.")
                         .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
-                                "name", Map.of("type", "string", "description", "Target name (required, must be unique)"),
-                                "agentsPath", Map.of("type", "string", "description", "Path to agents directory"),
-                                "scriptsPath", Map.of("type", "string", "description", "Path to scripts directory"),
-                                "instructionsPath", Map.of("type", "string", "description", "Path to instructions directory"),
-                                "cli", Map.of("type", "string", "description", "CLI command")
+        "name", Map.of("type", "string", "description", "Target name (required, must be unique)"),
+        "agentsPath", Map.of("type", "string", "description", "Path to agents directory"),
+        "scriptsPath", Map.of("type", "string", "description", "Path to scripts directory"),
+        "cli", Map.of("type", "string", "description", "CLI command")
                         ), List.of("name")))
                         .build())
                 .callHandler((exchange, request) -> {
                     try {
                         Target target = new Target();
                         target.setName((String) request.arguments().get("name"));
-                        target.setAgentsPath((String) request.arguments().get("agentsPath"));
-                        target.setScriptsPath((String) request.arguments().get("scriptsPath"));
-                        target.setInstructionsPath((String) request.arguments().get("instructionsPath"));
-                        target.setCli((String) request.arguments().get("cli"));
+      target.setAgentsPath((String) request.arguments().get("agentsPath"));
+      target.setScriptsPath((String) request.arguments().get("scriptsPath"));
+      target.setCli((String) request.arguments().get("cli"));
                         Target created = targetService.createTarget(target);
                         return McpSchema.CallToolResult.builder()
                                 .content(List.of(McpResponseFormatter.text("Target created successfully.\n\n" + McpResponseFormatter.formatTarget(created))))
@@ -128,12 +126,11 @@ public class TargetTools {
                         .name("update_target")
                         .description("Update an existing target configuration.")
                         .inputSchema(JsonSchemaBuilder.objectSchema(Map.of(
-                                "id", Map.of("type", "integer", "description", "Target ID (required)"),
-                                "name", Map.of("type", "string", "description", "Target name"),
-                                "agentsPath", Map.of("type", "string", "description", "Path to agents directory"),
-                                "scriptsPath", Map.of("type", "string", "description", "Path to scripts directory"),
-                                "instructionsPath", Map.of("type", "string", "description", "Path to instructions directory"),
-                                "cli", Map.of("type", "string", "description", "CLI command")
+        "id", Map.of("type", "integer", "description", "Target ID (required)"),
+        "name", Map.of("type", "string", "description", "Target name"),
+        "agentsPath", Map.of("type", "string", "description", "Path to agents directory"),
+        "scriptsPath", Map.of("type", "string", "description", "Path to scripts directory"),
+        "cli", Map.of("type", "string", "description", "CLI command")
                         ), List.of("id")))
                         .build())
                 .callHandler((exchange, request) -> {
@@ -146,13 +143,10 @@ public class TargetTools {
                         if (request.arguments().get("agentsPath") != null) {
                             details.setAgentsPath((String) request.arguments().get("agentsPath"));
                         }
-                        if (request.arguments().get("scriptsPath") != null) {
-                            details.setScriptsPath((String) request.arguments().get("scriptsPath"));
-                        }
-                        if (request.arguments().get("instructionsPath") != null) {
-                            details.setInstructionsPath((String) request.arguments().get("instructionsPath"));
-                        }
-                        if (request.arguments().get("cli") != null) {
+      if (request.arguments().get("scriptsPath") != null) {
+        details.setScriptsPath((String) request.arguments().get("scriptsPath"));
+      }
+      if (request.arguments().get("cli") != null) {
                             details.setCli((String) request.arguments().get("cli"));
                         }
                         Target updated = targetService.updateTarget(id, details);

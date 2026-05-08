@@ -56,10 +56,7 @@ import { ApiService, Template } from '../../services/api.service';
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
-              <mat-icon>list_alt</mat-icon>
-              <span>Instructions</span>
-            </button>
+
           </div>
           
           <div class="search-section">
@@ -733,8 +730,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
-      'scripts': 'Scripts',
-      'instructions': 'Instructions'
+      'scripts': 'Scripts'
     };
     return labels[this.selectedType] || 'Unknown';
   }

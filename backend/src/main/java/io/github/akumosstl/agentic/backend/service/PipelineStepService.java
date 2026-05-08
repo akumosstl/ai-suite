@@ -275,7 +275,11 @@ public class PipelineStepService {
         
         return pipelineStepRepository.save(step);
     }
-    
+
+    public PipelineStep saveStep(PipelineStep step) {
+        return pipelineStepRepository.save(step);
+    }
+
     public PipelineStep updateStep(Long stepId, Long newAgentId) {
         PipelineStep step = getStepById(stepId);
         
@@ -697,7 +701,9 @@ public class PipelineStepService {
             System.out.println("DEBUG: agent prompt: " + agent.getPrompt());
         }
         
-        String prompt = agent != null ? agent.getPrompt() : null;
+        String prompt = step.getInputContent() != null && !step.getInputContent().isEmpty()
+                ? step.getInputContent()
+                : (agent != null ? agent.getPrompt() : null);
         
         if (prompt == null || prompt.isEmpty()) {
             prompt = "Hello, please respond.";

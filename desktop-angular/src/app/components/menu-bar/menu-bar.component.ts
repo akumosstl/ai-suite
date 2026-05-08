@@ -10,9 +10,6 @@ import { CommonModule } from '@angular/common'
 import { Subscription, filter } from 'rxjs'
 import { OpenProjectDialogComponent } from '../open-project-dialog/open-project-dialog.component'
 import { NewProjectDialogComponent } from '../new-project-dialog/new-project-dialog.component'
-import { ExportDialogComponent } from '../export-dialog/export-dialog.component'
-import { ImportDialogComponent, ImportResult } from '../import-dialog/import-dialog.component'
-import { BackupDialogComponent } from '../backup-dialog/backup-dialog.component'
 import { ProjectContextService } from '../../services/project-context.service'
 import { ApiService } from '../../services/api.service'
 import { UpdateService } from '../../services/update.service'
@@ -23,7 +20,7 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent, BackupDialogComponent, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -86,21 +83,20 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button mat-menu-item routerLink="/instructions" class="menu-item">
-              <mat-icon>rule</mat-icon>
-              <span>Instructions</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item routerLink="/scripts" class="menu-item">
+      <button mat-menu-item routerLink="/scripts" class="menu-item">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item routerLink="/pipelines" class="menu-item">
-              <mat-icon>alt_route</mat-icon>
-              <span>Pipelines</span>
-            </button>
-          </mat-menu>
+          <div class="menu-separator"></div>
+          <button mat-menu-item routerLink="/pipelines" class="menu-item">
+            <mat-icon>alt_route</mat-icon>
+            <span>Pipelines</span>
+          </button>
+          <button mat-menu-item routerLink="/recipe" class="menu-item">
+            <mat-icon>restaurant</mat-icon>
+            <span>Recipe</span>
+          </button>
+        </mat-menu>
 
           <button class="menu-button" (click)="openPluginsModal()">
             <mat-icon>extension</mat-icon>
@@ -120,20 +116,6 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
         <button mat-menu-item routerLink="/namespaces" class="menu-item">
           <mat-icon>dns</mat-icon>
           <span>Namespace</span>
-        </button>
-        <div class="menu-separator"></div>
-        <button mat-menu-item (click)="openExport()" class="menu-item">
-          <mat-icon>file_download</mat-icon>
-          <span>Export</span>
-        </button>
-        <button mat-menu-item (click)="openImport()" class="menu-item">
-          <mat-icon>file_upload</mat-icon>
-          <span>Import</span>
-        </button>
-        <div class="menu-separator"></div>
-        <button mat-menu-item (click)="openBackup()" class="menu-item">
-          <mat-icon>backup</mat-icon>
-          <span>Backup</span>
         </button>
         <div class="menu-separator"></div>
         <button mat-menu-item (click)="checkUpdate()" class="menu-item">
@@ -399,13 +381,13 @@ ngOnInit(): void {
           event.preventDefault();
           this.router.navigate(['/namespaces']);
           break;
-        case 'i':
-          event.preventDefault();
-          this.router.navigate(['/instructions']);
-          break;
         case 'l':
           event.preventDefault();
           this.router.navigate(['/pipelines']);
+          break;
+        case 'y':
+          event.preventDefault();
+          this.router.navigate(['/recipe']);
           break;
         case 'p':
           event.preventDefault();
@@ -445,7 +427,7 @@ ngOnDestroy(): void {
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/scripts', '/instructions', '/templates', '/namespaces', '/pipelines'];
+    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;
@@ -521,51 +503,6 @@ ngOnDestroy(): void {
     this.router.navigate(['/menu'])
   }
 
-  openExport(): void {
-    const dialogRef = this.dialog.open(ExportDialogComponent, {
-      width: '450px',
-      data: { loading: false }
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result) {
-        this.snackBar.open('Export completed successfully!', 'Close', { duration: 3000 });
-      }
-    });
-  }
-
-  openImport(): void {
-    const dialogRef = this.dialog.open(ImportDialogComponent, {
-      width: '550px',
-      data: { loading: false, result: null }
-    });
-
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result && result.formData) {
-        const importDialogRef = this.dialog.open(ImportDialogComponent, {
-          width: '550px',
-          data: { loading: true, result: null }
-        });
-
-        this.apiService.importData(result.formData).subscribe({
-          next: (response: any) => {
-            importDialogRef.close();
-            const finalDialogRef = this.dialog.open(ImportDialogComponent, {
-              width: '550px',
-              data: { loading: false, result: response as ImportResult }
-            });
-            finalDialogRef.afterClosed().subscribe(() => {
-            });
-          },
-          error: (err) => {
-            console.error('Import error:', err);
-            importDialogRef.close();
-            this.snackBar.open('Import failed: ' + (err.error?.message || err.message), 'Close', { duration: 5000 });
-          }
-        });
-      }
-    });
-  }
-
   openDocumentation(): void {
     window.open('https://github.com/akumosstl/agentic-ai-suite/blob/main/README.md', '_blank');
   }
@@ -595,18 +532,6 @@ ngOnDestroy(): void {
       maxHeight: '1000px',
       panelClass: 'plugins-modal'
     })
-  }
-
-  openBackup(): void {
-    const dialogRef = this.dialog.open(BackupDialogComponent, {
-      width: '450px',
-      data: { loading: false }
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result) {
-        this.snackBar.open('Backup completed successfully!', 'Close', { duration: 3000 });
-      }
-    });
   }
 
   openShortcuts(): void {

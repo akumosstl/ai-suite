@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Serviço para gerenciamento de Agentes.
@@ -70,10 +71,12 @@ public class AgentService {
     }
     
     public Agent createAgent(Agent agent) {
+        checkDuplicateNameNamespace(agent, null);
         return agentRepository.save(agent);
     }
-    
+
     public Agent createAgent(Agent agent, Long projectId) {
+        checkDuplicateNameNamespace(agent, null);
         return agentRepository.save(agent);
     }
     
@@ -131,6 +134,7 @@ public class AgentService {
     
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
+        checkDuplicateNameNamespace(agentDetails, id);
         agent.setName(agentDetails.getName());
         agent.setNamespace(agentDetails.getNamespace());
         agent.setDescription(agentDetails.getDescription());
@@ -201,5 +205,14 @@ public class AgentService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Agent> agentPage = agentRepository.searchByNamespace(searchTerm, namespace, pageable);
         return agentPage.getContent();
+    }
+
+    private void checkDuplicateNameNamespace(Agent agent, Long excludeId) {
+        String name = agent.getName();
+        String namespace = agent.getNamespace() != null ? agent.getNamespace() : "";
+        Optional<Agent> existing = agentRepository.findByNameAndNamespace(name, namespace);
+        if (existing.isPresent() && !existing.get().getId().equals(excludeId)) {
+            throw new IllegalArgumentException("Agent with name '" + name + "' and namespace '" + namespace + "' already exists");
+        }
     }
 }

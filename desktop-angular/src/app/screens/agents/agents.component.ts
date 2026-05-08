@@ -303,7 +303,11 @@ toggleLeftPanel(): void {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.statusMessage = 'Error: ' + err.message;
+            if (err.status === 409 && err.error?.error) {
+              this.statusMessage = 'Error: ' + err.error.error;
+            } else {
+              this.statusMessage = 'Error: ' + err.message;
+            }
             this.cdr.detectChanges();
           });
         }
@@ -322,7 +326,11 @@ toggleLeftPanel(): void {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.statusMessage = 'Error: ' + err.message;
+            if (err.status === 409 && err.error?.error) {
+              this.statusMessage = 'Error: ' + err.error.error;
+            } else {
+              this.statusMessage = 'Error: ' + err.message;
+            }
             this.cdr.detectChanges();
           });
         }

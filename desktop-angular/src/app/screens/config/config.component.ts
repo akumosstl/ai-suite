@@ -567,7 +567,6 @@ export class ConfigComponent implements OnInit {
     commandsPath?: string;
     agentsPath: string;
     scriptsPath?: string;
-    instructionsPath?: string;
     pluginsPath?: string;
     toolsPath?: string;
   } = {
@@ -576,7 +575,6 @@ export class ConfigComponent implements OnInit {
     commandsPath: '',
     agentsPath: '',
     scriptsPath: '',
-    instructionsPath: '',
     pluginsPath: '',
     toolsPath: ''
   };
@@ -719,7 +717,6 @@ export class ConfigComponent implements OnInit {
       commandsPath: '',
       scriptsPath: '',
       agentsPath: '',
-      instructionsPath: '',
       pluginsPath: '',
       toolsPath: ''
     };
@@ -788,7 +785,6 @@ export class ConfigComponent implements OnInit {
       commandsPath: this.targetForm.commandsPath,
       scriptsPath: this.targetForm.scriptsPath,
       agentsPath: this.targetForm.agentsPath,
-      instructionsPath: this.targetForm.instructionsPath,
       pluginsPath: this.targetForm.pluginsPath,
       toolsPath: this.targetForm.toolsPath
     };

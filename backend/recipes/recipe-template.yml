@@ -1,0 +1,103 @@
+recipe:
+  name: "example-recipe"
+  version: "1.0"
+  description: "Example recipe template - creates an agent, script, project, and pipeline then runs it"
+
+parameters:
+  project_name: "my-project"
+  agent_name: "my-agent"
+  script_name: "my-script"
+  pipeline_name: "my-pipeline"
+  namespace: "default"
+
+targets:
+  - name: "local"
+    agents_path: "./agents"
+    scripts_path: "./scripts"
+    cli: "bash"
+
+agents:
+  - id: "example-agent"
+    name: "{{param:agent_name}}"
+    namespace: "{{param:namespace}}"
+    category: "general"
+    description: "Example agent created by recipe"
+    prompt: "You are a helpful assistant. Process the input and provide a response."
+
+scripts:
+  - id: "example-script"
+    name: "{{param:script_name}}"
+    namespace: "{{param:namespace}}"
+    category: "utility"
+    description: "Example script created by recipe"
+    content: |
+      #!/bin/bash
+      echo "Hello from recipe script"
+    scope: "global"
+
+projects:
+  - id: "example-project"
+    name: "{{param:project_name}}"
+    description: "Example project created by recipe"
+    path: "/tmp/{{param:project_name}}"
+    target: "local"
+    agents:
+      - "example-agent"
+    scripts:
+      - "example-script"
+
+pipelines:
+  - id: "example-pipeline"
+    name: "{{param:pipeline_name}}"
+    project: "example-project"
+    description: "Example pipeline created by recipe"
+    type: "sequential"
+    steps:
+      - order: 1
+        agent: "example-agent"
+        prompt: "Process the following input and provide a summary."
+        type: "agent"
+      - order: 2
+        script: "example-script"
+        type: "script"
+        runtime: "bash"
+
+tasks:
+  - id: "create-target"
+    type: "create"
+    resource: "target"
+    ref: "local"
+
+  - id: "create-agent"
+    type: "create"
+    resource: "agent"
+    ref: "example-agent"
+    depends_on:
+      - "create-target"
+
+  - id: "create-script"
+    type: "create"
+    resource: "script"
+    ref: "example-script"
+
+  - id: "create-project"
+    type: "create"
+    resource: "project"
+    ref: "example-project"
+    depends_on:
+      - "create-agent"
+      - "create-script"
+
+  - id: "create-pipeline"
+    type: "create"
+    resource: "pipeline"
+    ref: "example-pipeline"
+    depends_on:
+      - "create-project"
+
+  - id: "run-pipeline"
+    type: "run"
+    pipeline_ref: "example-pipeline"
+    wait: true
+    depends_on:
+      - "create-pipeline"

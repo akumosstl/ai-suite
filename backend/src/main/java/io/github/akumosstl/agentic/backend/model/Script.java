@@ -17,6 +17,9 @@ import java.util.List;
  * @version 1.0
  */
 @Entity
+@Table(name = "script", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_script_name_namespace", columnNames = {"name", "namespace"})
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Script {
     @Id

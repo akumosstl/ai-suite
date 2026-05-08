@@ -3,6 +3,7 @@ package io.github.akumosstl.agentic.backend.controller;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.service.AgentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,11 +75,15 @@ public class AgentController {
      * @return Agente criado
      */
     @PostMapping
-    public Agent createAgent(@RequestBody Agent agent, @RequestParam(required = false) Long projectId) {
-        if (projectId != null) {
-            return agentService.createAgent(agent, projectId);
+    public ResponseEntity<?> createAgent(@RequestBody Agent agent, @RequestParam(required = false) Long projectId) {
+        try {
+            Agent created = projectId != null ? agentService.createAgent(agent, projectId) : agentService.createAgent(agent);
+            return ResponseEntity.ok(created);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
-        return agentService.createAgent(agent);
     }
     
     /**
@@ -89,8 +94,14 @@ public class AgentController {
      * @return Agente atualizado
      */
     @PutMapping("/{id}")
-    public Agent updateAgent(@PathVariable Long id, @RequestBody Agent agentDetails) {
-        return agentService.updateAgent(id, agentDetails);
+    public ResponseEntity<?> updateAgent(@PathVariable Long id, @RequestBody Agent agentDetails) {
+        try {
+            return ResponseEntity.ok(agentService.updateAgent(id, agentDetails));
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
     }
     
     /**

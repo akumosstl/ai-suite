@@ -204,7 +204,6 @@ export class ShortcutsDialogComponent {
     { keys: 'Ctrl+Shift+S', action: 'Scripts', description: 'Go to Scripts page' },
     { keys: 'Ctrl+Shift+T', action: 'Templates', description: 'Go to Templates page' },
     { keys: 'Ctrl+Shift+N', action: 'Namespaces', description: 'Go to Namespaces page' },
-    { keys: 'Ctrl+Shift+I', action: 'Instructions', description: 'Go to Instructions page' },
     { keys: 'Ctrl+Shift+L', action: 'Pipelines', description: 'Go to Pipelines page' },
     { keys: 'Ctrl+Shift+P', action: 'Project', description: 'Go to Project page' },
     { keys: 'Ctrl+B', action: 'Toggle Panel', description: 'Toggle left panel' },
@@ -214,8 +213,8 @@ export class ShortcutsDialogComponent {
   ];
 
   editorShortcuts: Shortcut[] = [
-    { keys: 'Ctrl+Shift+E', action: 'Open in Editor', description: 'Open content in editor (Agents, Scripts, Instructions)' },
-    { keys: 'Ctrl+Shift+K', action: 'Copy to Clipboard', description: 'Copy content to clipboard (Agents, Scripts, Instructions)' },
+    { keys: 'Ctrl+Shift+E', action: 'Open in Editor', description: 'Open content in editor (Agents, Scripts)' },
+    { keys: 'Ctrl+Shift+K', action: 'Copy to Clipboard', description: 'Copy content to clipboard (Agents, Scripts)' },
   ];
 
 projectShortcuts: Shortcut[] = [

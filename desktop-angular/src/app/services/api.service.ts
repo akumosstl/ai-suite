@@ -24,7 +24,6 @@ export interface Project {
   commands?: Command[];
   scripts?: Script[];
   agents?: Agent[];
-  instructions?: Instruction[];
   plugins?: Plugin[];
   tools?: Tool[];
 }
@@ -195,7 +194,7 @@ export interface Template {
   name: string;
   description?: string;
   template?: string;
-  type: string; // "agents", "scripts", "instructions"
+  type: string; // "agents", "scripts"
   createdAt?: string;
   updatedAt?: string;
 }
@@ -211,35 +210,6 @@ export interface SkillFile {
   fileName: string;
   content: string;
   skillId?: number;
-  isDeleted?: boolean;
-}
-
-/**
- * Interface que representa uma Instrução no sistema.
- * Instruções são diretrizes que orientam o comportamento de agentes.
- * 
- * @interface Instruction
- */
-export interface Instruction {
-  id?: number;
-  name: string;
-  namespace: string;
-  description?: string;
-  instructions?: string;
-  path?: string;
-}
-
-/**
- * Interface que representa um arquivo associado a uma instrução.
- * 
- * @interface InstructionFile
- */
-export interface InstructionFile {
-  id?: number;
-  path: string;
-  fileName: string;
-  content: string;
-  instructionId?: number;
   isDeleted?: boolean;
 }
 
@@ -314,7 +284,6 @@ export interface Target {
   commandsPath?: string;
   scriptsPath?: string;
   agentsPath?: string;
-  instructionsPath?: string;
   pluginsPath?: string;
   toolsPath?: string;
 }
@@ -411,6 +380,16 @@ export interface Action {
  * 
  * @interface SprintReview
  */
+export interface RecipeFile {
+  id?: number;
+  name: string;
+  version?: string;
+  description?: string;
+  yamlContent: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SprintReview {
   id?: number;
   gameId: number;
@@ -1071,89 +1050,6 @@ export class ApiService {
     }).pipe(catchError(this.handleError<SkillFile>('updateSkillFile', {} as SkillFile)));
   }
 
-  // Instructions
-  getInstructions(page = 0, size = 10): Observable<any> {
-    return this.http.get(`${this.baseUrl}/instructions`, {
-      params: new HttpParams()
-        .set('page', page.toString())
-        .set('size', size.toString())
-    }).pipe(catchError(this.handleError('getInstructions', [])));
-  }
-
-  searchInstructions(term: string, namespace: string = '', page = 0, size = 10): Observable<any> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-    if (term) {
-      params = params.set('term', term);
-    }
-    if (namespace) {
-      params = params.set('namespace', namespace);
-    }
-    return this.http.get(`${this.baseUrl}/instructions/search`, { params }).pipe(
-      catchError(this.handleError('searchInstructions', []))
-    );
-  }
-
-  createInstruction(instruction: Instruction): Observable<Instruction> {
-    return this.http.post<Instruction>(`${this.baseUrl}/instructions`, instruction).pipe(
-      catchError(this.handleError('createInstruction', instruction))
-    );
-  }
-
-  updateInstruction(id: number, instruction: Instruction): Observable<Instruction> {
-    return this.http.put<Instruction>(`${this.baseUrl}/instructions/${id}`, instruction).pipe(
-      catchError(this.handleError('updateInstruction', instruction))
-    );
-  }
-
-  deleteInstruction(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/instructions/${id}`).pipe(
-      catchError(this.handleError('deleteInstruction', null))
-    );
-  }
-
-  // Instruction Files
-  getInstructionFiles(instructionId: number): Observable<InstructionFile[]> {
-    return this.http.get<InstructionFile[]>(`${this.baseUrl}/instruction-files/instruction/${instructionId}`).pipe(
-      catchError(this.handleError('getInstructionFiles', []))
-    );
-  }
-
-  addInstructionFile(instructionId: number, path: string, fileName: string, content: string): Observable<InstructionFile> {
-    return this.http.post<InstructionFile>(`${this.baseUrl}/instruction-files`, {
-      instructionId,
-      path,
-      fileName,
-      content
-    }).pipe(catchError(this.handleError<InstructionFile>('addInstructionFile', {} as InstructionFile)));
-  }
-
-  deleteInstructionFile(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/instruction-files/${id}`).pipe(
-      catchError(this.handleError('deleteInstructionFile', null))
-    );
-  }
-
-  updateInstructionFile(id: number, path: string, fileName: string, content: string): Observable<InstructionFile> {
-    return this.http.put<InstructionFile>(`${this.baseUrl}/instruction-files/${id}`, {
-      path,
-      fileName,
-      content
-    }).pipe(catchError(this.handleError<InstructionFile>('updateInstructionFile', {} as InstructionFile)));
-  }
-
-  syncInstructionFilesToFilesystem(targetPath: string, files: InstructionFile[]): Observable<any> {
-    return this.http.post(`${this.baseUrl}/instruction-files/sync-to-filesystem`, {
-      targetPath,
-      files: files.map(f => ({
-        path: f.path,
-        fileName: f.fileName,
-        content: f.content
-      }))
-    }).pipe(catchError(this.handleError('syncInstructionFilesToFilesystem', { success: false })));
-  }
-
   // Plugins
   getPlugins(page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/plugins`, {
@@ -1329,12 +1225,6 @@ export class ApiService {
     );
   }
 
-  getInstructionNamespaces(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/instructions/namespaces`).pipe(
-      catchError(this.handleError('getInstructionNamespaces', []))
-    );
-  }
-
   getPluginNamespaces(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/plugins/namespaces`).pipe(
       catchError(this.handleError('getPluginNamespaces', []))
@@ -1415,6 +1305,48 @@ export class ApiService {
     );
   }
 
+  // Recipe Files
+  getRecipeFiles(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/recipe-files`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getRecipeFiles', [])));
+  }
+
+  searchRecipeFiles(term: string, page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/recipe-files/search`, {
+      params: new HttpParams()
+        .set('term', term)
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('searchRecipeFiles', [])));
+  }
+
+  getRecipeFile(id: number): Observable<RecipeFile> {
+    return this.http.get<RecipeFile>(`${this.baseUrl}/recipe-files/${id}`).pipe(
+      catchError(this.handleError('getRecipeFile', {} as RecipeFile))
+    );
+  }
+
+  createRecipeFile(recipeFile: RecipeFile): Observable<RecipeFile> {
+    return this.http.post<RecipeFile>(`${this.baseUrl}/recipe-files`, recipeFile).pipe(
+      catchError(this.handleError('createRecipeFile', recipeFile))
+    );
+  }
+
+  updateRecipeFile(id: number, recipeFile: RecipeFile): Observable<RecipeFile> {
+    return this.http.put<RecipeFile>(`${this.baseUrl}/recipe-files/${id}`, recipeFile).pipe(
+      catchError(this.handleError('updateRecipeFile', recipeFile))
+    );
+  }
+
+  deleteRecipeFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/recipe-files/${id}`).pipe(
+      catchError(this.handleError('deleteRecipeFile', null))
+    );
+  }
+
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed:`, error);
@@ -1424,38 +1356,9 @@ export class ApiService {
       (customError as any).error = errorMessage;
       return throwError(() => customError);
     };
-  }
+}
 
-  exportData(types: string[]): Observable<Blob> {
-    const params = types.map(t => `types=${t}`).join('&');
-    return this.http.get(`${this.baseUrl}/export-import/export?${params}`, {
-      responseType: 'blob'
-    }).pipe(
-      catchError(this.handleError('exportData', new Blob()))
-    );
-  }
-
-  importData(formData: FormData): Observable<any> {
-    return this.http.post(`${this.baseUrl}/export-import/import`, formData).pipe(
-      catchError(this.handleError('importData', { success: false, message: 'Import failed' }))
-    );
-  }
-
-backupDatabase(directory: string, fileName: string): Observable<any> {
-      return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
-        catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
-      );
-    }
-
-   downloadBackup(): Observable<Blob> {
-     return this.http.get(`${this.baseUrl}/backup/download`, {
-       responseType: 'blob'
-     }).pipe(
-       catchError(this.handleError('downloadBackup', new Blob()))
-     );
-   }
-
-   exitApplication(): Observable<any> {
+exitApplication(): Observable<any> {
      return this.http.post(`${this.baseUrl}/exit`, {}).pipe(
        catchError(this.handleError('exitApplication', {}))
      );

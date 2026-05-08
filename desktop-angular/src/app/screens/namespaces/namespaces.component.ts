@@ -86,10 +86,7 @@ interface ClearResult {
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
-              <mat-icon>description</mat-icon>
-              <span>Instructions</span>
-            </button>
+
           </div>
           
           <div class="search-section">
@@ -764,8 +761,7 @@ export class NamespacesComponent implements OnInit, OnDestroy {
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
-      'scripts': 'Scripts',
-      'instructions': 'Instructions'
+      'scripts': 'Scripts'
     };
     return labels[this.selectedType] || 'Unknown';
   }

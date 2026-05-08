@@ -252,45 +252,13 @@ public final class McpResponseFormatter {
         return sb.toString();
     }
 
-    public static String formatInstruction(Instruction i) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("## Instruction: ").append(i.getName()).append("\n");
-        sb.append("- **ID**: ").append(i.getId()).append("\n");
-        sb.append("- **Namespace**: ").append(i.getNamespace()).append("\n");
-        if (i.getCategory() != null) sb.append("- **Category**: ").append(i.getCategory()).append("\n");
-        if (i.getDescription() != null) sb.append("- **Description**: ").append(i.getDescription()).append("\n");
-        if (i.getPath() != null) sb.append("- **Path**: ").append(i.getPath()).append("\n");
-        sb.append("- **Created**: ").append(i.getCreatedAt()).append("\n");
-        return sb.toString();
-    }
-
-    public static String formatInstructionsList(List<Instruction> instructions) {
-        if (instructions.isEmpty()) {
-            return "No instructions found.";
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("## Instructions (").append(instructions.size()).append(")\n\n");
-        sb.append("| # | ID | Name | Namespace | Category |\n");
-        sb.append("|---|----|------|-----------|----------|\n");
-        for (int i = 0; i < instructions.size(); i++) {
-            Instruction inst = instructions.get(i);
-            sb.append("| ").append(i + 1).append(" | ")
-                    .append(inst.getId()).append(" | ")
-                    .append(inst.getName()).append(" | ")
-                    .append(inst.getNamespace() != null ? inst.getNamespace() : "-").append(" | ")
-                    .append(inst.getCategory() != null ? inst.getCategory() : "-").append(" |\n");
-        }
-        return sb.toString();
-    }
-
-    public static String formatTarget(Target t) {
+  public static String formatTarget(Target t) {
         StringBuilder sb = new StringBuilder();
         sb.append("## Target: ").append(t.getName()).append("\n");
         sb.append("- **ID**: ").append(t.getId()).append("\n");
         if (t.getAgentsPath() != null) sb.append("- **Agents Path**: ").append(t.getAgentsPath()).append("\n");
         if (t.getScriptsPath() != null) sb.append("- **Scripts Path**: ").append(t.getScriptsPath()).append("\n");
-        if (t.getInstructionsPath() != null) sb.append("- **Instructions Path**: ").append(t.getInstructionsPath()).append("\n");
-        if (t.getCli() != null) sb.append("- **CLI**: ").append(t.getCli()).append("\n");
+    if (t.getCli() != null) sb.append("- **CLI**: ").append(t.getCli()).append("\n");
         return sb.toString();
     }
 

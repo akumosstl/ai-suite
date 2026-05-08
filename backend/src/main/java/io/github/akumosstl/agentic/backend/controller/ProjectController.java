@@ -3,7 +3,6 @@ package io.github.akumosstl.agentic.backend.controller;
 import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Agent;
-import io.github.akumosstl.agentic.backend.model.Instruction;
 import io.github.akumosstl.agentic.backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +21,7 @@ import java.util.Map;
  * Controlador REST para gerenciamento de Projetos.
  * 
  * Fornece endpoints para gerenciar projetos e suas associa��es
- * (agentes, scripts, instructions).
+ * (agentes, scripts).
  * Suporta manipula��o de arquivos de projeto.
  * 
  * @author Sistema Agentic
@@ -60,16 +59,7 @@ public class ProjectController {
         return projectService.addAgentsToProject(id, agentIds, force);
     }
     
-    @PostMapping("/{id}/instructions")
-    public Project addInstructionsToProject(@PathVariable Long id, @RequestBody Map<String, Object> request) {
-        List<Long> instructionIds = ((List<Number>) request.get("instructionIds")).stream()
-            .map(Number::longValue)
-            .collect(java.util.stream.Collectors.toList());
-        Boolean force = request.get("force") != null ? (Boolean) request.get("force") : false;
-        return projectService.addInstructionsToProject(id, instructionIds, force);
-    }
-    
-    @DeleteMapping("/{projectId}/scripts/{scriptId}")
+  @DeleteMapping("/{projectId}/scripts/{scriptId}")
     public Project removeScriptFromProject(@PathVariable Long projectId, @PathVariable Long scriptId) {
         return projectService.removeScriptFromProject(projectId, scriptId);
     }
@@ -85,17 +75,6 @@ public class ProjectController {
         return projectService.removeAgentFromProject(projectId, agentId);
     }
     
-    // Instructions endpoints
-    @GetMapping("/{id}/instructions")
-    public List<Instruction> getProjectInstructions(@PathVariable Long id) {
-        return projectService.getProjectInstructions(id);
-    }
-    
-  @DeleteMapping("/{projectId}/instructions/{instructionId}")
-  public Project removeInstructionFromProject(@PathVariable Long projectId, @PathVariable Long instructionId) {
-    return projectService.removeInstructionFromProject(projectId, instructionId);
-  }
-
   @GetMapping("/{id}/files")
   public List<Object> getProjectFiles(@PathVariable Long id) {
     return new ArrayList<>();

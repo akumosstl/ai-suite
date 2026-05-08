@@ -21,11 +21,8 @@ public class NamespaceController {
     @Autowired
     private ScriptService scriptService;
 
-    @Autowired
-    private InstructionService instructionService;
-
-    @Autowired
-    private PipelineService pipelineService;
+  @Autowired
+  private PipelineService pipelineService;
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -35,7 +32,7 @@ public class NamespaceController {
 
     @GetMapping("/types")
     public ResponseEntity<List<String>> getTypes() {
-        return ResponseEntity.ok(Arrays.asList("agents", "scripts", "instructions"));
+        return ResponseEntity.ok(Arrays.asList("agents", "scripts"));
     }
 
     @GetMapping("/namespaces/{type}")
@@ -54,25 +51,18 @@ public class NamespaceController {
                     namespaces = scriptService.getDistinctCategories();
                 }
                 break;
-            case "instructions":
-                namespaces = instructionService.getDistinctNamespaces();
-                if (namespaces.isEmpty()) {
-                    namespaces = instructionService.getDistinctCategories();
-                }
-                break;
-            default:
-                return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok(namespaces);
-    }
+    default:
+      return ResponseEntity.badRequest().build();
+  }
+  return ResponseEntity.ok(namespaces);
+}
 
     @GetMapping("/all")
     public ResponseEntity<Map<String, List<String>>> getAllNamespaces() {
         Map<String, List<String>> result = new HashMap<>();
-        result.put("agents", agentService.getDistinctNamespaces());
-        result.put("scripts", scriptService.getDistinctNamespaces());
-        result.put("instructions", instructionService.getDistinctNamespaces());
-        return ResponseEntity.ok(result);
+  result.put("agents", agentService.getDistinctNamespaces());
+  result.put("scripts", scriptService.getDistinctNamespaces());
+  return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{type}/{namespace}")
@@ -90,12 +80,9 @@ public class NamespaceController {
             case "scripts":
                 items = scriptService.getScriptsByNamespace(namespace);
                 break;
-            case "instructions":
-                items = instructionService.getInstructionsByNamespace(namespace);
-                break;
-            default:
-                return ResponseEntity.badRequest().build();
-        }
+    default:
+      return ResponseEntity.badRequest().build();
+  }
 
         NamespaceItems result = new NamespaceItems();
         result.setType(type);
@@ -147,31 +134,25 @@ public class NamespaceController {
         for (Project project : allProjects) {
             boolean referencesNamespace = false;
             
-            switch (type) {
-                case "scripts":
-                    if (project.getScripts() != null) {
-                        referencesNamespace = project.getScripts().stream()
-                            .anyMatch(s -> itemIds.contains(s.getId()));
-                    }
-                    break;
-                case "agents":
-                    if (project.getAgents() != null) {
-                        referencesNamespace = project.getAgents().stream()
-                            .anyMatch(a -> itemIds.contains(a.getId()));
-                    }
-                    break;
-                case "instructions":
-                    if (project.getInstructions() != null) {
-                        referencesNamespace = project.getInstructions().stream()
-                            .anyMatch(i -> itemIds.contains(i.getId()));
-                    }
-                    break;
-            }
-            
-            if (referencesNamespace) {
-                referencedProjects.add(project);
-            }
+    switch (type) {
+      case "scripts":
+        if (project.getScripts() != null) {
+          referencesNamespace = project.getScripts().stream()
+            .anyMatch(s -> itemIds.contains(s.getId()));
         }
+        break;
+      case "agents":
+        if (project.getAgents() != null) {
+          referencesNamespace = project.getAgents().stream()
+            .anyMatch(a -> itemIds.contains(a.getId()));
+        }
+        break;
+    }
+
+    if (referencesNamespace) {
+      referencedProjects.add(project);
+    }
+  }
         
         return ResponseEntity.ok(referencedProjects);
     }
