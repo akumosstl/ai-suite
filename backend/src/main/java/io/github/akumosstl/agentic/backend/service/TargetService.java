@@ -40,6 +40,18 @@ public class TargetService {
     }
 
     @Transactional
+    public Target findOrCreateTarget(String name, String agentsPath, String scriptsPath, String cli) {
+        return targetRepository.findByName(name).orElseGet(() -> {
+            Target t = new Target();
+            t.setName(name);
+            t.setAgentsPath(agentsPath != null ? agentsPath : "");
+            t.setScriptsPath(scriptsPath != null ? scriptsPath : "");
+            t.setCli(cli != null ? cli : "");
+            return targetRepository.save(t);
+        });
+    }
+
+    @Transactional
     public Target updateTarget(Long id, Target targetDetails) {
         Target target = getTargetById(id);
     target.setName(targetDetails.getName());

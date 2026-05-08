@@ -195,13 +195,12 @@ public class RecipeExecutor {
 
                 if (entityId != null) {
                     resolver.registerTaskResult(taskId, entityId);
+                    if ("create".equals(task.getType())) {
+                        resolver.registerTaskResult(task.getRef(), entityId);
+                    }
                 }
 
                 completedTaskIds.add(taskId);
-
-                if ("create".equals(task.getType()) && entityId != null) {
-                    resolver.registerTaskResult(task.getRef(), entityId);
-                }
 
             } catch (Exception e) {
                 logger.error("Task '{}' failed: {}", taskId, e.getMessage(), e);
@@ -352,6 +351,7 @@ public class RecipeExecutor {
             }
         }
 
+        resolver.registerTaskResult("_project:" + rp.getId(), project.getId());
         return project.getId();
     }
 
@@ -359,14 +359,15 @@ public class RecipeExecutor {
         RecipeAgent ra = findById(recipeYaml.getAgents(), ref);
         if (ra == null) throw new RuntimeException("Agent not found in recipe: " + ref);
 
-        Agent agent = new Agent();
-        agent.setName(resolver.resolve(ra.getName()));
-        agent.setNamespace(ra.getNamespace() != null ? resolver.resolve(ra.getNamespace()) : "");
-        agent.setCategory(resolver.resolve(ra.getCategory()));
-        agent.setDescription(resolver.resolve(ra.getDescription()));
-        agent.setPrompt(resolver.resolve(ra.getPrompt()));
-        agent.setPath(resolver.resolve(ra.getPath()));
-        agent = agentService.createAgent(agent);
+        Agent agent = agentService.findOrCreateAgent(
+                resolver.resolve(ra.getName()),
+                ra.getNamespace() != null ? resolver.resolve(ra.getNamespace()) : null,
+                ra.getCategory() != null ? resolver.resolve(ra.getCategory()) : null,
+                ra.getDescription() != null ? resolver.resolve(ra.getDescription()) : null,
+                ra.getPrompt() != null ? resolver.resolve(ra.getPrompt()) : null,
+                ra.getPath() != null ? resolver.resolve(ra.getPath()) : null
+        );
+        resolver.registerTaskResult("_agent:" + ra.getId(), agent.getId());
         return agent.getId();
     }
 
@@ -374,15 +375,16 @@ public class RecipeExecutor {
         RecipeScript rs = findById(recipeYaml.getScripts(), ref);
         if (rs == null) throw new RuntimeException("Script not found in recipe: " + ref);
 
-        Script script = new Script();
-        script.setName(resolver.resolve(rs.getName()));
-        script.setNamespace(rs.getNamespace() != null ? resolver.resolve(rs.getNamespace()) : "");
-        script.setCategory(resolver.resolve(rs.getCategory()));
-        script.setDescription(resolver.resolve(rs.getDescription()));
-        script.setContent(resolver.resolve(rs.getContent()));
-        script.setScope(resolver.resolve(rs.getScope()) != null ? resolver.resolve(rs.getScope()) : "global");
-        script.setPath(resolver.resolve(rs.getPath()));
-        script = scriptService.createScript(script);
+        Script script = scriptService.findOrCreateScript(
+                resolver.resolve(rs.getName()),
+                rs.getNamespace() != null ? resolver.resolve(rs.getNamespace()) : null,
+                rs.getCategory() != null ? resolver.resolve(rs.getCategory()) : null,
+                rs.getDescription() != null ? resolver.resolve(rs.getDescription()) : null,
+                rs.getContent() != null ? resolver.resolve(rs.getContent()) : null,
+                rs.getScope() != null ? resolver.resolve(rs.getScope()) : null,
+                rs.getPath() != null ? resolver.resolve(rs.getPath()) : null
+        );
+        resolver.registerTaskResult("_script:" + rs.getId(), script.getId());
         return script.getId();
     }
 
@@ -395,14 +397,24 @@ public class RecipeExecutor {
             throw new RuntimeException("Cannot resolve project for pipeline: " + rpipe.getName());
         }
 
-        Pipeline pipeline = new Pipeline();
-        pipeline.setName(resolver.resolve(rpipe.getName()));
-        pipeline.setDescription(resolver.resolve(rpipe.getDescription()));
-        pipeline.setType(resolver.resolve(rpipe.getType()));
-        pipeline.setOutputExtension(resolver.resolve(rpipe.getOutputExtension()));
-        pipeline = pipelineService.createPipeline(projectId, pipeline);
+        List<Pipeline> existingPipelines = pipelineService.getPipelineRepository().findByProject_IdAndName(projectId, resolver.resolve(rpipe.getName()));
+        Pipeline pipeline;
+        boolean isNewPipeline;
 
-        if (rpipe.getSteps() != null) {
+        if (!existingPipelines.isEmpty()) {
+            pipeline = existingPipelines.get(0);
+            isNewPipeline = false;
+        } else {
+            pipeline = pipelineService.findOrCreatePipeline(projectId,
+                    resolver.resolve(rpipe.getName()),
+                    rpipe.getDescription() != null ? resolver.resolve(rpipe.getDescription()) : null,
+                    rpipe.getType() != null ? resolver.resolve(rpipe.getType()) : null,
+                    rpipe.getOutputExtension() != null ? resolver.resolve(rpipe.getOutputExtension()) : null
+            );
+            isNewPipeline = true;
+        }
+
+        if (isNewPipeline && rpipe.getSteps() != null) {
             for (RecipeStep rstep : rpipe.getSteps()) {
                 Long agentId = null;
                 Long scriptId = null;
@@ -463,6 +475,7 @@ public class RecipeExecutor {
             }
         }
 
+        resolver.registerTaskResult("_pipeline:" + ref, pipeline.getId());
         return pipeline.getId();
     }
 
@@ -470,12 +483,12 @@ public class RecipeExecutor {
         RecipeTarget rt = findById(recipeYaml.getTargets(), ref);
         if (rt == null) throw new RuntimeException("Target not found in recipe: " + ref);
 
-        Target target = new Target();
-        target.setName(resolver.resolve(rt.getName()));
-        target.setAgentsPath(resolver.resolve(rt.getAgentsPath()));
-        target.setScriptsPath(resolver.resolve(rt.getScriptsPath()));
-        target.setCli(resolver.resolve(rt.getCli()));
-        target = targetService.createTarget(target);
+        Target target = targetService.findOrCreateTarget(
+                resolver.resolve(rt.getName()),
+                resolver.resolve(rt.getAgentsPath()),
+                resolver.resolve(rt.getScriptsPath()),
+                resolver.resolve(rt.getCli())
+        );
         return target.getId();
     }
 
@@ -483,12 +496,12 @@ public class RecipeExecutor {
         RecipeTemplate rt = findById(recipeYaml.getTemplates(), ref);
         if (rt == null) throw new RuntimeException("Template not found in recipe: " + ref);
 
-        Template template = new Template();
-        template.setName(resolver.resolve(rt.getName()));
-        template.setType(resolver.resolve(rt.getType()));
-        template.setDescription(resolver.resolve(rt.getDescription()));
-        template.setTemplate(resolver.resolve(rt.getTemplate()));
-        template = templateService.createTemplate(template);
+        Template template = templateService.findOrCreateTemplate(
+                resolver.resolve(rt.getName()),
+                rt.getType() != null ? resolver.resolve(rt.getType()) : null,
+                rt.getDescription() != null ? resolver.resolve(rt.getDescription()) : null,
+                rt.getTemplate() != null ? resolver.resolve(rt.getTemplate()) : null
+        );
         return template.getId();
     }
 
@@ -581,6 +594,8 @@ public class RecipeExecutor {
         if (task.getPipelineRef() != null) {
             Long id = resolver.getTaskResult(task.getPipelineRef());
             if (id != null) return id;
+            id = resolver.getTaskResult("_pipeline:" + task.getPipelineRef());
+            if (id != null) return id;
         }
 
         if (task.getPipelineName() != null) {
@@ -601,6 +616,8 @@ public class RecipeExecutor {
         if (projectRef == null || projectRef.isEmpty()) return null;
 
         Long id = resolver.getTaskResult(projectRef);
+        if (id != null) return id;
+        id = resolver.getTaskResult("_project:" + projectRef);
         if (id != null) return id;
 
         if (recipeYaml.getProjects() != null) {
@@ -625,6 +642,9 @@ public class RecipeExecutor {
     private Long findAgentIdByName(RecipeYaml recipeYaml, String agentRef,
                                    RecipeParameterResolver resolver) {
         if (agentRef == null) return null;
+
+        Long cachedId = resolver.getTaskResult("_agent:" + agentRef);
+        if (cachedId != null) return cachedId;
 
         if (recipeYaml.getAgents() != null) {
             for (RecipeAgent ra : recipeYaml.getAgents()) {
@@ -658,6 +678,9 @@ public class RecipeExecutor {
     private Long findScriptIdByName(RecipeYaml recipeYaml, String scriptRef,
                                     RecipeParameterResolver resolver) {
         if (scriptRef == null) return null;
+
+        Long cachedId = resolver.getTaskResult("_script:" + scriptRef);
+        if (cachedId != null) return cachedId;
 
         if (recipeYaml.getScripts() != null) {
             for (RecipeScript rs : recipeYaml.getScripts()) {

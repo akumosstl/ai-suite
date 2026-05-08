@@ -3,6 +3,7 @@ package io.github.akumosstl.agentic.backend.recipe;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RecipeStep {
+    private String id;
     private Integer order;
     private String agent;
     private String script;
@@ -14,6 +15,9 @@ public class RecipeStep {
     private String arguments;
     private RecipeStepIO input;
     private RecipeStepIO output;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public Integer getOrder() { return order; }
     public void setOrder(Integer order) { this.order = order; }

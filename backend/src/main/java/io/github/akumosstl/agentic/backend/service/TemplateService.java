@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TemplateService {
@@ -60,7 +61,20 @@ public class TemplateService {
     public void deleteTemplate(Long id) {
         templateRepository.deleteById(id);
     }
-    
+
+    public Template findOrCreateTemplate(String name, String type, String description, String templateContent) {
+        Optional<Template> existing = templateRepository.findByNameAndType(name, type);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Template template = new Template();
+        template.setName(name);
+        template.setType(type);
+        template.setDescription(description != null ? description : "");
+        template.setTemplate(templateContent != null ? templateContent : "");
+        return templateRepository.save(template);
+    }
+
     public List<Template> searchTemplatesByType(String type, String searchTerm) {
         return templateRepository.findByTypeAndNameContainingIgnoreCase(type, searchTerm);
     }

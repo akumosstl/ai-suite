@@ -215,4 +215,19 @@ public class AgentService {
             throw new IllegalArgumentException("Agent with name '" + name + "' and namespace '" + namespace + "' already exists");
         }
     }
+
+    public Agent findOrCreateAgent(String name, String namespace, String category, String description, String prompt, String path) {
+        Optional<Agent> existing = agentRepository.findByNameAndNamespace(name, namespace != null ? namespace : "");
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Agent agent = new Agent();
+        agent.setName(name);
+        agent.setNamespace(namespace != null ? namespace : "");
+        agent.setCategory(category != null ? category : "");
+        agent.setDescription(description != null ? description : "");
+        agent.setPrompt(prompt != null ? prompt : "");
+        agent.setPath(path != null ? path : "");
+        return agentRepository.save(agent);
+    }
 }

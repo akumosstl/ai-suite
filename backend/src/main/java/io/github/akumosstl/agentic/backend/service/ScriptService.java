@@ -113,4 +113,20 @@ public class ScriptService {
             throw new IllegalArgumentException("Script with name '" + name + "' and namespace '" + namespace + "' already exists");
         }
     }
+
+    public Script findOrCreateScript(String name, String namespace, String category, String description, String content, String scope, String path) {
+        Optional<Script> existing = scriptRepository.findByNameAndNamespace(name, namespace != null ? namespace : "");
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Script script = new Script();
+        script.setName(name);
+        script.setNamespace(namespace != null ? namespace : "");
+        script.setCategory(category != null ? category : "");
+        script.setDescription(description != null ? description : "");
+        script.setContent(content != null ? content : "");
+        script.setScope(scope != null ? scope : "global");
+        script.setPath(path != null ? path : "");
+        return scriptRepository.save(script);
+    }
 }

@@ -196,3 +196,20 @@ Release Date: 2026-04-24
 ## Documentation
 
 User documentation is available in the [docs](docs/) folder. See [docs/README.md](docs/README.md) for the full index.
+
+
+# recipe
+
+```bash
+
+curl -X POST http://localhost:8080/api/recipe-files -H "Content-Type: application/json" -d @test-recipe.json
+
+
+
+curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d "{\"yaml\": $(cat test-recipe.yml | jq -Rs .)}"
+
+
+python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
+
+python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
+```

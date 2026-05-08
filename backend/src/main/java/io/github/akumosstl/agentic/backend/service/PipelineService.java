@@ -76,7 +76,23 @@ public class PipelineService {
         pipeline.setProject(project);
         return pipelineRepository.save(pipeline);
     }
-    
+
+    public Pipeline findOrCreatePipeline(Long projectId, String name, String description, String type, String outputExtension) {
+        List<Pipeline> existing = pipelineRepository.findByProject_IdAndName(projectId, name);
+        if (!existing.isEmpty()) {
+            return existing.get(0);
+        }
+        Pipeline pipeline = new Pipeline();
+        pipeline.setName(name);
+        pipeline.setDescription(description != null ? description : "");
+        pipeline.setType(type != null ? type : "");
+        pipeline.setOutputExtension(outputExtension != null ? outputExtension : "");
+        pipeline.setStatus("pending");
+        Project project = projectService.getProjectById(projectId);
+        pipeline.setProject(project);
+        return pipelineRepository.save(pipeline);
+    }
+
     public Pipeline updatePipeline(Long id, Pipeline pipelineDetails) {
         Pipeline pipeline = getPipelineById(id);
         pipeline.setName(pipelineDetails.getName());

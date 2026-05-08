@@ -1075,6 +1075,38 @@ export class RecipeComponent implements OnInit, OnDestroy {
     }
   }
 
+  async copyYamlAsJson(): Promise<void> {
+    let yamlContent = ''
+    if (this.viewMode === 'visual') {
+      yamlContent = this.formToYaml()
+    } else {
+      yamlContent = this.rawYaml
+    }
+
+    if (!yamlContent) return
+
+    try {
+      const parsed = this.parseYamlSimple(yamlContent)
+      let recipe = parsed['recipe'] || {}
+      if (!recipe || Object.keys(recipe).length === 0) {
+        recipe = parsed
+      }
+
+      const jsonPayload = {
+        name: this.recipeName || recipe['name'] || '',
+        version: this.recipeVersion || recipe['version'] || '1.0',
+        description: this.recipeDescription || recipe['description'] || '',
+        yamlContent: yamlContent
+      }
+
+      await navigator.clipboard.writeText(JSON.stringify(jsonPayload, null, 2))
+      this.statusMessage = 'JSON (API format) copied to clipboard'
+      setTimeout(() => this.statusMessage = '', 3000)
+    } catch {
+      this.statusMessage = 'Failed to convert to JSON'
+    }
+  }
+
   getStatusClass(): string {
     if (!this.statusMessage) return ''
     if (this.statusMessage.includes('Error')) return 'error'

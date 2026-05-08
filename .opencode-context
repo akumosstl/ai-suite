@@ -459,3 +459,26 @@ A visual editor for creating and managing recipe YAML files, accessible from the
 
 **Fix (Backend - RecipeFileController.java):**
 - `updateRecipeFile()`: Changed from replacing the entire entity (which could null out `createdAt`) to selectively updating only `name`, `version`, `description`, `yamlContent` on the existing entity
+
+---
+
+### Recipe Engine Bug Fixes (Session: 2026-05-08)
+
+**Problems found and fixed:**
+
+1. **Project path must exist** — `ProjectService.createProject()` threw "Path does not exist" even for valid directories (relative paths don't resolve from backend working directory). Fixed to create the directory if it doesn't exist (`mkdirs`).
+
+2. **Duplicate create tasks fail** — Agents/scripts/targets/templates/pipelines that already exist caused unique constraint violations. Fixed by adding `findOrCreate*` methods to all services (`TargetService`, `AgentService`, `ScriptService`, `TemplateService`, `PipelineService`). Recipe executor now uses these instead of raw `create*` + exception on duplicates.
+
+3. **Pipeline ref resolution broken** — Tasks referencing `pipeline_ref: "pipeline-001"` couldn't find the pipeline because only the task ID was registered (e.g. `t-create-pipeline`), not the pipeline's own ID (`pipeline-001`). Fixed:
+   - Register `_pipeline:refId` after creating each pipeline
+   - Also register `_project:refId`, `_agent:refId`, `_script:refId` for all resources
+   - Updated `resolvePipelineId()` to check `_pipeline:ref` as fallback
+   - Updated `findAgentIdByName()` and `findScriptIdByName()` to check cached IDs first
+   - Updated `resolveProjectId()` to check `_project:ref` as fallback
+
+4. **RecipeStep missing `id`** — Pipeline steps didn't have an `id` field, making it hard to reference them. Added `id` field to `RecipeStep.java`.
+
+5. **Pipeline not added to project** — When pipeline already existed (via findOrCreate), steps were being added on every run. Fixed by only adding steps when creating a new pipeline (`isNewPipeline` flag).
+
+**Services with findOrCreate:** TargetService, AgentService, ScriptService, TemplateService, PipelineService

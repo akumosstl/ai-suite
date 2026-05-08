@@ -884,8 +884,11 @@
         <div *ngIf="viewMode === 'raw'" class="raw-editor">
           <div class="raw-toolbar">
             <span class="raw-label">YAML</span>
-            <button class="icon-btn copy-btn" (click)="copyToClipboard(rawYaml)" title="Copy to clipboard" [disabled]="!rawYaml">
+            <button class="icon-btn copy-btn" (click)="copyToClipboard(rawYaml)" title="Copy YAML to clipboard" [disabled]="!rawYaml">
               <mat-icon>content_copy</mat-icon>
+            </button>
+            <button class="icon-btn copy-btn" (click)="copyYamlAsJson()" title="Copy as JSON (for API)" [disabled]="!rawYaml">
+              <mat-icon>code</mat-icon>
             </button>
           </div>
           <textarea

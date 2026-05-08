@@ -82,13 +82,17 @@ public class ProjectService {
     }
     
     public Project createProject(Project project) {
-        if (project.getPath() != null && !project.getPath().isEmpty()) {
-            File path = new File(project.getPath());
+        String projectPath = project.getPath();
+        if (projectPath != null && !projectPath.isEmpty()) {
+            File path = new File(projectPath);
             if (!path.exists()) {
-                throw new RuntimeException("Path does not exist: " + project.getPath());
+                boolean created = path.mkdirs();
+                if (!created && !path.exists()) {
+                    throw new RuntimeException("Could not create path: " + projectPath);
+                }
             }
             if (!path.isDirectory()) {
-                throw new RuntimeException("Path is not a directory: " + project.getPath());
+                throw new RuntimeException("Path is not a directory: " + projectPath);
             }
         }
         return projectRepository.save(project);
