@@ -1,4 +1,14 @@
+mvn clean install -U 
+
+
 # Agentic - AI Pipeline Execution System
+
+mvn -Pnative spring-boot:process-aot
+
+
+mvn -Pnative clean package -DskipTests
+
+java -Dspring.aot.enabled=true -jar target/my-app.jar
 
 A hybrid pipeline execution system with Server-Sent Events (SSE) for real-time updates and polling fallback, built on a Java Spring Boot backend and Angular frontend.
 
@@ -76,6 +86,11 @@ This method compiles the application to a standalone native executable (no JVM r
 cd backend
 mvn -Pnative native:build spring-boot:process-aot
 ```
+./mvnw -Pnative native:compile
+
+mvn -Pnative package -DskipTests
+
+java -jar backend/target/backend-3.5.0.jar
 
 The native executable will be created at `target/backend`.
 
@@ -127,8 +142,57 @@ cd desktop-angular
 npm test
 ```
 
-## Notes
+## MCP Server (opencode)
 
-- The backend must be running on port 8080 for the Angular proxy to work
-- The Angular dev server proxies `/api` requests to `http://localhost:8080`
-- H2 console is available at `http://localhost:8080/h2-console`
+Add this to your `opencode.json` to connect opencode to the Agentic MCP server:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "agentic-mcp": {
+      "type": "remote",
+      "url": "http://localhost:1488/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+The MCP server exposes 67 tools for managing projects, pipelines, agents, scripts, instructions, targets, templates, and system operations. It is enabled by default when `mcp.enabled=true` in `application.properties`.
+
+### MCP Usage Examples
+
+**Example 1 — Check how many pipelines are currently running:**
+
+```
+@list_all_pipeline_runs
+```
+
+Returns all pipeline runs across every project. Filter the results by `"status": "running"` to see which pipelines are actively executing. To get detailed step-by-step results for a specific run:
+
+```
+@get_pipeline_run id=3
+```
+
+**Example 2 — View project details with pipelines:**
+
+```
+@list_projects_with_pipelines
+```
+
+Returns every project along with its pipelines (names, statuses, step counts). For full details on a single project (agents, scripts, instructions):
+
+```
+@get_project id=1
+```
+
+## Version
+
+2.0.0 - AI Pipeline Execution System
+
+Release Date: 2026-04-24
+
+## Documentation
+
+User documentation is available in the [docs](docs/) folder. See [docs/README.md](docs/README.md) for the full index.

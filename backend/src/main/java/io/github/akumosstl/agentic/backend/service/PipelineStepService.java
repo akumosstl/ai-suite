@@ -1,82 +1,75 @@
 package io.github.akumosstl.agentic.backend.service;
 
-import io.github.akumosstl.agentic.backend.model.Agent;
-import io.github.akumosstl.agentic.backend.model.Pipeline;
-import io.github.akumosstl.agentic.backend.model.PipelineRun;
-import io.github.akumosstl.agentic.backend.model.PipelineStep;
-import io.github.akumosstl.agentic.backend.model.Project;
-import io.github.akumosstl.agentic.backend.model.Script;
-import io.github.akumosstl.agentic.backend.model.Target;
+import io.github.akumosstl.agentic.backend.model.*;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
 import io.github.akumosstl.agentic.backend.repository.TargetRepository;
 import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Serviço para gerenciamento de Etapas (Steps) de Pipeline.
- * 
- * Realiza operações de CRUD, execução de etapas de pipeline,
- * resolução de placeholders e streaming de saída em tempo real.
- * 
- * @author Sistema Agentic
- * @version 1.0
- */
 @Service
 public class PipelineStepService {
     
-    @Autowired
-    private PipelineStepRepository pipelineStepRepository;
+    private final PipelineStepRepository pipelineStepRepository;
+    private final PipelineRunRepository pipelineRunRepository;
+    private final EntityManager entityManager;
+    private final AgentService agentService;
+    private final ScriptService scriptService;
+    private final TargetRepository targetRepository;
+    private final PipelineRepository pipelineRepository;
+    private final SseService sseService;
+    private final ObjectProvider<PipelineService> pipelineServiceProvider;
+    private final ObjectProvider<PipelineRunService> pipelineRunServiceProvider;
     
     @Autowired
-    private PipelineRunRepository pipelineRunRepository;
+    public PipelineStepService(
+            PipelineStepRepository pipelineStepRepository,
+            PipelineRunRepository pipelineRunRepository,
+            EntityManager entityManager,
+            AgentService agentService,
+            ScriptService scriptService,
+            TargetRepository targetRepository,
+            PipelineRepository pipelineRepository,
+            SseService sseService,
+            ObjectProvider<PipelineService> pipelineServiceProvider,
+            ObjectProvider<PipelineRunService> pipelineRunServiceProvider) {
+        this.pipelineStepRepository = pipelineStepRepository;
+        this.pipelineRunRepository = pipelineRunRepository;
+        this.entityManager = entityManager;
+        this.agentService = agentService;
+        this.scriptService = scriptService;
+        this.targetRepository = targetRepository;
+        this.pipelineRepository = pipelineRepository;
+        this.sseService = sseService;
+        this.pipelineServiceProvider = pipelineServiceProvider;
+        this.pipelineRunServiceProvider = pipelineRunServiceProvider;
+    }
     
-    @Autowired
-    private EntityManager entityManager;
+    private PipelineService getPipelineService() {
+        return pipelineServiceProvider.getObject();
+    }
     
-    @Lazy
-    @Autowired
-    private PipelineService pipelineService;
-    
-    @Lazy
-    @Autowired
-    private PipelineRunService pipelineRunService;
-    
-    @Autowired
-    private AgentService agentService;
-    
-    @Autowired
-    private ScriptService scriptService;
-    
-    @Autowired
-    private TargetRepository targetRepository;
-    
-    @Autowired
-    private PipelineRepository pipelineRepository;
+    private PipelineRunService getPipelineRunService() {
+        return pipelineRunServiceProvider.getObject();
+    }
     
     private static final Pattern STEP_OUTPUT_PATTERN = Pattern.compile("\\{\\{step:(\\d+):output\\}\\}");
     private static final Pattern FILE_PATTERN = Pattern.compile("\\{\\{file:([^}]+)\\}\\}");
@@ -260,7 +253,7 @@ public class PipelineStepService {
     }
     
     public PipelineStep addStepToPipeline(Long pipelineId, Long agentId, Long scriptId) {
-        Pipeline pipeline = pipelineService.getPipelineById(pipelineId);
+        Pipeline pipeline = getPipelineService().getPipelineById(pipelineId);
         
         Integer nextStepOrder = pipelineStepRepository.getNextStepOrder(pipelineId);
         
@@ -282,7 +275,11 @@ public class PipelineStepService {
         
         return pipelineStepRepository.save(step);
     }
-    
+
+    public PipelineStep saveStep(PipelineStep step) {
+        return pipelineStepRepository.save(step);
+    }
+
     public PipelineStep updateStep(Long stepId, Long newAgentId) {
         PipelineStep step = getStepById(stepId);
         
@@ -294,21 +291,24 @@ public class PipelineStepService {
         return pipelineStepRepository.save(step);
     }
     
+    @Transactional
     public void removeStep(Long stepId) {
-        PipelineStep step = getStepById(stepId);
+        PipelineStep step = pipelineStepRepository.findById(stepId)
+                .orElseThrow(() -> new RuntimeException("Pipeline step not found: " + stepId));
         Long pipelineId = step.getPipelineId();
-        Integer removedOrder = step.getStepOrder();
-        
-        // Delete the step
-        pipelineStepRepository.delete(step);
-        
-        // Reorder remaining steps
+
+        entityManager.createNativeQuery(
+            "DELETE FROM pipeline_step WHERE id = ?1")
+            .setParameter(1, stepId)
+            .executeUpdate();
+        entityManager.flush();
+
         List<PipelineStep> remainingSteps = pipelineStepRepository.findByPipeline_IdOrderByStepOrderAsc(pipelineId);
         for (int i = 0; i < remainingSteps.size(); i++) {
             PipelineStep remainingStep = remainingSteps.get(i);
             if (remainingStep.getStepOrder() != i + 1) {
                 remainingStep.setStepOrder(i + 1);
-                pipelineStepRepository.save(remainingStep);
+                pipelineStepRepository.saveAndFlush(remainingStep);
             }
         }
     }
@@ -384,13 +384,9 @@ public class PipelineStepService {
         return pipelineStepRepository.save(step);
     }
     
-    @Autowired
-    private SseService sseService;
-    
     private final Set<Long> stoppedPipelines = ConcurrentHashMap.newKeySet();
     private final Map<Long, ReentrantLock> pipelineLocks = new ConcurrentHashMap<>();
     
-    // Map to track running processes per pipeline
     private final Map<Long, Process> runningProcesses = new ConcurrentHashMap<>();
 
     public void registerRunningProcess(Long pipelineId, Process process) {
@@ -454,7 +450,7 @@ public class PipelineStepService {
             
             pipelineStepRepository.flush();
             
-            Pipeline pipeline = pipelineService.getPipelineById(pipelineId);
+            Pipeline pipeline = getPipelineService().getPipelineById(pipelineId);
             boolean isStepByStep = "step_by_step".equals(pipeline.getType());
             
             if (isStepByStep) {
@@ -530,7 +526,7 @@ public class PipelineStepService {
                 previousOutputFile = runDir + File.separator + "step" + step.getStepOrder() + "-result." + outputExtension;
             }
             
-            if ("step_by_step".equals(pipelineService.getPipelineById(pipelineId).getType())) {
+            if ("step_by_step".equals(getPipelineService().getPipelineById(pipelineId).getType())) {
                 if (!step.getStatus().equals("completed")) {
                     break;
                 }
@@ -705,7 +701,9 @@ public class PipelineStepService {
             System.out.println("DEBUG: agent prompt: " + agent.getPrompt());
         }
         
-        String prompt = agent != null ? agent.getPrompt() : null;
+        String prompt = step.getInputContent() != null && !step.getInputContent().isEmpty()
+                ? step.getInputContent()
+                : (agent != null ? agent.getPrompt() : null);
         
         if (prompt == null || prompt.isEmpty()) {
             prompt = "Hello, please respond.";
@@ -1045,7 +1043,7 @@ public class PipelineStepService {
                     targetPipelineId = runs.get(0).getPipeline().getId();
                 }
             } else {
-                PipelineRun run = pipelineRunService.getRunById(targetRunId);
+                PipelineRun run = getPipelineRunService().getRunById(targetRunId);
                 if (run != null) {
                     targetPipelineId = run.getPipeline().getId();
                 }
@@ -1053,7 +1051,7 @@ public class PipelineStepService {
             
             if (targetRunId != null) {
                 System.out.println("DEBUG: syncRunStepStatus - syncing run " + targetRunId + " (pipeline " + targetPipelineId + "), step " + stepOrder + " to " + status);
-                pipelineRunService.updateRunStep(targetRunId, stepOrder, status, outputContent, outputType);
+                getPipelineRunService().updateRunStep(targetRunId, stepOrder, status, outputContent, outputType);
             }
         } catch (Exception e) {
             System.out.println("DEBUG: Error syncing run step status: " + e.getMessage());

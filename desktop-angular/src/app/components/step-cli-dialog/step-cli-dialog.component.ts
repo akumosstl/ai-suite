@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, ChangeDetectorRef, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -271,6 +271,11 @@ export class StepCliDialogComponent {
         console.error('Error saving CLI:', err);
       }
     });
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
   }
 
   onCancel(): void {

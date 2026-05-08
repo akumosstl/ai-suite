@@ -1,7 +1,7 @@
-import { Component, Inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, ChangeDetectorRef, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +11,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ApiService, Agent } from '../../services/api.service';
 
 export interface ProjectAgentsDialogData {
@@ -32,7 +33,8 @@ export interface ProjectAgentsDialogData {
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
-    MatTabsModule
+    MatTabsModule,
+    ConfirmDialogComponent
   ],
   template: `
     <div class="dialog-header">
@@ -506,6 +508,7 @@ export class ProjectAgentsDialogComponent {
     public dialogRef: MatDialogRef<ProjectAgentsDialogComponent>,
     private apiService: ApiService,
     private cdr: ChangeDetectorRef,
+    private dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: ProjectAgentsDialogData
   ) {
     this.loadProjectAgents();
@@ -654,10 +657,44 @@ export class ProjectAgentsDialogComponent {
           this.dialogRef.close(this.selection.selected);
         },
         error: (err) => {
-          console.error('Error adding agents to project:', err);
+          if (err.status === 409 && err.error?.error === 'FILE_ALREADY_EXISTS') {
+            this.showOverwriteConfirmation(err.error.message, () => {
+              this.apiService.addAgentsToProject(this.data.projectId, agentIds, true).subscribe({
+                next: () => {
+                  this.dialogRef.close(this.selection.selected);
+                },
+                error: (retryErr) => {
+                  console.error('Error adding agents to project:', retryErr);
+                }
+              });
+            });
+          } else {
+            console.error('Error adding agents to project:', err);
+          }
         }
       });
     }
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onAdd();
+  }
+
+  showOverwriteConfirmation(fileName: string, onConfirm: () => void): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'File Already Exists',
+        message: `${fileName} already exists. Do you want to overwrite it?`
+      },
+      panelClass: 'custom-dialog-panel'
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        onConfirm();
+      }
+    });
   }
 
   onClose(): void {

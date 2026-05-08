@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    {
+      "name": "nvidia-prompt",
+      "version": "1.0.0",
+      "namespace": "akumosstl.github.io",
+      "documentationUrl": "https://github.com/akumosstl/agentic-ai-suite/blob/main/tools/nvidia/README.md",
+      "downloadUrl": "",
+      "description": "NVIDIA AI Chat is a command-line tool that lets you chat with advanced AI models through NVIDIA's API. Simply type your question and get an intelligent response powered by GLM models."
+    }
+  ]
+}

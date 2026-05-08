@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { Observable, firstValueFrom, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 /**
  * Interface que representa um Projeto no sistema.
@@ -24,7 +24,6 @@ export interface Project {
   commands?: Command[];
   scripts?: Script[];
   agents?: Agent[];
-  instructions?: Instruction[];
   plugins?: Plugin[];
   tools?: Tool[];
 }
@@ -97,6 +96,7 @@ export interface PipelineRun {
   completedAt?: string;
   createdAt?: string;
   steps?: PipelineRunStep[];
+  runDir?: string;
 }
 
 /**
@@ -194,7 +194,7 @@ export interface Template {
   name: string;
   description?: string;
   template?: string;
-  type: string; // "agents", "skills", "commands", "scripts", "instructions", "plugins", "tools"
+  type: string; // "agents", "scripts"
   createdAt?: string;
   updatedAt?: string;
 }
@@ -210,35 +210,6 @@ export interface SkillFile {
   fileName: string;
   content: string;
   skillId?: number;
-  isDeleted?: boolean;
-}
-
-/**
- * Interface que representa uma Instrução no sistema.
- * Instruções são diretrizes que orientam o comportamento de agentes.
- * 
- * @interface Instruction
- */
-export interface Instruction {
-  id?: number;
-  name: string;
-  namespace: string;
-  description?: string;
-  instructions?: string;
-  path?: string;
-}
-
-/**
- * Interface que representa um arquivo associado a uma instrução.
- * 
- * @interface InstructionFile
- */
-export interface InstructionFile {
-  id?: number;
-  path: string;
-  fileName: string;
-  content: string;
-  instructionId?: number;
   isDeleted?: boolean;
 }
 
@@ -313,9 +284,18 @@ export interface Target {
   commandsPath?: string;
   scriptsPath?: string;
   agentsPath?: string;
-  instructionsPath?: string;
   pluginsPath?: string;
   toolsPath?: string;
+}
+
+export interface ProjectFile {
+  id?: number;
+  path?: string;
+  fileName: string;
+  content: string;
+  projectId?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -400,6 +380,16 @@ export interface Action {
  * 
  * @interface SprintReview
  */
+export interface RecipeFile {
+  id?: number;
+  name: string;
+  version?: string;
+  description?: string;
+  yamlContent: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SprintReview {
   id?: number;
   gameId: number;
@@ -421,20 +411,27 @@ export interface SprintReview {
 @Injectable({
   providedIn: 'root'
 })
-/**
- * Serviço responsável pela comunicação com a API backend.
- * Fornece métodos para requisições HTTP relacionadas a projetos, agentes, skills, etc.
- *
- * @author Seu Nome
- * @since 2024
- * @service
- * @description Serviço de integração com endpoints REST do backend.
- */
 export class ApiService {
-  /** URL base para todas as requisições API (via proxy) */
   private baseUrl = '/api';
-
+  
   constructor(private http: HttpClient) {}
+  
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+  
+  setBaseUrl(url: string): void {
+    this.baseUrl = url;
+  }
+
+  async getVersion(): Promise<string> {
+    try {
+      const response = await firstValueFrom(this.http.get<{ version: string }>(`${this.baseUrl}/version`))
+      return response.version
+    } catch {
+      return '1.0.0'
+    }
+  }
 
   // Projects
   getProjects(page = 0, size = 10): Observable<any> {
@@ -484,63 +481,6 @@ export class ApiService {
     );
   }
 
-  // Project Skills
-  getProjectSkills(projectId: number): Observable<Skill[]> {
-    return this.http.get<Skill[]>(`${this.baseUrl}/projects/${projectId}/skills`).pipe(
-      catchError(this.handleError('getProjectSkills', []))
-    );
-  }
-
-  addSkillsToProject(projectId: number, skillIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/skills`, skillIds).pipe(
-      catchError(this.handleError('addSkillsToProject', {} as Project))
-    );
-  }
-
-  removeSkillFromProject(projectId: number, skillId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/skills/${skillId}`).pipe(
-      catchError(this.handleError('removeSkillFromProject', {} as Project))
-    );
-  }
-
-  // Project Commands
-  getProjectCommands(projectId: number): Observable<Command[]> {
-    return this.http.get<Command[]>(`${this.baseUrl}/projects/${projectId}/commands`).pipe(
-      catchError(this.handleError('getProjectCommands', []))
-    );
-  }
-
-  addCommandsToProject(projectId: number, commandIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/commands`, commandIds).pipe(
-      catchError(this.handleError('addCommandsToProject', {} as Project))
-    );
-  }
-
-  removeCommandFromProject(projectId: number, commandId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/commands/${commandId}`).pipe(
-      catchError(this.handleError('removeCommandFromProject', {} as Project))
-    );
-  }
-
-  // Project Scripts
-  getProjectScripts(projectId: number): Observable<Script[]> {
-    return this.http.get<Script[]>(`${this.baseUrl}/projects/${projectId}/scripts`).pipe(
-      catchError(this.handleError('getProjectScripts', []))
-    );
-  }
-
-  addScriptsToProject(projectId: number, scriptIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/scripts`, scriptIds).pipe(
-      catchError(this.handleError('addScriptsToProject', {} as Project))
-    );
-  }
-
-  removeScriptFromProject(projectId: number, scriptId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/scripts/${scriptId}`).pipe(
-      catchError(this.handleError('removeScriptFromProject', {} as Project))
-    );
-  }
-
   // Project Agents
   getProjectAgents(projectId: number): Observable<Agent[]> {
     return this.http.get<Agent[]>(`${this.baseUrl}/projects/${projectId}/agents`).pipe(
@@ -548,8 +488,8 @@ export class ApiService {
     );
   }
 
-  addAgentsToProject(projectId: number, agentIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/agents`, agentIds).pipe(
+  addAgentsToProject(projectId: number, agentIds: number[], force: boolean = false): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/agents`, { agentIds, force }).pipe(
       catchError(this.handleError('addAgentsToProject', {} as Project))
     );
   }
@@ -560,65 +500,10 @@ export class ApiService {
     );
   }
 
-  // Project Instructions
-  getProjectInstructions(projectId: number): Observable<Instruction[]> {
-    return this.http.get<Instruction[]>(`${this.baseUrl}/projects/${projectId}/instructions`).pipe(
-      catchError(this.handleError('getProjectInstructions', []))
-    );
-  }
-
-  addInstructionsToProject(projectId: number, instructionIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/instructions`, instructionIds).pipe(
-      catchError(this.handleError('addInstructionsToProject', {} as Project))
-    );
-  }
-
-  removeInstructionFromProject(projectId: number, instructionId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/instructions/${instructionId}`).pipe(
-      catchError(this.handleError('removeInstructionFromProject', {} as Project))
-    );
-  }
-
-  // Project Plugins
-  getProjectPlugins(projectId: number): Observable<Plugin[]> {
-    return this.http.get<Plugin[]>(`${this.baseUrl}/projects/${projectId}/plugins`).pipe(
-      catchError(this.handleError('getProjectPlugins', []))
-    );
-  }
-
-  addPluginsToProject(projectId: number, pluginIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/plugins`, pluginIds).pipe(
-      catchError(this.handleError('addPluginsToProject', {} as Project))
-    );
-  }
-
-  removePluginFromProject(projectId: number, pluginId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/plugins/${pluginId}`).pipe(
-      catchError(this.handleError('removePluginFromProject', {} as Project))
-    );
-  }
-
-  // Project Tools
-  getProjectTools(projectId: number): Observable<Tool[]> {
-    return this.http.get<Tool[]>(`${this.baseUrl}/projects/${projectId}/tools`).pipe(
-      catchError(this.handleError('getProjectTools', []))
-    );
-  }
-
-  addToolsToProject(projectId: number, toolIds: number[]): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects/${projectId}/tools`, toolIds).pipe(
-      catchError(this.handleError('addToolsToProject', {} as Project))
-    );
-  }
-
-removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
-    return this.http.delete<Project>(`${this.baseUrl}/projects/${projectId}/tools/${toolId}`).pipe(
-      catchError(this.handleError('removeToolFromProject', {} as Project))
-    );
-  }
-  
-  createProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
+  createProjectFile(projectId: number, fileName: string, content: string): Observable<ProjectFile> {
+    console.log('API createProjectFile called:', { projectId, fileName, contentLength: content?.length });
+    return this.http.post<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files`, { fileName, content }).pipe(
+      tap(response => console.log('API createProjectFile success:', response)),
       catchError((error) => {
         console.error('createProjectFile error:', error);
         throw error;
@@ -626,8 +511,10 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  getProjectFiles(projectId: number): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/projects/${projectId}/files`).pipe(
+  getProjectFiles(projectId: number): Observable<ProjectFile[]> {
+    console.log('API getProjectFiles called for project:', projectId);
+    return this.http.get<ProjectFile[]>(`${this.baseUrl}/projects/${projectId}/files`).pipe(
+      tap(files => console.log('API getProjectFiles success:', files)),
       catchError((error) => {
         console.error('getProjectFiles error:', error);
         throw error;
@@ -635,17 +522,26 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  getProjectFileContent(projectId: number, fileName: string): Observable<{ fileName: string; content: string }> {
-    return this.http.get<{ fileName: string; content: string }>(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+  getProjectFile(projectId: number, fileId: number): Observable<ProjectFile> {
+    return this.http.get<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/${fileId}`).pipe(
       catchError((error) => {
-        console.error('getProjectFileContent error:', error);
+        console.error('getProjectFile error:', error);
         throw error;
       })
     );
   }
 
-  updateProjectFile(projectId: number, fileName: string, content: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`, { content }).pipe(
+  getProjectFileByName(projectId: number, fileName: string): Observable<ProjectFile> {
+    return this.http.get<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('getProjectFileByName error:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateProjectFile(projectId: number, fileId: number, content: string): Observable<ProjectFile> {
+    return this.http.put<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/${fileId}`, { content }).pipe(
       catchError((error) => {
         console.error('updateProjectFile error:', error);
         throw error;
@@ -653,10 +549,28 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  deleteProjectFile(projectId: number, fileName: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/${encodeURIComponent(fileName)}`).pipe(
+  updateProjectFileByName(projectId: number, fileName: string, content: string): Observable<ProjectFile> {
+    return this.http.put<ProjectFile>(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`, { content }).pipe(
+      catchError((error) => {
+        console.error('updateProjectFileByName error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteProjectFile(projectId: number, fileId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/${fileId}`).pipe(
       catchError((error) => {
         console.error('deleteProjectFile error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteProjectFileByName(projectId: number, fileName: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/files/by-name/${encodeURIComponent(fileName)}`).pipe(
+      catchError((error) => {
+        console.error('deleteProjectFileByName error:', error);
         throw error;
       })
     );
@@ -710,6 +624,12 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
         console.error('stopPipeline error:', error);
         throw error;
       })
+    );
+  }
+
+  duplicatePipeline(projectId: number, pipelineId: number, name: string): Observable<Pipeline> {
+    return this.http.post<Pipeline>(`${this.baseUrl}/projects/${projectId}/pipelines/${pipelineId}/duplicate`, { name }).pipe(
+      catchError(this.handleError('duplicatePipeline', {} as Pipeline))
     );
   }
 
@@ -825,6 +745,12 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
   getPipelineRunById(runId: number): Observable<PipelineRun> {
     return this.http.get<PipelineRun>(`${this.baseUrl}/pipeline-runs/${runId}`).pipe(
       catchError(this.handleError('getPipelineRunById', {} as PipelineRun))
+    );
+  }
+
+  getStepFileOutput(runId: number, stepOrder: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/pipeline-runs/${runId}/steps/${stepOrder}/file-output`).pipe(
+      catchError(this.handleError('getStepFileOutput', { fileExists: false, message: 'Error fetching file output' }))
     );
   }
 
@@ -1116,68 +1042,12 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
-  // Instructions
-  getInstructions(page = 0, size = 10): Observable<any> {
-    return this.http.get(`${this.baseUrl}/instructions`, {
-      params: new HttpParams()
-        .set('page', page.toString())
-        .set('size', size.toString())
-    }).pipe(catchError(this.handleError('getInstructions', [])));
-  }
-
-  searchInstructions(term: string, namespace: string = '', page = 0, size = 10): Observable<any> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-    if (term) {
-      params = params.set('term', term);
-    }
-    if (namespace) {
-      params = params.set('namespace', namespace);
-    }
-    return this.http.get(`${this.baseUrl}/instructions/search`, { params }).pipe(
-      catchError(this.handleError('searchInstructions', []))
-    );
-  }
-
-  createInstruction(instruction: Instruction): Observable<Instruction> {
-    return this.http.post<Instruction>(`${this.baseUrl}/instructions`, instruction).pipe(
-      catchError(this.handleError('createInstruction', instruction))
-    );
-  }
-
-  updateInstruction(id: number, instruction: Instruction): Observable<Instruction> {
-    return this.http.put<Instruction>(`${this.baseUrl}/instructions/${id}`, instruction).pipe(
-      catchError(this.handleError('updateInstruction', instruction))
-    );
-  }
-
-  deleteInstruction(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/instructions/${id}`).pipe(
-      catchError(this.handleError('deleteInstruction', null))
-    );
-  }
-
-  // Instruction Files
-  getInstructionFiles(instructionId: number): Observable<InstructionFile[]> {
-    return this.http.get<InstructionFile[]>(`${this.baseUrl}/instruction-files/instruction/${instructionId}`).pipe(
-      catchError(this.handleError('getInstructionFiles', []))
-    );
-  }
-
-  addInstructionFile(instructionId: number, path: string, fileName: string, content: string): Observable<InstructionFile> {
-    return this.http.post<InstructionFile>(`${this.baseUrl}/instruction-files`, {
-      instructionId,
+  updateSkillFile(id: number, path: string, fileName: string, content: string): Observable<SkillFile> {
+    return this.http.put<SkillFile>(`${this.baseUrl}/skill-files/${id}`, {
       path,
       fileName,
       content
-    }).pipe(catchError(this.handleError<InstructionFile>('addInstructionFile', {} as InstructionFile)));
-  }
-
-  deleteInstructionFile(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/instruction-files/${id}`).pipe(
-      catchError(this.handleError('deleteInstructionFile', null))
-    );
+    }).pipe(catchError(this.handleError<SkillFile>('updateSkillFile', {} as SkillFile)));
   }
 
   // Plugins
@@ -1244,6 +1114,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
+  updatePluginFile(id: number, path: string, fileName: string, content: string): Observable<PluginFile> {
+    return this.http.put<PluginFile>(`${this.baseUrl}/plugin-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<PluginFile>('updatePluginFile', {} as PluginFile)));
+  }
+
   // Tools
   getTools(page = 0, size = 10): Observable<any> {
     return this.http.get(`${this.baseUrl}/tools`, {
@@ -1308,6 +1186,14 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
+  updateToolFile(id: number, path: string, fileName: string, content: string): Observable<ToolFile> {
+    return this.http.put<ToolFile>(`${this.baseUrl}/tool-files/${id}`, {
+      path,
+      fileName,
+      content
+    }).pipe(catchError(this.handleError<ToolFile>('updateToolFile', {} as ToolFile)));
+  }
+
   // Targets
   getTargets(): Observable<Target[]> {
     return this.http.get<Target[]>(`${this.baseUrl}/targets`).pipe(
@@ -1336,12 +1222,6 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
   getSkillNamespaces(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/skills/namespaces`).pipe(
       catchError(this.handleError('getSkillNamespaces', []))
-    );
-  }
-
-  getInstructionNamespaces(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/instructions/namespaces`).pipe(
-      catchError(this.handleError('getInstructionNamespaces', []))
     );
   }
 
@@ -1425,6 +1305,48 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
     );
   }
 
+  // Recipe Files
+  getRecipeFiles(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/recipe-files`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getRecipeFiles', [])));
+  }
+
+  searchRecipeFiles(term: string, page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/recipe-files/search`, {
+      params: new HttpParams()
+        .set('term', term)
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('searchRecipeFiles', [])));
+  }
+
+  getRecipeFile(id: number): Observable<RecipeFile> {
+    return this.http.get<RecipeFile>(`${this.baseUrl}/recipe-files/${id}`).pipe(
+      catchError(this.handleError('getRecipeFile', {} as RecipeFile))
+    );
+  }
+
+  createRecipeFile(recipeFile: RecipeFile): Observable<RecipeFile> {
+    return this.http.post<RecipeFile>(`${this.baseUrl}/recipe-files`, recipeFile).pipe(
+      catchError(this.handleError('createRecipeFile', recipeFile))
+    );
+  }
+
+  updateRecipeFile(id: number, recipeFile: RecipeFile): Observable<RecipeFile> {
+    return this.http.put<RecipeFile>(`${this.baseUrl}/recipe-files/${id}`, recipeFile).pipe(
+      catchError(this.handleError('updateRecipeFile', recipeFile))
+    );
+  }
+
+  deleteRecipeFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/recipe-files/${id}`).pipe(
+      catchError(this.handleError('deleteRecipeFile', null))
+    );
+  }
+
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed:`, error);
@@ -1434,30 +1356,9 @@ removeToolFromProject(projectId: number, toolId: number): Observable<Project> {
       (customError as any).error = errorMessage;
       return throwError(() => customError);
     };
-  }
+}
 
-  exportData(types: string[]): Observable<Blob> {
-    const params = types.map(t => `types=${t}`).join('&');
-    return this.http.get(`${this.baseUrl}/export-import/export?${params}`, {
-      responseType: 'blob'
-    }).pipe(
-      catchError(this.handleError('exportData', new Blob()))
-    );
-  }
-
-  importData(formData: FormData): Observable<any> {
-    return this.http.post(`${this.baseUrl}/export-import/import`, formData).pipe(
-      catchError(this.handleError('importData', { success: false, message: 'Import failed' }))
-    );
-  }
-
-   backupDatabase(directory: string, fileName: string): Observable<any> {
-     return this.http.post(`${this.baseUrl}/backup`, { directory, fileName }).pipe(
-       catchError(this.handleError('backupDatabase', { success: false, message: 'Backup failed' }))
-     );
-   }
-
-   exitApplication(): Observable<any> {
+exitApplication(): Observable<any> {
      return this.http.post(`${this.baseUrl}/exit`, {}).pipe(
        catchError(this.handleError('exitApplication', {}))
      );
@@ -1488,9 +1389,15 @@ getNamespacesByType(type: string): Observable<string[]> {
      );
    }
 
-   clearNamespace(type: string, namespace: string): Observable<any> {
-     return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
-       catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
-     );
-   }
+  clearNamespace(type: string, namespace: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
+      catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
+    );
+  }
+
+  getPluginRegistry(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/plugins/registry`).pipe(
+      catchError(this.handleError('getPluginRegistry', { plugins: [] }))
+    );
+  }
 }

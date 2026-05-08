@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/components/character-portrait/character-portrait.component.ts"],
-  "sourcesContent": ["\n    .portrait {\n      width: 128px;\n      height: 128px;\n      background-size: cover;\n      background-position: center;\n      border-radius: 50%;\n      border: 2px solid #ccc;\n    }\n  "],
-  "mappings": "AACI,CAAA,SACE,MAAA,MACA,OAAA,MACA,gBAAA,MACA,oBAAA,OAJF,cAKE,IACA,OAAA,IAAA,MAAA",
-  "names": []
-}

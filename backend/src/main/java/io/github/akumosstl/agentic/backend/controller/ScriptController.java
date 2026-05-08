@@ -3,6 +3,7 @@ package io.github.akumosstl.agentic.backend.controller;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.service.ScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,13 +50,25 @@ public class ScriptController {
     }
 
     @PostMapping
-    public Script createScript(@RequestBody Script script) {
-        return scriptService.createScript(script);
+    public ResponseEntity<?> createScript(@RequestBody Script script) {
+        try {
+            return ResponseEntity.ok(scriptService.createScript(script));
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
     }
 
     @PutMapping("/{id}")
-    public Script updateScript(@PathVariable Long id, @RequestBody Script scriptDetails) {
-        return scriptService.updateScript(id, scriptDetails);
+    public ResponseEntity<?> updateScript(@PathVariable Long id, @RequestBody Script scriptDetails) {
+        try {
+            return ResponseEntity.ok(scriptService.updateScript(id, scriptDetails));
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
     }
 
     @DeleteMapping("/{id}")

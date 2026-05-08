@@ -46,4 +46,6 @@ public interface AgentRepository extends JpaRepository<Agent, Long> {
     List<Agent> findByCategory(String category);
     
     Optional<Agent> findByNameAndCategory(String name, String category);
+
+    Optional<Agent> findByNameAndNamespace(String name, String namespace);
 }

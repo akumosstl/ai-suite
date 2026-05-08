@@ -42,14 +42,10 @@ public class TargetService {
     @Transactional
     public Target updateTarget(Long id, Target targetDetails) {
         Target target = getTargetById(id);
-        target.setName(targetDetails.getName());
-        target.setSkillsPath(targetDetails.getSkillsPath());
-        target.setCommandsPath(targetDetails.getCommandsPath());
-        target.setScriptsPath(targetDetails.getScriptsPath());
-        target.setAgentsPath(targetDetails.getAgentsPath());
-        target.setInstructionsPath(targetDetails.getInstructionsPath());
-        target.setPluginsPath(targetDetails.getPluginsPath());
-        target.setToolsPath(targetDetails.getToolsPath());
+    target.setName(targetDetails.getName());
+    target.setAgentsPath(targetDetails.getAgentsPath());
+    target.setScriptsPath(targetDetails.getScriptsPath());
+    target.setCli(targetDetails.getCli());
         return targetRepository.save(target);
     }
 

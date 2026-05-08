@@ -1,0 +1,16 @@
+[0m
+> build · big-pickle
+[0m
+[0m% [0mWebFetch http://localhost:8080/api/pipelines/3/runs?page=0&size=20
+```json
+{
+  "totalPages": 0,
+  "currentPage": 0,
+  "runs": [],
+  "totalElements": 0
+}
+```
+
+There are no runs for pipeline ID 3.
+
+--- Step completed ---

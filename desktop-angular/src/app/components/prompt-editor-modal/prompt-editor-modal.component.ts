@@ -12,7 +12,7 @@ import { ApiService, Template } from '../../services/api.service';
 
 export interface PromptEditorData {
   prompt: string;
-  type: 'agents' | 'skills' | 'commands' | 'scripts' | 'instructions' | 'plugins' | 'tools';
+  type: 'agents' | 'scripts';
   title?: string;
 }
 
@@ -66,6 +66,7 @@ export interface PromptEditorResult {
                     [(ngModel)]="editedPrompt" 
                     rows="15" 
                     placeholder="Enter the prompt content"
+                    [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"
                     (ngModelChange)="onPromptChange()"></textarea>
           <mat-icon matPrefix>code</mat-icon>
         </mat-form-field>
@@ -89,8 +90,8 @@ export interface PromptEditorResult {
       flex-direction: column;
       min-width: 700px;
       max-width: 900px;
-      min-height: 500px;
-      max-height: 80vh;
+      min-height: 300px;
+      max-height: 90vh;
       background: #1e1e1e;
       border-radius: 12px;
       overflow: hidden;
@@ -124,8 +125,8 @@ export interface PromptEditorResult {
     .dialog-content {
       flex: 1;
       padding: 24px;
-      min-height: 300px;
-      max-height: 60vh;
+      min-height: 200px;
+      max-height: calc(90vh - 140px);
       background: #1e1e1e;
       display: flex;
       flex-direction: column;
@@ -155,15 +156,39 @@ export interface PromptEditorResult {
     
     .prompt-field {
       flex: 1;
-      min-height: 350px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::ng-deep .prompt-field .mat-mdc-form-field-flex {
+      display: flex;
+      flex: 1;
+      min-height: 200px;
     }
 
     ::ng-deep .prompt-field .mat-mdc-text-field-wrapper {
-      height: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
     }
 
-    ::ng-deep .prompt-field textarea {
-      height: 300px !important;
+    ::ng-deep .prompt-field .mat-mdc-form-field-infix {
+      display: flex;
+      flex: 1;
+      padding: 12px 0;
+      min-height: 200px;
+    }
+
+    ::ng-deep .prompt-field textarea.mat-mdc-input-element {
+      flex: 1;
+      min-height: 150px;
+      overflow-y: auto;
+      resize: none;
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
     }
     
     mat-form-field {
@@ -353,5 +378,10 @@ export class PromptEditorModalComponent implements OnInit {
 
   onSave(): void {
     this.dialogRef.close({ prompt: this.editedPrompt });
+  }
+
+  @HostListener('document:keydown.control.enter')
+  onCtrlEnter(): void {
+    this.onSave();
   }
 }

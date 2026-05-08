@@ -3,6 +3,8 @@ package io.github.akumosstl.agentic.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class PipelineRun {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "pipeline_id", nullable = false)
     @JsonIgnore
     private Pipeline pipeline;
@@ -44,6 +46,7 @@ public class PipelineRun {
     
     @OneToMany(mappedBy = "pipelineRun", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderBy("stepOrder ASC")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<PipelineRunStep> steps = new ArrayList<>();
     
     @Column(name = "execution_id", unique = true)
@@ -51,6 +54,9 @@ public class PipelineRun {
     
     @Column(name = "thread_name")
     private String threadName;
+    
+    @Column(name = "run_dir")
+    private String runDir;
     
     @PrePersist
     protected void onCreate() {
@@ -117,6 +123,9 @@ public class PipelineRun {
     
     public String getThreadName() { return threadName; }
     public void setThreadName(String threadName) { this.threadName = threadName; }
+    
+    public String getRunDir() { return runDir; }
+    public void setRunDir(String runDir) { this.runDir = runDir; }
     
     public void addStep(PipelineRunStep step) {
         steps.add(step);

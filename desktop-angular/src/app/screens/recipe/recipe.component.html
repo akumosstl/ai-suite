@@ -1,0 +1,924 @@
+<div class="recipe-container">
+  <app-menu-bar></app-menu-bar>
+
+  <div class="content" [class.left-collapsed]="leftPanelCollapsed">
+    <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon>restaurant</mat-icon>
+          <span>Recipes</span>
+        </div>
+        <button class="icon-btn add-btn" (click)="clearForm()" title="Add new recipe">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <div class="search-section">
+        <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+          <mat-label>Search by name...</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <button class="icon-btn search-btn" (click)="search()" title="Search">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button class="icon-btn clear-btn" (click)="clearSearch()" title="Clear" *ngIf="searchTerm">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="loading === true" class="loading-state">
+        <mat-spinner diameter="32" color="primary"></mat-spinner>
+        <span>Loading recipes...</span>
+      </div>
+
+      <div class="recipe-list">
+        <div class="list-item" *ngFor="let recipe of recipeFiles"
+          [class.selected]="recipe === selectedRecipeFile"
+          (click)="selectRecipeFile(recipe)">
+          <div class="recipe-avatar">
+            <mat-icon>restaurant_menu</mat-icon>
+          </div>
+          <div class="recipe-info">
+            <span class="recipe-name">{{ recipe.name }}</span>
+            <span class="recipe-meta">{{ recipe.version || '1.0' }} &bull; {{ recipe.updatedAt | date:'short' }}</span>
+          </div>
+          <button class="icon-btn delete-btn" (click)="deleteRecipeFileInline(recipe, $event)" title="Delete recipe">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <mat-icon class="chevron">chevron_right</mat-icon>
+        </div>
+
+        <div *ngIf="recipeFiles.length === 0 && !loading" class="empty-state">
+          <mat-icon>restaurant_menu</mat-icon>
+          <span>No recipes found</span>
+          <small>Create your first recipe</small>
+        </div>
+      </div>
+
+      <mat-paginator class="custom-paginator"
+        [length]="totalElements"
+        [pageSize]="pageSize"
+        [pageIndex]="currentPage"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+    <app-panel-toggle
+      [isCollapsed]="leftPanelCollapsed"
+      (toggle)="toggleLeftPanel()"
+      [class.collapsed]="leftPanelCollapsed">
+    </app-panel-toggle>
+
+    <div class="right-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon>settings</mat-icon>
+          <span>Recipe Editor</span>
+        </div>
+        <div class="header-actions">
+          <button class="view-toggle-btn"
+            [class.active]="viewMode === 'visual'"
+            (click)="switchToVisual()"
+            title="Visual editor">
+            <mat-icon>visibility</mat-icon>
+            <span>Visual</span>
+          </button>
+          <button class="view-toggle-btn"
+            [class.active]="viewMode === 'raw'"
+            (click)="switchToRaw()"
+            title="Raw YAML editor">
+            <mat-icon>code</mat-icon>
+            <span>Raw</span>
+          </button>
+          <button class="icon-btn clear-btn" (click)="clearForm()" title="Clear form" *ngIf="selectedRecipeFile">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <button class="icon-btn delete-btn" (click)="deleteRecipeFileInline(selectedRecipeFile!, $event)"
+            title="Delete recipe" *ngIf="selectedRecipeFile">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-container">
+        <!-- VISUAL MODE -->
+        <div *ngIf="viewMode === 'visual'" class="visual-editor">
+
+          <!-- ============ METADATA ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['metadata']">
+            <div class="section-header" (click)="toggleSection('metadata')">
+              <mat-icon class="expand-icon">{{ expandedSections['metadata'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>label</mat-icon>
+              <span>Recipe Metadata</span>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['metadata']">
+              <div class="form-row">
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Name *</mat-label>
+                  <input matInput [(ngModel)]="recipeName" placeholder="nome-do-recipe">
+                  <mat-icon matPrefix>badge</mat-icon>
+                </mat-form-field>
+                <mat-form-field class="form-field-small" appearance="outline" floatLabel="always">
+                  <mat-label>Version</mat-label>
+                  <input matInput [(ngModel)]="recipeVersion" placeholder="1.0">
+                  <mat-icon matPrefix>tag</mat-icon>
+                </mat-form-field>
+              </div>
+              <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                <mat-label>Description</mat-label>
+                <textarea matInput [(ngModel)]="recipeDescription" rows="2" placeholder="Description of what this recipe does"></textarea>
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- ============ PARAMETERS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['parameters']">
+            <div class="section-header" (click)="toggleSection('parameters')">
+              <mat-icon class="expand-icon">{{ expandedSections['parameters'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>tune</mat-icon>
+              <span>Parameters</span>
+              <span class="badge" *ngIf="getSectionCount('parameters') > 0">{{ getSectionCount('parameters') }}</span>
+              <button class="icon-btn add-btn small" (click)="addParameter(); $event.stopPropagation()" title="Add parameter">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <p class="section-hint" *ngIf="expandedSections['parameters']">Parametrized values reusable with {{'{{param:X}}'}}. Can be overridden via MCP tool or REST API.</p>
+            <div class="section-body" *ngIf="expandedSections['parameters']">
+              <div class="kv-list">
+                <div class="kv-row" *ngFor="let param of parameters; let i = index">
+                  <mat-form-field class="kv-key-field" appearance="outline" floatLabel="always">
+                    <mat-label>Key</mat-label>
+                    <input matInput [(ngModel)]="param.key" placeholder="parameter_name">
+                  </mat-form-field>
+                  <mat-form-field class="kv-value-field" appearance="outline" floatLabel="always">
+                    <mat-label>Value</mat-label>
+                    <input matInput [(ngModel)]="param.value" placeholder="value">
+                  </mat-form-field>
+                  <button class="icon-btn remove-btn" (click)="removeParameter(i)" title="Remove">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                </div>
+                <div *ngIf="parameters.length === 0" class="empty-hint">No parameters defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ ENV VARS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['env']">
+            <div class="section-header" (click)="toggleSection('env')">
+              <mat-icon class="expand-icon">{{ expandedSections['env'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>env_variables</mat-icon>
+              <span>Environment Variables</span>
+              <span class="badge" *ngIf="getSectionCount('env') > 0">{{ getSectionCount('env') }}</span>
+              <button class="icon-btn add-btn small" (click)="addEnvVar(); $event.stopPropagation()" title="Add env var">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <p class="section-hint" *ngIf="expandedSections['env']">Injected into execution context. Use {{'{{param:X}}'}} to reference parameters.</p>
+            <div class="section-body" *ngIf="expandedSections['env']">
+              <div class="kv-list">
+                <div class="kv-row" *ngFor="let env of envVars; let i = index">
+                  <mat-form-field class="kv-key-field" appearance="outline" floatLabel="always">
+                    <mat-label>Key</mat-label>
+                    <input matInput [(ngModel)]="env.key" placeholder="MY_VAR">
+                  </mat-form-field>
+                  <mat-form-field class="kv-value-field" appearance="outline" floatLabel="always">
+                    <mat-label>Value</mat-label>
+                    <input matInput [(ngModel)]="env.value" placeholder="{{'{{param:namespace}}'}}">
+                  </mat-form-field>
+                  <button class="icon-btn remove-btn" (click)="removeEnvVar(i)" title="Remove">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                </div>
+                <div *ngIf="envVars.length === 0" class="empty-hint">No env vars defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TARGETS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['targets']">
+            <div class="section-header" (click)="toggleSection('targets')">
+              <mat-icon class="expand-icon">{{ expandedSections['targets'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>my_location</mat-icon>
+              <span>Targets</span>
+              <span class="badge" *ngIf="getSectionCount('targets') > 0">{{ getSectionCount('targets') }}</span>
+              <button class="icon-btn add-btn small" (click)="addTarget(); $event.stopPropagation()" title="Add target">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['targets']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let target of targets; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ target.name || 'New Target' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeTarget(i)" title="Remove target">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="target.name" placeholder="meu-target">
+                      </mat-form-field>
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>CLI</mat-label>
+                        <mat-select [(ngModel)]="target.cli">
+                          <mat-option *ngFor="let opt of cliOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Agents Path</mat-label>
+                      <input matInput [(ngModel)]="target.agents_path" placeholder="/path/to/agents">
+                    </mat-form-field>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Scripts Path</mat-label>
+                      <input matInput [(ngModel)]="target.scripts_path" placeholder="/path/to/scripts">
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div *ngIf="targets.length === 0" class="empty-hint">No targets defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ AGENTS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['agents']">
+            <div class="section-header" (click)="toggleSection('agents')">
+              <mat-icon class="expand-icon">{{ expandedSections['agents'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>smart_toy</mat-icon>
+              <span>Agents</span>
+              <span class="badge" *ngIf="getSectionCount('agents') > 0">{{ getSectionCount('agents') }}</span>
+              <button class="icon-btn add-btn small" (click)="addAgent(); $event.stopPropagation()" title="Add agent">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['agents']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let agent of agents; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ agent.id || 'New Agent' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeAgent(i)" title="Remove agent">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>ID *</mat-label>
+                        <input matInput [(ngModel)]="agent.id" placeholder="agent1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="agent.name" placeholder="code-reviewer">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Namespace</mat-label>
+                        <input matInput [(ngModel)]="agent.namespace" placeholder="default">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Category</mat-label>
+                        <input matInput [(ngModel)]="agent.category" placeholder="review">
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Description</mat-label>
+                      <input matInput [(ngModel)]="agent.description" placeholder="Agent description">
+                    </mat-form-field>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Prompt</mat-label>
+                      <textarea matInput [(ngModel)]="agent.prompt" rows="3" placeholder="Agent prompt or {{'{{param:agent_prompt}}'}}"></textarea>
+                    </mat-form-field>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Path</mat-label>
+                      <input matInput [(ngModel)]="agent.path" placeholder="/path/to/agent.md">
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div *ngIf="agents.length === 0" class="empty-hint">No agents defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ SCRIPTS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['scripts']">
+            <div class="section-header" (click)="toggleSection('scripts')">
+              <mat-icon class="expand-icon">{{ expandedSections['scripts'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>terminal</mat-icon>
+              <span>Scripts</span>
+              <span class="badge" *ngIf="getSectionCount('scripts') > 0">{{ getSectionCount('scripts') }}</span>
+              <button class="icon-btn add-btn small" (click)="addScript(); $event.stopPropagation()" title="Add script">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['scripts']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let script of scripts; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ script.id || 'New Script' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeScript(i)" title="Remove script">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>ID *</mat-label>
+                        <input matInput [(ngModel)]="script.id" placeholder="script1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="script.name" placeholder="hello-script">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Namespace</mat-label>
+                        <input matInput [(ngModel)]="script.namespace" placeholder="default">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Category</mat-label>
+                        <input matInput [(ngModel)]="script.category" placeholder="utility">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>Scope</mat-label>
+                        <mat-select [(ngModel)]="script.scope">
+                          <mat-option *ngFor="let opt of scopeOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Path</mat-label>
+                        <input matInput [(ngModel)]="script.path" placeholder="/path/to/script.sh">
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Description</mat-label>
+                      <input matInput [(ngModel)]="script.description" placeholder="Script description">
+                    </mat-form-field>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Content</mat-label>
+                      <textarea matInput [(ngModel)]="script.content" rows="3" placeholder="Script content or {{'{{param:script_content}}'}}"></textarea>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div *ngIf="scripts.length === 0" class="empty-hint">No scripts defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ PROJECTS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['projects']">
+            <div class="section-header" (click)="toggleSection('projects')">
+              <mat-icon class="expand-icon">{{ expandedSections['projects'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>folder</mat-icon>
+              <span>Projects</span>
+              <span class="badge" *ngIf="getSectionCount('projects') > 0">{{ getSectionCount('projects') }}</span>
+              <button class="icon-btn add-btn small" (click)="addProject(); $event.stopPropagation()" title="Add project">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['projects']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let project of projects; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ project.id || 'New Project' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeProject(i)" title="Remove project">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>ID *</mat-label>
+                        <input matInput [(ngModel)]="project.id" placeholder="proj1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="project.name" placeholder="{{'{{param:project_name}}'}}">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Path</mat-label>
+                        <input matInput [(ngModel)]="project.path" placeholder="/path/to/project">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Target</mat-label>
+                        <input matInput [(ngModel)]="project.target" placeholder="meu-target">
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Description</mat-label>
+                      <input matInput [(ngModel)]="project.description" placeholder="Project description">
+                    </mat-form-field>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Readme</mat-label>
+                      <textarea matInput [(ngModel)]="project.readme" rows="2" placeholder="# My Project"></textarea>
+                    </mat-form-field>
+                    <!-- Nested: Agents refs -->
+                    <div class="nested-section">
+                      <div class="nested-header">
+                        <mat-icon>smart_toy</mat-icon>
+                        <span>Agent Refs</span>
+                        <span class="badge small" *ngIf="project.agents.length > 0">{{ project.agents.length }}</span>
+                        <button class="icon-btn add-btn small" (click)="addProjectAgent(i)" title="Add agent ref">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                      <div class="nested-list">
+                        <div class="nested-row" *ngFor="let ag of project.agents; let j = index">
+                          <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                            <mat-label>Agent ID</mat-label>
+                            <input matInput [(ngModel)]="project.agents[j]" placeholder="agent1">
+                          </mat-form-field>
+                          <button class="icon-btn remove-btn small" (click)="removeProjectAgent(i, j)" title="Remove">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Nested: Scripts refs -->
+                    <div class="nested-section">
+                      <div class="nested-header">
+                        <mat-icon>terminal</mat-icon>
+                        <span>Script Refs</span>
+                        <span class="badge small" *ngIf="project.scripts.length > 0">{{ project.scripts.length }}</span>
+                        <button class="icon-btn add-btn small" (click)="addProjectScript(i)" title="Add script ref">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                      <div class="nested-list">
+                        <div class="nested-row" *ngFor="let sc of project.scripts; let j = index">
+                          <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                            <mat-label>Script ID</mat-label>
+                            <input matInput [(ngModel)]="project.scripts[j]" placeholder="script1">
+                          </mat-form-field>
+                          <button class="icon-btn remove-btn small" (click)="removeProjectScript(i, j)" title="Remove">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="projects.length === 0" class="empty-hint">No projects defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TEMPLATES ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['templates']">
+            <div class="section-header" (click)="toggleSection('templates')">
+              <mat-icon class="expand-icon">{{ expandedSections['templates'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>description</mat-icon>
+              <span>Templates</span>
+              <span class="badge" *ngIf="getSectionCount('templates') > 0">{{ getSectionCount('templates') }}</span>
+              <button class="icon-btn add-btn small" (click)="addTemplate(); $event.stopPropagation()" title="Add template">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['templates']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let tpl of templates; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ tpl.id || 'New Template' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeTemplate(i)" title="Remove template">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>ID *</mat-label>
+                        <input matInput [(ngModel)]="tpl.id" placeholder="tpl1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="tpl.name" placeholder="review-template">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>Type *</mat-label>
+                        <mat-select [(ngModel)]="tpl.type">
+                          <mat-option *ngFor="let opt of templateTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Description</mat-label>
+                        <input matInput [(ngModel)]="tpl.description" placeholder="Template description">
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Template Content</mat-label>
+                      <textarea matInput [(ngModel)]="tpl.template" rows="3" placeholder="You are a reviewer..."></textarea>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div *ngIf="templates.length === 0" class="empty-hint">No templates defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ PIPELINES ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['pipelines']">
+            <div class="section-header" (click)="toggleSection('pipelines')">
+              <mat-icon class="expand-icon">{{ expandedSections['pipelines'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>account_tree</mat-icon>
+              <span>Pipelines</span>
+              <span class="badge" *ngIf="getSectionCount('pipelines') > 0">{{ getSectionCount('pipelines') }}</span>
+              <button class="icon-btn add-btn small" (click)="addPipeline(); $event.stopPropagation()" title="Add pipeline">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['pipelines']">
+              <div class="item-cards">
+                <div class="item-card" *ngFor="let pipeline of pipelines; let i = index">
+                  <div class="item-card-header">
+                    <span class="item-id">{{ pipeline.id || 'New Pipeline' }}</span>
+                    <span class="item-sub">{{ pipeline.steps.length }} step{{ pipeline.steps.length !== 1 ? 's' : '' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removePipeline(i)" title="Remove pipeline">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>ID *</mat-label>
+                        <input matInput [(ngModel)]="pipeline.id" placeholder="pipe1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name *</mat-label>
+                        <input matInput [(ngModel)]="pipeline.name" placeholder="pipeline-review">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Project</mat-label>
+                        <input matInput [(ngModel)]="pipeline.project" placeholder="proj1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>Type</mat-label>
+                        <mat-select [(ngModel)]="pipeline.type">
+                          <mat-option *ngFor="let opt of pipelineTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                        <mat-label>Description</mat-label>
+                        <input matInput [(ngModel)]="pipeline.description" placeholder="Pipeline description">
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                      <mat-label>Output Extension</mat-label>
+                      <input matInput [(ngModel)]="pipeline.output_extension" placeholder="{{'{{param:output_extension}}'}}">
+                    </mat-form-field>
+
+                    <!-- Nested: Steps -->
+                    <div class="nested-section">
+                      <div class="nested-header" (click)="togglePipelineSteps(i)">
+                        <mat-icon class="expand-icon">{{ expandedPipelines.has(i) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                        <mat-icon>list_alt</mat-icon>
+                        <span>Steps</span>
+                        <span class="badge small" *ngIf="pipeline.steps.length > 0">{{ pipeline.steps.length }}</span>
+                        <button class="icon-btn add-btn small" (click)="addStep(i); $event.stopPropagation()" title="Add step">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                      <div class="nested-list" *ngIf="expandedPipelines.has(i)">
+                        <div class="step-card" *ngFor="let step of pipeline.steps; let j = index">
+                          <div class="step-header">
+                            <span class="step-order">#{{ step.order }}</span>
+                            <span class="step-type">{{ step.type || (step.agent ? 'agent' : step.script ? 'script' : '-') }}</span>
+                            <span class="step-ref">{{ step.agent || step.script || '-' }}</span>
+                            <button class="icon-btn remove-btn small" (click)="removeStep(i, j)" title="Remove step">
+                              <mat-icon>close</mat-icon>
+                            </button>
+                          </div>
+                          <div class="step-body">
+                            <div class="form-row compact">
+                              <mat-form-field class="form-field-xs" appearance="outline" floatLabel="always">
+                                <mat-label>Order</mat-label>
+                                <input matInput type="number" [(ngModel)]="step.order" placeholder="1">
+                              </mat-form-field>
+                              <mat-form-field class="form-field-select compact" appearance="outline" floatLabel="always">
+                                <mat-label>Type</mat-label>
+                                <mat-select [(ngModel)]="step.type">
+                                  <mat-option value="">Auto</mat-option>
+                                  <mat-option *ngFor="let opt of stepTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                                <mat-label>Agent</mat-label>
+                                <input matInput [(ngModel)]="step.agent" placeholder="agent1">
+                              </mat-form-field>
+                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                                <mat-label>Script</mat-label>
+                                <input matInput [(ngModel)]="step.script" placeholder="script1">
+                              </mat-form-field>
+                            </div>
+                            <mat-form-field class="full-width compact" appearance="outline" floatLabel="always">
+                              <mat-label>Prompt Override</mat-label>
+                              <textarea matInput [(ngModel)]="step.prompt" rows="2" placeholder="Prompt override for this step"></textarea>
+                            </mat-form-field>
+                            <div class="form-row compact">
+                              <mat-form-field class="form-field-select compact" appearance="outline" floatLabel="always">
+                                <mat-label>Runtime</mat-label>
+                                <mat-select [(ngModel)]="step.runtime">
+                                  <mat-option value="">None</mat-option>
+                                  <mat-option *ngFor="let opt of runtimeOptions" [value]="opt">{{ opt }}</mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                                <mat-label>CLI</mat-label>
+                                <input matInput [(ngModel)]="step.cli" placeholder="opencode">
+                              </mat-form-field>
+                            </div>
+                            <div class="form-row compact">
+                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                                <mat-label>Parameters</mat-label>
+                                <input matInput [(ngModel)]="step.parameters" placeholder="--model gpt4">
+                              </mat-form-field>
+                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                                <mat-label>Arguments</mat-label>
+                                <input matInput [(ngModel)]="step.arguments" placeholder="--verbose">
+                              </mat-form-field>
+                            </div>
+                            <div class="io-section">
+                              <div class="io-row">
+                                <mat-form-field class="io-field" appearance="outline" floatLabel="always">
+                                  <mat-label>Input Content</mat-label>
+                                  <input matInput [(ngModel)]="step.input.content" placeholder="{{'{{step:0:output}}'}}">
+                                </mat-form-field>
+                                <mat-form-field class="io-type-field" appearance="outline" floatLabel="always">
+                                  <mat-label>In Type</mat-label>
+                                  <mat-select [(ngModel)]="step.input.type">
+                                    <mat-option *ngFor="let opt of stepIOTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                                  </mat-select>
+                                </mat-form-field>
+                              </div>
+                              <div class="io-row">
+                                <mat-form-field class="io-field" appearance="outline" floatLabel="always">
+                                  <mat-label>Output Content</mat-label>
+                                  <input matInput [(ngModel)]="step.output.content" placeholder="Output content">
+                                </mat-form-field>
+                                <mat-form-field class="io-type-field" appearance="outline" floatLabel="always">
+                                  <mat-label>Out Type</mat-label>
+                                  <mat-select [(ngModel)]="step.output.type">
+                                    <mat-option *ngFor="let opt of stepIOTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                                  </mat-select>
+                                </mat-form-field>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div *ngIf="pipeline.steps.length === 0" class="empty-hint">No steps defined. Click + to add.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="pipelines.length === 0" class="empty-hint">No pipelines defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TASKS ============ -->
+          <div class="section-card" [class.expanded]="expandedSections['tasks']">
+            <div class="section-header" (click)="toggleSection('tasks')">
+              <mat-icon class="expand-icon">{{ expandedSections['tasks'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>checklist</mat-icon>
+              <span>Tasks</span>
+              <span class="badge" *ngIf="getSectionCount('tasks') > 0">{{ getSectionCount('tasks') }}</span>
+              <button class="icon-btn add-btn small" (click)="addTask(); $event.stopPropagation()" title="Add task">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div class="section-body" *ngIf="expandedSections['tasks']">
+              <div class="item-cards">
+                <div class="item-card task-card" *ngFor="let task of tasks; let i = index">
+                  <div class="item-card-header" (click)="toggleTaskDetails(i)" style="cursor: pointer">
+                    <mat-icon class="expand-icon">{{ expandedTasks.has(i) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                    <span class="item-id">{{ task.id || 'New Task' }}</span>
+                    <span class="task-type-badge" [ngClass]="'type-' + task.type">{{ task.type }}</span>
+                    <span class="item-sub" *ngIf="task.resource">{{ task.resource }}{{ task.ref ? ': ' + task.ref : '' }}</span>
+                    <button class="icon-btn remove-btn small" (click)="removeTask(i); $event.stopPropagation()" title="Remove task">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="item-card-body" *ngIf="expandedTasks.has(i)">
+                    <div class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Task ID *</mat-label>
+                        <input matInput [(ngModel)]="task.id" placeholder="create_project">
+                      </mat-form-field>
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>Type *</mat-label>
+                        <mat-select [(ngModel)]="task.type">
+                          <mat-option *ngFor="let opt of taskTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Create-specific fields -->
+                    <div *ngIf="task.type === 'create'" class="form-row">
+                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                        <mat-label>Resource *</mat-label>
+                        <mat-select [(ngModel)]="task.resource">
+                          <mat-option *ngFor="let opt of resourceTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Ref</mat-label>
+                        <input matInput [(ngModel)]="task.ref" placeholder="proj1">
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Run/Stop/Call-specific fields -->
+                    <div *ngIf="task.type === 'run' || task.type === 'stop'" class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Pipeline Ref</mat-label>
+                        <input matInput [(ngModel)]="task.pipeline_ref" placeholder="pipe1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Pipeline ID</mat-label>
+                        <input matInput [(ngModel)]="task.pipeline_id" placeholder="42">
+                      </mat-form-field>
+                    </div>
+
+                    <div *ngIf="task.type === 'call'" class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Project</mat-label>
+                        <input matInput [(ngModel)]="task.project" placeholder="proj1">
+                      </mat-form-field>
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Pipeline Name</mat-label>
+                        <input matInput [(ngModel)]="task.pipeline_name" placeholder="pipeline-review">
+                      </mat-form-field>
+                    </div>
+
+                    <div *ngIf="task.type === 'run' || task.type === 'call'" class="form-row">
+                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Repeat</mat-label>
+                        <input matInput [(ngModel)]="task.repeat" placeholder="{{'{{param:repeat_count}}'}}">
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Depends On -->
+                    <div class="nested-section">
+                      <div class="nested-header">
+                        <mat-icon>link</mat-icon>
+                        <span>Depends On</span>
+                        <span class="badge small" *ngIf="task.depends_on.length > 0">{{ task.depends_on.length }}</span>
+                        <button class="icon-btn add-btn small" (click)="addTaskDependsOn(i)" title="Add dependency">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                      <div class="nested-list">
+                        <div class="nested-row" *ngFor="let dep of task.depends_on; let j = index">
+                          <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                            <mat-label>Task ID</mat-label>
+                            <input matInput [(ngModel)]="task.depends_on[j]" placeholder="create_pipeline">
+                          </mat-form-field>
+                          <button class="icon-btn remove-btn small" (click)="removeTaskDependsOn(i, j)" title="Remove">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Retry (for run/call) -->
+                    <div *ngIf="task.type === 'run' || task.type === 'call'" class="nested-section">
+                      <div class="nested-header">
+                        <mat-icon>replay</mat-icon>
+                        <span>Retry Config</span>
+                      </div>
+                      <div class="nested-list">
+                        <div class="form-row compact">
+                          <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                            <mat-label>Max Attempts</mat-label>
+                            <input matInput [(ngModel)]="task.retry.max_attempts" placeholder="0">
+                          </mat-form-field>
+                          <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                            <mat-label>Delay (s)</mat-label>
+                            <input matInput [(ngModel)]="task.retry.delay_seconds" placeholder="5">
+                          </mat-form-field>
+                        </div>
+                        <div class="nested-header sub">
+                          <span>On Status</span>
+                          <span class="badge small" *ngIf="task.retry.on_status.length > 0">{{ task.retry.on_status.length }}</span>
+                          <button class="icon-btn add-btn small" (click)="addRetryOnStatus(i)" title="Add status">
+                            <mat-icon>add</mat-icon>
+                          </button>
+                        </div>
+                        <div class="nested-row" *ngFor="let st of task.retry.on_status; let k = index">
+                          <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                            <mat-label>Status</mat-label>
+                            <mat-select [(ngModel)]="task.retry.on_status[k]">
+                              <mat-option *ngFor="let opt of retryStatusOptions" [value]="opt">{{ opt }}</mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                          <button class="icon-btn remove-btn small" (click)="removeRetryOnStatus(i, k)" title="Remove">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Loop (for run) -->
+                    <div *ngIf="task.type === 'run'" class="nested-section">
+                      <div class="nested-header">
+                        <mat-icon>loop</mat-icon>
+                        <span>Loop Config</span>
+                      </div>
+                      <div class="nested-list">
+                        <div class="form-row compact">
+                          <mat-form-field class="form-field-select compact" appearance="outline" floatLabel="always">
+                            <mat-label>Condition</mat-label>
+                            <mat-select [(ngModel)]="task.loop.condition">
+                              <mat-option value="">None</mat-option>
+                              <mat-option *ngFor="let opt of loopConditionOptions" [value]="opt">{{ opt }}</mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                          <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                            <mat-label>Max Iterations</mat-label>
+                            <input matInput [(ngModel)]="task.loop.max_iterations" placeholder="10">
+                          </mat-form-field>
+                          <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                            <mat-label>Delay (s)</mat-label>
+                            <input matInput [(ngModel)]="task.loop.delay_seconds" placeholder="30">
+                          </mat-form-field>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Wait & Stop on failure -->
+                    <div *ngIf="task.type === 'run' || task.type === 'call'" class="toggle-row">
+                      <label class="toggle-label">
+                        <input type="checkbox" [(ngModel)]="task.wait">
+                        <span>Wait for completion</span>
+                      </label>
+                      <label class="toggle-label">
+                        <input type="checkbox" [(ngModel)]="task.stop_on_failure">
+                        <span>Stop on failure</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="tasks.length === 0" class="empty-hint">No tasks defined. Click + to add.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RAW MODE -->
+        <div *ngIf="viewMode === 'raw'" class="raw-editor">
+          <div class="raw-toolbar">
+            <span class="raw-label">YAML</span>
+            <button class="icon-btn copy-btn" (click)="copyToClipboard(rawYaml)" title="Copy to clipboard" [disabled]="!rawYaml">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+          <textarea
+            class="yaml-editor"
+            [(ngModel)]="rawYaml"
+            spellcheck="false"
+            placeholder="# Paste or write your recipe YAML here...
+recipe:
+  name: &quot;my-recipe&quot;
+  version: &quot;1.0&quot;
+  description: &quot;Description&quot;
+
+parameters:
+  project_name: &quot;meu-projeto&quot;">
+          </textarea>
+        </div>
+
+        <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+          <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+          {{ statusMessage }}
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-primary" (click)="saveRecipeFile()" [disabled]="viewMode === 'visual' ? !recipeName : !rawYaml.trim()">
+            <mat-icon>save</mat-icon>
+            {{ formRecipeFile.id ? 'Update Recipe' : 'Save Recipe' }}
+          </button>
+          <button class="btn btn-secondary" (click)="clearForm()">
+            <mat-icon>refresh</mat-icon>
+            Clear Form
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

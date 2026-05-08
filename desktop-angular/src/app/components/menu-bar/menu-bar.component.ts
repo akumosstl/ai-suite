@@ -10,15 +10,17 @@ import { CommonModule } from '@angular/common'
 import { Subscription, filter } from 'rxjs'
 import { OpenProjectDialogComponent } from '../open-project-dialog/open-project-dialog.component'
 import { NewProjectDialogComponent } from '../new-project-dialog/new-project-dialog.component'
-import { ExportDialogComponent } from '../export-dialog/export-dialog.component'
-import { ImportDialogComponent, ImportResult } from '../import-dialog/import-dialog.component'
 import { ProjectContextService } from '../../services/project-context.service'
 import { ApiService } from '../../services/api.service'
+import { UpdateService } from '../../services/update.service'
+import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
+import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
+import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.component'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, ExportDialogComponent, ImportDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -81,62 +83,51 @@ import { ApiService } from '../../services/api.service'
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button mat-menu-item routerLink="/skills" class="menu-item">
-              <mat-icon>psychology</mat-icon>
-              <span>Skills</span>
-            </button>
-            <button mat-menu-item routerLink="/instructions" class="menu-item">
-              <mat-icon>rule</mat-icon>
-              <span>Instructions</span>
-            </button>
-            <button mat-menu-item routerLink="/plugins" class="menu-item">
-              <mat-icon>extension</mat-icon>
-              <span>Plugins</span>
-            </button>
-            <button mat-menu-item routerLink="/tools" class="menu-item">
-              <mat-icon>build</mat-icon>
-              <span>Tools</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item routerLink="/scripts" class="menu-item">
+      <button mat-menu-item routerLink="/scripts" class="menu-item">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
-            <button mat-menu-item routerLink="/commands" class="menu-item">
-              <mat-icon>terminal</mat-icon>
-              <span>Commands</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item routerLink="/pipelines" class="menu-item">
-              <mat-icon>alt_route</mat-icon>
-              <span>Pipelines</span>
-            </button>
-          </mat-menu>
+          <div class="menu-separator"></div>
+          <button mat-menu-item routerLink="/pipelines" class="menu-item">
+            <mat-icon>alt_route</mat-icon>
+            <span>Pipelines</span>
+          </button>
+          <button mat-menu-item routerLink="/recipe" class="menu-item">
+            <mat-icon>restaurant</mat-icon>
+            <span>Recipe</span>
+          </button>
+        </mat-menu>
+
+          <button class="menu-button" (click)="openPluginsModal()">
+            <mat-icon>extension</mat-icon>
+            <span>Tools</span>
+          </button>
 
           <button class="menu-button" [matMenuTriggerFor]="managementMenu">
             <mat-icon>settings</mat-icon>
             <span>Management</span>
             <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
           </button>
-          <mat-menu #managementMenu="matMenu" class="custom-menu">
-            <button mat-menu-item routerLink="/templates" class="menu-item">
-              <mat-icon>description</mat-icon>
-              <span>Templates</span>
-            </button>
-            <button mat-menu-item routerLink="/namespaces" class="menu-item">
-              <mat-icon>dns</mat-icon>
-              <span>Namespace</span>
-            </button>
-            <div class="menu-separator"></div>
-            <button mat-menu-item (click)="openExport()" class="menu-item">
-              <mat-icon>file_download</mat-icon>
-              <span>Export</span>
-            </button>
-            <button mat-menu-item (click)="openImport()" class="menu-item">
-              <mat-icon>file_upload</mat-icon>
-              <span>Import</span>
-            </button>
-          </mat-menu>
+<mat-menu #managementMenu="matMenu" class="custom-menu">
+        <button mat-menu-item routerLink="/templates" class="menu-item">
+          <mat-icon>description</mat-icon>
+          <span>Templates</span>
+        </button>
+        <button mat-menu-item routerLink="/namespaces" class="menu-item">
+          <mat-icon>dns</mat-icon>
+          <span>Namespace</span>
+        </button>
+        <div class="menu-separator"></div>
+        <button mat-menu-item (click)="checkUpdate()" class="menu-item">
+          <mat-icon>system_update</mat-icon>
+          <span>Update</span>
+        </button>
+      </mat-menu>
+
+      <button class="menu-button" (click)="openShortcuts()">
+        <mat-icon>info</mat-icon>
+        <span>Info</span>
+      </button>
         </ng-container>
         
         <ng-container *ngIf="isMainPage(); else homeButton">
@@ -333,6 +324,7 @@ selectedProjectId: number | null = null;
  * Subscription para eventos de navegação do Angular Router.
  */
 private routerSubscription: Subscription | null = null;
+  private keydownHandler!: (event: KeyboardEvent) => void;
 
   /**
  * Injeta dependências necessárias para navegação, diálogos, contexto de projeto, API e notificações.
@@ -342,7 +334,8 @@ constructor(
     private dialog: MatDialog,
     private projectContext: ProjectContextService,
     private apiService: ApiService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private updateService: UpdateService
   ) {
     const nav = this.router.getCurrentNavigation()
     if (nav && nav.extras && nav.extras.state && nav.extras.state['project']) {
@@ -365,6 +358,60 @@ ngOnInit(): void {
     });
     
     this.updateNavigationState(this.router.url);
+
+    this.keydownHandler = (event: KeyboardEvent) => {
+      if (!event.ctrlKey || !event.shiftKey) return;
+      
+      const key = event.key.toLowerCase();
+      
+      switch (key) {
+        case 'a':
+          event.preventDefault();
+          this.router.navigate(['/agents']);
+          break;
+        case 's':
+          event.preventDefault();
+          this.router.navigate(['/scripts']);
+          break;
+        case 't':
+          event.preventDefault();
+          this.router.navigate(['/templates']);
+          break;
+        case 'n':
+          event.preventDefault();
+          this.router.navigate(['/namespaces']);
+          break;
+        case 'l':
+          event.preventDefault();
+          this.router.navigate(['/pipelines']);
+          break;
+        case 'y':
+          event.preventDefault();
+          this.router.navigate(['/recipe']);
+          break;
+        case 'p':
+          event.preventDefault();
+          if (!this.isMainPage() && !this.isProjectPage()) {
+            this.goToProject();
+          }
+          break;
+        case 'q':
+          event.preventDefault();
+          this.openShortcuts();
+          break;
+        case 'x':
+          event.preventDefault();
+          this.openPluginsModal();
+          break;
+        case 'h':
+          if (event.altKey && event.ctrlKey) {
+            event.preventDefault();
+            this.goHome();
+          }
+          break;
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler);
   }
 
   /**
@@ -374,10 +421,13 @@ ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
+    }
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/skills', '/scripts', '/commands', '/templates', '/namespaces'];
+    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;
@@ -453,53 +503,38 @@ ngOnDestroy(): void {
     this.router.navigate(['/menu'])
   }
 
-  openExport(): void {
-    const dialogRef = this.dialog.open(ExportDialogComponent, {
-      width: '450px',
-      data: { loading: false }
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result) {
-        this.snackBar.open('Export completed successfully!', 'Close', { duration: 3000 });
-      }
-    });
-  }
-
-  openImport(): void {
-    const dialogRef = this.dialog.open(ImportDialogComponent, {
-      width: '550px',
-      data: { loading: false, result: null }
-    });
-
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result && result.formData) {
-        const importDialogRef = this.dialog.open(ImportDialogComponent, {
-          width: '550px',
-          data: { loading: true, result: null }
-        });
-
-        this.apiService.importData(result.formData).subscribe({
-          next: (response: any) => {
-            importDialogRef.close();
-            const finalDialogRef = this.dialog.open(ImportDialogComponent, {
-              width: '550px',
-              data: { loading: false, result: response as ImportResult }
-            });
-            finalDialogRef.afterClosed().subscribe(() => {
-              window.location.reload();
-            });
-          },
-          error: (err) => {
-            console.error('Import error:', err);
-            importDialogRef.close();
-            this.snackBar.open('Import failed: ' + (err.error?.message || err.message), 'Close', { duration: 5000 });
-          }
-        });
-      }
-    });
-  }
-
   openDocumentation(): void {
     window.open('https://github.com/akumosstl/agentic-ai-suite/blob/main/README.md', '_blank');
+  }
+
+  async checkUpdate(): Promise<void> {
+    const currentVersion = await this.apiService.getVersion()
+    const updateInfo = await this.updateService.checkForUpdate(currentVersion)
+
+    if (updateInfo) {
+      this.dialog.open(UpdateDialogComponent, {
+        width: '400px',
+        data: {
+          currentVersion: currentVersion,
+          newVersion: updateInfo.version
+        }
+      })
+    } else {
+      this.snackBar.open('You are using the latest version', 'Close', { duration: 3000 })
+    }
+  }
+
+  openPluginsModal(): void {
+    this.dialog.open(PluginsModalComponent, {
+      width: '80vw',
+      maxWidth: '1600px',
+      height: '80vh',
+      maxHeight: '1000px',
+      panelClass: 'plugins-modal'
+    })
+  }
+
+  openShortcuts(): void {
+    this.dialog.open(ShortcutsDialogComponent);
   }
 }

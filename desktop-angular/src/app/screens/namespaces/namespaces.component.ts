@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -42,7 +42,7 @@ interface ClearResult {
 
 /**
  * Componente de gerenciamento de namespaces.
- * Exibe uma visão geral dos namespaces organizados por tipo (agents, skills, commands, scripts)
+ * Exibe uma visão geral dos namespaces organizados por tipo (agents, scripts)
  * e permite visualizar detalhes, limpar itens e buscar por namespace.
  * 
  * @componentName NamespacesComponent
@@ -82,34 +82,15 @@ interface ClearResult {
               <mat-icon>smart_toy</mat-icon>
               <span>Agents</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'skills'" (click)="selectType('skills')">
-              <mat-icon>psychology</mat-icon>
-              <span>Skills</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'commands'" (click)="selectType('commands')">
-              <mat-icon>terminal</mat-icon>
-              <span>Commands</span>
-            </button>
             <button class="type-btn" [class.active]="selectedType === 'scripts'" (click)="selectType('scripts')">
               <mat-icon>code</mat-icon>
               <span>Scripts</span>
             </button>
-            <button class="type-btn" [class.active]="selectedType === 'instructions'" (click)="selectType('instructions')">
-              <mat-icon>description</mat-icon>
-              <span>Instructions</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'plugins'" (click)="selectType('plugins')">
-              <mat-icon>extension</mat-icon>
-              <span>Plugins</span>
-            </button>
-            <button class="type-btn" [class.active]="selectedType === 'tools'" (click)="selectType('tools')">
-              <mat-icon>build</mat-icon>
-              <span>Tools</span>
-            </button>
+
           </div>
           
           <div class="search-section">
-            <mat-form-field class="search-field" appearance="outline">
+            <mat-form-field class="search-field" appearance="outline" floatLabel="always">
               <mat-label>Search by namespace...</mat-label>
               <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
               <mat-icon matPrefix>search</mat-icon>
@@ -281,9 +262,9 @@ interface ClearResult {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                  min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.08s ease-out, 
+                  min-width 0.08s ease-out,
+                  opacity 0.08s ease-out;
     }
     
     .left-panel.collapsed {
@@ -738,7 +719,7 @@ interface ClearResult {
     }
   `]
 })
-export class NamespacesComponent implements OnInit {
+export class NamespacesComponent implements OnInit, OnDestroy {
   namespaces: string[] = [];
   allNamespaces: string[] = [];
   selectedNamespace: string | null = null;
@@ -767,6 +748,11 @@ export class NamespacesComponent implements OnInit {
   toggleLeftPanel(): void {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
+
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
+  }
   
   /**
    * Retorna o label legível para o tipo de namespace selecionado.
@@ -775,12 +761,7 @@ export class NamespacesComponent implements OnInit {
   getTypeLabel(): string {
     const labels: { [key: string]: string } = {
       'agents': 'Agents',
-      'skills': 'Skills',
-      'commands': 'Commands',
-      'scripts': 'Scripts',
-      'instructions': 'Instructions',
-      'plugins': 'Plugins',
-      'tools': 'Tools'
+      'scripts': 'Scripts'
     };
     return labels[this.selectedType] || 'Unknown';
   }
@@ -800,15 +781,15 @@ export class NamespacesComponent implements OnInit {
     this.pipelines = [];
     this.projects = [];
     this.loadNamespaces();
-  }
-  
-  ngOnInit(): void {
+}
+
+ngOnInit(): void {
     this.loadNamespaces();
   }
+
+  ngOnDestroy(): void {
+  }
   
-  /**
-   * Carrega a lista de namespaces do tipo selecionado.
-   */
   /**
    * Carrega a lista de namespaces do tipo selecionado.
    */

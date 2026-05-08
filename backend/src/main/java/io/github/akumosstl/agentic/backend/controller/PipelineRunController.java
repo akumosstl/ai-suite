@@ -237,6 +237,53 @@ public class PipelineRunController {
         return pipelineRunService.getTop20AllRuns();
     }
     
+    @GetMapping("/pipeline-runs/{runId}/steps/{stepOrder}/file-output")
+    public ResponseEntity<Map<String, Object>> getStepFileOutput(
+            @PathVariable Long runId,
+            @PathVariable Integer stepOrder) {
+        PipelineRun run = pipelineRunService.getRunById(runId);
+        Map<String, Object> response = new HashMap<>();
+        
+        if (run == null) {
+            response.put("error", "Pipeline run not found");
+            return ResponseEntity.notFound().build();
+        }
+        
+        String runDir = run.getRunDir();
+        if (runDir == null || runDir.isEmpty()) {
+            response.put("error", "Run directory not available");
+            response.put("message", "Output file no longer exists");
+            return ResponseEntity.ok(response);
+        }
+        
+        String pipelineName = run.getPipeline() != null ? run.getPipeline().getName() : "pipeline";
+        pipelineName = pipelineName.replaceAll("\\s+", "");
+        String outputExtension = run.getPipeline() != null && run.getPipeline().getOutputExtension() != null 
+            ? run.getPipeline().getOutputExtension() 
+            : "txt";
+        
+        String outputFileName = "step" + stepOrder + "-result." + outputExtension;
+        java.io.File outputFile = new java.io.File(runDir, outputFileName);
+        
+        if (!outputFile.exists()) {
+            response.put("fileExists", false);
+            response.put("message", "Output file no longer exists");
+            response.put("expectedPath", outputFile.getAbsolutePath());
+            return ResponseEntity.ok(response);
+        }
+        
+        try {
+            String content = java.nio.file.Files.readString(outputFile.toPath());
+            response.put("fileExists", true);
+            response.put("content", content);
+            response.put("filePath", outputFile.getAbsolutePath());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Failed to read output file: " + e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
     @DeleteMapping("/all-pipeline-runs/cleanup")
     public ResponseEntity<Map<String, Object>> cleanupAllRuns() {
         int deletedCount = pipelineRunService.deleteAllNonRunningRuns();

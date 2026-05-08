@@ -87,38 +87,26 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
               </div>
 
               <table class="targets-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Skills Path</th>
-                    <th>Commands Path</th>
-                    <th>Scripts Path</th>
-                    <th>Agents Path</th>
-                    <th>Instructions Path</th>
-                    <th>Plugins Path</th>
-                    <th>Tools Path</th>
-                    <th class="actions-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    *ngFor="let target of targets" 
-                    (click)="selectTargetToEdit(target)"
-                    [class.selected]="selectedTarget?.id === target.id"
-                    class="target-row"
-                  >
-                    <td>
-                      <mat-icon class="row-icon">flag</mat-icon>
-                      {{ target.name }}
-                    </td>
-                    <td>{{ target.skillsPath }}</td>
-                    <td>{{ target.commandsPath }}</td>
-                    <td>{{ target.scriptsPath }}</td>
-                    <td>{{ target.agentsPath }}</td>
-                    <td>{{ target.instructionsPath }}</td>
-                    <td>{{ target.pluginsPath }}</td>
-                    <td>{{ target.toolsPath }}</td>
-                    <td class="actions-col" (click)="$event.stopPropagation()">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Agents Path</th>
+      <th class="actions-col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr
+    *ngFor="let target of targets"
+    (click)="selectTargetToEdit(target)"
+    [class.selected]="selectedTarget?.id === target.id"
+    class="target-row"
+  >
+    <td>
+      <mat-icon class="row-icon">flag</mat-icon>
+      {{ target.name }}
+    </td>
+    <td>{{ target.agentsPath }}</td>
+    <td class="actions-col" (click)="$event.stopPropagation()">
                       <button mat-icon-button (click)="deleteTarget(target, $event)" class="delete-btn" title="Delete Target">
                         <mat-icon>delete</mat-icon>
                       </button>
@@ -149,47 +137,11 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                   <mat-icon matPrefix>badge</mat-icon>
                 </mat-form-field>
 
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Skills Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.skillsPath" placeholder="e.g., .opencode/skills">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Commands Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.commandsPath" placeholder="e.g., .opencode/commands">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Scripts Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.scriptsPath" placeholder="e.g., .opencode/scripts">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Agents Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Instructions Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.instructionsPath" placeholder="e.g., .opencode/instructions">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Plugins Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.pluginsPath" placeholder="e.g., .opencode/plugins">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Tools Path</mat-label>
-                  <input matInput [(ngModel)]="targetForm.toolsPath" placeholder="e.g., .opencode/tools">
-                  <mat-icon matPrefix>folder</mat-icon>
-                </mat-form-field>
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Agents Path</mat-label>
+      <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
+      <mat-icon matPrefix>folder</mat-icon>
+    </mat-form-field>
 
                 <div class="form-actions">
                   <button mat-stroked-button (click)="cancelTarget()" class="cancel-btn" *ngIf="isEditing">
@@ -611,20 +563,18 @@ export class ConfigComponent implements OnInit {
 
   targetForm: {
     name: string;
-    skillsPath: string;
-    commandsPath: string;
-    scriptsPath: string;
+    skillsPath?: string;
+    commandsPath?: string;
     agentsPath: string;
-    instructionsPath: string;
-    pluginsPath: string;
-    toolsPath: string;
+    scriptsPath?: string;
+    pluginsPath?: string;
+    toolsPath?: string;
   } = {
     name: '',
     skillsPath: '',
     commandsPath: '',
-    scriptsPath: '',
     agentsPath: '',
-    instructionsPath: '',
+    scriptsPath: '',
     pluginsPath: '',
     toolsPath: ''
   };
@@ -678,20 +628,14 @@ export class ConfigComponent implements OnInit {
   createDefaultTarget(): void {
     const defaultTarget: Target = {
       name: 'opencode',
-      skillsPath: '.opencode\\skills',
-      commandsPath: '.opencode\\commands',
-      scriptsPath: '.opencode\\scripts',
-      agentsPath: '.opencode\\agents',
-      instructionsPath: '.opencode\\instructions',
-      pluginsPath: '.opencode\\plugins',
-      toolsPath: '.opencode\\tools'
+      agentsPath: '.opencode\\agents'
     };
     this.apiService.createTarget(defaultTarget).subscribe({
       next: (created) => {
         this.targets = [created];
         this.cdr.detectChanges();
       }
-    });
+  });
   }
 
   /**
@@ -732,9 +676,7 @@ export class ConfigComponent implements OnInit {
       name: target.name,
       skillsPath: target.skillsPath || '',
       commandsPath: target.commandsPath || '',
-      scriptsPath: target.scriptsPath || '',
       agentsPath: target.agentsPath || '',
-      instructionsPath: target.instructionsPath || '',
       pluginsPath: target.pluginsPath || '',
       toolsPath: target.toolsPath || ''
     };
@@ -754,9 +696,7 @@ export class ConfigComponent implements OnInit {
       name: '',
       skillsPath: '',
       commandsPath: '',
-      scriptsPath: '',
       agentsPath: '',
-      instructionsPath: '',
       pluginsPath: '',
       toolsPath: ''
     };
@@ -777,7 +717,6 @@ export class ConfigComponent implements OnInit {
       commandsPath: '',
       scriptsPath: '',
       agentsPath: '',
-      instructionsPath: '',
       pluginsPath: '',
       toolsPath: ''
     };
@@ -846,7 +785,6 @@ export class ConfigComponent implements OnInit {
       commandsPath: this.targetForm.commandsPath,
       scriptsPath: this.targetForm.scriptsPath,
       agentsPath: this.targetForm.agentsPath,
-      instructionsPath: this.targetForm.instructionsPath,
       pluginsPath: this.targetForm.pluginsPath,
       toolsPath: this.targetForm.toolsPath
     };

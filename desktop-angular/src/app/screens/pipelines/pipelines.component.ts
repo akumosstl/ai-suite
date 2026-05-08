@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -90,14 +90,6 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                 <span class="run-project">{{ run.projectName || 'Project #' + run.projectId }}</span>
                 <span class="run-date">{{ formatDate(run.createdAt) }}</span>
               </div>
-              <div class="run-actions">
-                <button *ngIf="run.status === 'running'" 
-                        class="icon-btn view-running-btn" 
-                        (click)="viewRunningPipeline(run, $event)"
-                        title="View Running Pipeline">
-                  <mat-icon>visibility</mat-icon>
-                </button>
-              </div>
               <div class="run-status-badge" [class]="run.status || 'pending'">
                 {{ run.status || 'pending' }}
               </div>
@@ -130,6 +122,11 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
         </div>
         
         <div class="right-panel">
+          <div class="pipeline-directory" *ngIf="selectedRun?.runDir">
+            <mat-icon>folder</mat-icon>
+            <span class="dir-path">{{ selectedRun?.runDir }}</span>
+          </div>
+          
           <div class="pipeline-visualization" *ngIf="selectedRun && selectedRun.steps?.length">
             <div class="pipeline-header">
               <mat-icon>alt_route</mat-icon>
@@ -152,7 +149,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                   </div>
                   <div class="step-info">
                     <span class="step-name">{{ step.agentName || step.scriptName || 'Unknown' }}</span>
-                    <span class="step-category">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
+                    <span class="step-namespace">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
                   </div>
                 </div>
                 <div class="step-connector" *ngIf="i < selectedRun.steps!.length - 1">
@@ -174,6 +171,10 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
               <button class="output-btn" (click)="openOutputModal()">
                 <mat-icon>output</mat-icon>
                 <span>Output</span>
+              </button>
+              <button class="file-output-btn" (click)="openFileOutputModal()" [disabled]="selectedRun?.status === 'running'">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span>File output</span>
               </button>
             </div>
           </div>
@@ -784,7 +785,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       text-overflow: ellipsis;
     }
     
-    .step-category {
+    .step-namespace {
       font-size: 0.7rem;
       color: #888;
       text-transform: capitalize;
@@ -884,6 +885,58 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       width: 18px;
       height: 18px;
       color: #4fc3f7;
+    }
+    
+    .file-output-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .file-output-btn:hover:not(:disabled) {
+      background: #3a3a3a;
+      border-color: #ff9800;
+    }
+    
+    .file-output-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .file-output-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #ff9800;
+    }
+    
+    .pipeline-directory {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .pipeline-directory mat-icon {
+      color: #ff9800;
+    }
+    
+    .dir-path {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.85rem;
+      color: #888;
+      word-break: break-all;
     }
     
     .console-output {
@@ -1012,16 +1065,29 @@ export class PipelinesComponent implements OnInit {
       this.router.navigate(['/project']);
     }
   }
+
+  @HostListener('document:keydown.control.alt.p')
+  onGoBack(): void {
+    this.goBack();
+  }
+
+  @HostListener('document:keydown.control.shift.u')
+  onRefresh(): void {
+    this.loadRuns();
+  }
   
   loadRuns(page = 0, projectName?: string) {
     const searchName = projectName !== undefined ? projectName : (this.searchProjectName || undefined);
+    this.selectedRun = null;
+    this.selectedStep = null;
     this.apiService.getAllPipelineRuns(page, this.pageSize, searchName).subscribe({
       next: (response: any) => {
+        console.log('Loaded runs:', response.runs);
         this.runs = response.runs || [];
         this.currentPage = response.currentPage || 0;
         this.totalPages = response.totalPages || 0;
         this.totalElements = response.totalElements || 0;
-        if (this.runs.length > 0 && !this.selectedRun) {
+        if (this.runs.length > 0) {
           this.selectRun(this.runs[0]);
         }
         this.cdr.detectChanges();
@@ -1102,7 +1168,53 @@ export class PipelinesComponent implements OnInit {
       });
     }
   }
-  
+
+  openFileOutputModal() {
+    if (!this.selectedStep || !this.selectedRun || !this.selectedRun.id) {
+      return;
+    }
+
+    this.apiService.getStepFileOutput(this.selectedRun.id, this.selectedStep.stepOrder!).subscribe({
+      next: (response: any) => {
+        if (response.fileExists === false) {
+          const dialogData: ConfirmDialogData = {
+            title: 'File Not Found',
+            message: response.message || 'Output file no longer exists. Expected path: ' + response.expectedPath
+          };
+          this.dialog.open(ConfirmDialogComponent, {
+            width: '450px',
+            data: dialogData
+          });
+        } else {
+          this.dialog.open(OutputDialogComponent, {
+            width: '80vw',
+            height: '70vh',
+            maxWidth: '900px',
+            data: {
+              step: {
+                ...this.selectedStep,
+                outputContent: response.content
+              },
+              type: 'output'
+            },
+            panelClass: 'output-dialog-panel'
+          });
+        }
+      },
+      error: (err: any) => {
+        console.error('Error fetching file output:', err);
+        const dialogData: ConfirmDialogData = {
+          title: 'Error',
+          message: 'Failed to fetch file output: ' + (err.message || 'Unknown error')
+        };
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '400px',
+          data: dialogData
+        });
+      }
+    });
+  }
+
   viewRunningPipeline(run: PipelineRun, event: Event) {
     event.stopPropagation();
     if (!run.pipelineId || !run.projectId) {
@@ -1128,13 +1240,15 @@ export class PipelinesComponent implements OnInit {
       }
       this.cleaningUp = true;
       this.apiService.cleanupAllPipelineRuns().subscribe({
-        next: () => {
+        next: (result) => {
+          console.log('Cleanup result:', result);
           this.cleaningUp = false;
           this.selectedRun = null;
           this.selectedStep = null;
           this.loadRuns();
         },
-        error: () => {
+        error: (err) => {
+          console.error('Cleanup error:', err);
           this.cleaningUp = false;
         }
       });

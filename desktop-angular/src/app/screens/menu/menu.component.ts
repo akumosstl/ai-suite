@@ -65,11 +65,6 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
           </mat-menu>
         </div>
         
-        <button class="action-button" (click)="goToAgents()">
-          <mat-icon>smart_toy</mat-icon>
-          <span>Agents</span>
-        </button>
-        
         <button class="action-button config-button" (click)="goToConfig()">
           <mat-icon>build</mat-icon>
           <span>Config</span>
@@ -82,7 +77,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       </div>
       
       <div class="footer">
-        <p class="version">Version 1.0.0</p>
+        <p class="version">Version 3.3.1</p>
         <div class="footer-links">
           <span class="link">Documentation</span>
           <span class="separator">·</span>

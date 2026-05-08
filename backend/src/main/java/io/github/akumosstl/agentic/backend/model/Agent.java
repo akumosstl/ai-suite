@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "agent")
+@Table(name = "agent", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_agent_name_namespace", columnNames = {"name", "namespace"})
+})
 @JsonIgnoreProperties({"createdAt", "updatedAt"})
 public class Agent {
     
@@ -18,8 +20,8 @@ public class Agent {
     private String name;
     
     /** Namespace do agente */
-    @Column(length = 255)
-    private String namespace;
+    @Column(length = 255, nullable = false)
+    private String namespace = "";
     
     /** Categoria do agente */
     private String category;

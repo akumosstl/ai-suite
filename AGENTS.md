@@ -1,5 +1,11 @@
 # AGENTS.md
 
+# SYNCHRONIZATION ROUTINE
+
+At the start of every session, read the .opencode-context file to understand the current progress and the technologies used (Spring/Angular).
+After every successful implementation, update the 'Estado Atual' (Current State) and 'Próximos Passos' (Next Steps) sections in the .opencode-context file.
+If there are any changes to the H2 database schema, remind me to update the initialization .sql files.
+
 ## Project Overview
 
 This is a hybrid project with:

@@ -5,13 +5,15 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineRunStep;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -19,17 +21,26 @@ import java.util.List;
 
 @Service
 public class PipelineRunService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PipelineRunService.class);
+
+    private final PipelineRunRepository pipelineRunRepository;
+    private final PipelineStepService pipelineStepService;
+    private final ObjectProvider<PipelineService> pipelineServiceProvider;
     
     @Autowired
-    private PipelineRunRepository pipelineRunRepository;
+    public PipelineRunService(
+            PipelineRunRepository pipelineRunRepository,
+            PipelineStepService pipelineStepService,
+            ObjectProvider<PipelineService> pipelineServiceProvider) {
+        this.pipelineRunRepository = pipelineRunRepository;
+        this.pipelineStepService = pipelineStepService;
+        this.pipelineServiceProvider = pipelineServiceProvider;
+    }
     
-    @Lazy
-    @Autowired
-    private PipelineService pipelineService;
-    
-    @Lazy
-    @Autowired
-    private PipelineStepService pipelineStepService;
+    private PipelineService getPipelineService() {
+        return pipelineServiceProvider.getObject();
+    }
     
     public List<PipelineRun> getTop20RunsByPipeline(Long pipelineId) {
         return pipelineRunRepository.findTop20ByPipeline_IdOrderByCreatedAtDesc(pipelineId);
@@ -56,7 +67,7 @@ public class PipelineRunService {
     
     @Transactional
     public PipelineRun createRun(Long pipelineId) {
-        Pipeline pipeline = pipelineService.getPipelineById(pipelineId);
+        Pipeline pipeline = getPipelineService().getPipelineById(pipelineId);
         PipelineRun run = new PipelineRun(pipeline);
         run.setStatus("running");
         
@@ -109,13 +120,23 @@ public class PipelineRunService {
     }
     
     @Transactional
+    public PipelineRun saveRun(PipelineRun run) {
+        return pipelineRunRepository.save(run);
+    }
+    
+    @Transactional
     public void deleteRun(Long id) {
-        pipelineRunRepository.deleteById(id);
+        PipelineRun run = getRunById(id);
+        run.getSteps().clear();
+        pipelineRunRepository.delete(run);
     }
     
     @Transactional
     public void deleteRunsByPipeline(Long pipelineId) {
         List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
+        for (PipelineRun run : runs) {
+            run.getSteps().clear();
+        }
         pipelineRunRepository.deleteAll(runs);
     }
     
@@ -134,9 +155,16 @@ public class PipelineRunService {
     
     @Transactional
     public int deleteAllNonRunningRuns() {
-        List<PipelineRun> nonRunningRuns = pipelineRunRepository.findByStatusNot("running");
-        int count = nonRunningRuns.size();
-        pipelineRunRepository.deleteAll(nonRunningRuns);
-        return count;
+        logger.info("Starting cleanup of non-running pipeline runs using native query");
+
+        // First delete all steps for non-running runs
+        pipelineRunRepository.deleteStepsByNonRunningRuns();
+        logger.info("Deleted steps for non-running runs");
+
+        // Then delete the runs themselves
+        int deletedCount = pipelineRunRepository.deleteAllNonRunningRunsNative();
+        logger.info("Native query deleted {} pipeline runs", deletedCount);
+
+        return deletedCount;
     }
 }

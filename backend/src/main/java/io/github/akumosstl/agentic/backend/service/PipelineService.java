@@ -2,8 +2,11 @@ package io.github.akumosstl.agentic.backend.service;
 
 import io.github.akumosstl.agentic.backend.model.Pipeline;
 import io.github.akumosstl.agentic.backend.model.PipelineRun;
+import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.repository.PipelineRepository;
+import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,31 +18,44 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * Serviço para gerenciamento de Pipelines.
- * 
- * Realiza operações de CRUD, execução de pipelines e gerenciamento deRunDirs.
- * 
- * @author Sistema Agentic
- * @version 1.0
- */
 @Service
 public class PipelineService {
     
+    private final PipelineRepository pipelineRepository;
+    private final PipelineRunRepository pipelineRunRepository;
+    private final ProjectService projectService;
+    private final PipelineStepService pipelineStepService;
+    private final SseService sseService;
+    private final ObjectProvider<PipelineRunService> pipelineRunServiceProvider;
+    
     @Autowired
-    private PipelineRepository pipelineRepository;
+    public PipelineService(
+            PipelineRepository pipelineRepository,
+            PipelineRunRepository pipelineRunRepository,
+            ProjectService projectService,
+            PipelineStepService pipelineStepService,
+            SseService sseService,
+            ObjectProvider<PipelineRunService> pipelineRunServiceProvider) {
+        this.pipelineRepository = pipelineRepository;
+        this.pipelineRunRepository = pipelineRunRepository;
+        this.projectService = projectService;
+        this.pipelineStepService = pipelineStepService;
+        this.sseService = sseService;
+        this.pipelineRunServiceProvider = pipelineRunServiceProvider;
+    }
+    
+    private PipelineRunService getPipelineRunService() {
+        return pipelineRunServiceProvider.getObject();
+    }
     
     public PipelineRepository getPipelineRepository() {
         return pipelineRepository;
     }
-    
-    @Autowired
-    private ProjectService projectService;
-    
-    @Autowired
-    private PipelineRunService pipelineRunService;
     
     public List<Pipeline> getTop10PipelinesByProject(Long projectId) {
         return pipelineRepository.findTop10ByProject_IdOrderByCreatedAtDesc(projectId);
@@ -71,9 +87,24 @@ public class PipelineService {
         return pipelineRepository.save(pipeline);
     }
     
+    @Transactional
     public void deletePipeline(Long id) {
-        pipelineRunService.deleteRunsByPipeline(id);
-        pipelineRepository.deleteById(id);
+        Pipeline pipeline = pipelineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pipeline not found"));
+        
+        Long projectId = pipeline.getProject().getId();
+        
+        pipelineRunRepository.deleteStepsByPipelineId(id);
+        pipelineRunRepository.flush();
+        
+        pipelineRunRepository.deleteByPipelineId(id);
+        pipelineRunRepository.flush();
+        
+        pipelineRepository.deleteStepsByPipelineId(id);
+        pipelineRepository.flush();
+        
+        pipelineRepository.deleteByIdNative(id);
+        pipelineRepository.flush();
     }
     
     public List<Pipeline> getPipelinesByProjectAndStatus(Long projectId, String status) {
@@ -83,20 +114,99 @@ public class PipelineService {
     public List<Pipeline> getAllPipelines() {
         return pipelineRepository.findAll();
     }
-    
-    @Autowired
-    private PipelineStepService pipelineStepService;
-    
-    @Autowired
-    private SseService sseService;
+
+    @Transactional
+    public Pipeline duplicatePipeline(Long sourcePipelineId, String newName) {
+        Pipeline source = getPipelineById(sourcePipelineId);
+
+        Project project = source.getProject();
+        Long projectId = project.getId();
+
+        String finalName;
+        if (newName != null && !newName.trim().isEmpty()) {
+            finalName = newName.trim();
+        } else {
+            finalName = generateDuplicateName(projectId, source.getName());
+        }
+
+        Pipeline duplicate = new Pipeline();
+        duplicate.setName(finalName);
+        duplicate.setDescription(source.getDescription());
+        duplicate.setStatus("pending");
+        duplicate.setOutputExtension(source.getOutputExtension());
+        duplicate.setType(source.getType());
+        duplicate.setProject(project);
+
+        List<PipelineStep> sourceSteps = source.getSteps();
+        List<PipelineStep> newSteps = new ArrayList<>();
+        for (PipelineStep sourceStep : sourceSteps) {
+            PipelineStep newStep = new PipelineStep();
+            newStep.setPipeline(duplicate);
+            newStep.setAgent(sourceStep.getAgent());
+            newStep.setScript(sourceStep.getScript());
+            newStep.setStepOrder(sourceStep.getStepOrder());
+            newStep.setStatus("pending");
+            newStep.setInputContent(sourceStep.getInputContent());
+            newStep.setInputType(sourceStep.getInputType());
+            newStep.setOutputContent(sourceStep.getOutputContent());
+            newStep.setOutputType(sourceStep.getOutputType());
+            newStep.setStepOutput(sourceStep.getStepOutput());
+            newStep.setStepOutputType(sourceStep.getStepOutputType());
+            newStep.setCli(sourceStep.getCli());
+            newStep.setParameters(sourceStep.getParameters());
+            newStep.setArguments(sourceStep.getArguments());
+            newStep.setType(sourceStep.getType());
+            newStep.setRuntime(sourceStep.getRuntime());
+            newSteps.add(newStep);
+        }
+        duplicate.setSteps(newSteps);
+
+        return pipelineRepository.save(duplicate);
+    }
+
+    private String generateDuplicateName(Long projectId, String baseName) {
+        String candidate = baseName + "copy";
+        List<Pipeline> existing = pipelineRepository.findByProject_IdAndNameStartingWith(projectId, candidate);
+
+        if (existing.isEmpty()) {
+            if (!pipelineRepository.findByProject_IdAndName(projectId, candidate).isEmpty()) {
+                return candidate + "(1)";
+            }
+            return candidate;
+        }
+
+        Pattern pattern = Pattern.compile("^" + Pattern.quote(candidate) + "(?:\\((\\d+)\\))?$");
+        int maxNumber = 0;
+        boolean exactMatch = false;
+
+        for (Pipeline p : existing) {
+            Matcher m = pattern.matcher(p.getName());
+            if (m.matches()) {
+                if (m.group(1) == null) {
+                    exactMatch = true;
+                } else {
+                    maxNumber = Math.max(maxNumber, Integer.parseInt(m.group(1)));
+                }
+            }
+        }
+
+        if (!exactMatch) {
+            List<Pipeline> exactPipelines = pipelineRepository.findByProject_IdAndName(projectId, candidate);
+            if (exactPipelines.isEmpty()) {
+                return candidate;
+            }
+        }
+
+        return candidate + "(" + (maxNumber + 1) + ")";
+    }
     
     public void runPipeline(Long pipelineId) {
-        PipelineRun run = pipelineRunService.createRun(pipelineId);
+        PipelineRun run = getPipelineRunService().createRun(pipelineId);
         runPipelineDirect(pipelineId, run.getId());
     }
     
     public void runPipelineDirect(Long pipelineId, Long runId) {
-        Long actualPipelineId = pipelineRunService.getPipelineIdByRunId(runId);
+        Long actualPipelineId = getPipelineRunService().getPipelineIdByRunId(runId);
         System.out.println("DEBUG: runPipelineDirect - runId=" + runId + ", received pipelineId=" + pipelineId + ", actual pipelineId=" + actualPipelineId);
         
         final Long finalPipelineId = !pipelineId.equals(actualPipelineId) ? actualPipelineId : pipelineId;
@@ -145,6 +255,12 @@ Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
         
         String outputExtension = pipeline.getOutputExtension() != null ? pipeline.getOutputExtension() : "txt";
         
+        PipelineRun runForDir = getPipelineRunService().getRunById(runId);
+        if (runForDir != null) {
+            runForDir.setRunDir(runDirPath);
+            getPipelineRunService().saveRun(runForDir);
+        }
+        
         final String runDirFinal = runDirPath;
         final Long finalRunId = runId;
         final Long finalPipelineIdUsed = finalPipelineId;
@@ -162,11 +278,11 @@ Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
                 if (!p.getStatus().equals("stopped")) {
                     p.setStatus("completed");
                     pipelineRepository.save(p);
-                    pipelineRunService.completeRun(finalRunId, "completed");
+                    getPipelineRunService().completeRun(finalRunId, "completed");
                     sseService.sendPipelineComplete(finalPipelineIdUsed, "completed");
                     sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "completed");
                 } else {
-                    pipelineRunService.completeRun(finalRunId, "stopped");
+                    getPipelineRunService().completeRun(finalRunId, "stopped");
                     sseService.sendPipelineComplete(finalPipelineIdUsed, "stopped");
                     sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "stopped");
                 }
@@ -175,11 +291,11 @@ Pipeline pipeline = pipelineRepository.findById(finalPipelineId)
                 if (!p.getStatus().equals("stopped")) {
                     p.setStatus("failed");
                     pipelineRepository.save(p);
-                    pipelineRunService.completeRun(finalRunId, "failed");
+                    getPipelineRunService().completeRun(finalRunId, "failed");
                     sseService.sendPipelineComplete(finalPipelineIdUsed, "failed");
                     sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "failed");
                 } else {
-                    pipelineRunService.completeRun(finalRunId, "stopped");
+                    getPipelineRunService().completeRun(finalRunId, "stopped");
                     sseService.sendPipelineComplete(finalPipelineIdUsed, "stopped");
                     sseService.sendPipelineCompleteToRun(finalRunId, finalPipelineIdUsed, "stopped");
                 }

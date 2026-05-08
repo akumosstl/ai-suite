@@ -1,0 +1,461 @@
+# 🧠 PROJECT MEMORY (Java/Angular)
+
+## 🎯 General Context
+- **Project:** Agentic Code Pipeline Execution System
+- **Backend:** Java 21, Spring Boot (maven)
+- **Frontend:** Angular 21.2.8, TypeScript, RxJS
+- **Database:** H2 Database (Console available at `/h2-console`)
+- **Architecture:** REST API (JSON) with SSE for real-time updates
+
+## 🛠 Architecture Decisions & Patterns
+- **Standardization:** DTOs for input/output; Clean Controllers
+- **Service Layer:** All business logic in @Service classes
+- **Angular:** Standalone Components, Signals for reactive state
+- **H2:** Keep data.sql and schema.sql updated
+
+## 📍 Current State (Session: 2026-04-26)
+
+## 📍 Current State (Session: 2026-05-03)
+
+### Dynamic Port Configuration
+
+#### Development Mode
+- Created script `scripts/setup-proxy.js` that reads port from `~/.agentic/agentic.json`
+- Added to package.json: `"prestart": "node scripts/setup-proxy.js"`
+- Runs before `npm start`, updating `proxy.conf.json` automatically
+
+#### Backend - Endpoint `/api/config`
+- Created `ConfigService.java` - provides app configuration including port
+- Created `SimpleConfigController.java` - exposes `/api/config` endpoint
+- Returns: `{ port, version, apiUrl }`
+
+#### Production Mode
+- Angular served from same JAR, calls to `/api/*` work via relative URLs
+- No proxy needed
+
+---
+
+### Port Change: 8080 → 1488
+
+All configurations updated to use port 1488 instead of 8080:
+
+**Backend files modified:**
+- `application.properties` - server.port=1488
+- `application-local.properties` - server.port=1488
+- `AgenticConfigLoader.java` - default port changed to 1488
+
+**Frontend files modified:**
+- `proxy.conf.json` - target changed to localhost:1488
+- `project.component.ts` - baseUrl changed to http://localhost:1488/
+- `runpipelines.component.ts` - baseUrl changed to http://localhost:1488
+
+**Browser auto-open:** Backend opens browser at localhost:1488 (via BackendApplication.java using AgenticConfigLoader)
+
+### File Output & Run Directory Feature Implementation
+
+#### [TASK1] Pipeline Pages - File Output Button
+Added "File output" button to Step Details area in both pages:
+
+**Pages modified:**
+- `/pipelines` - PipelinesComponent
+- `/pipeline-run-history` - PipelineRunHistoryComponent
+
+**Changes:**
+1. Added `File output` button next to existing `Output` button
+2. Button disabled when pipeline status is "running"
+3. Click opens modal with file content OR shows alert if file doesn't exist
+
+**File output path pattern:**
+```
+<project_path>\.agentic\pipelines\<pipeline_name>\<timestamp>\step<stepOrder>-result.<extension>
+```
+
+Example: `.agentic\pipelines\helloworld\20260421-220826\step1-result.json`
+
+#### [TASK2] Pipeline Run Directory Display
+Added display of pipeline run directory path in both pages:
+
+**Changes:**
+- Added `pipeline-directory` section showing: `<mat-icon>folder</mat-icon> <runDir>`
+- Located above Pipeline Flow area
+- Shows path like: `.agentic\pipelines\hellowolrd\20260421-220826\`
+
+#### Backend Changes
+
+**PipelineRun.java:**
+- Added `runDir` field to store run directory path
+- New column: `run_dir` in `pipeline_run` table
+
+**PipelineService.java:**
+- Modified to save `runDir` when creating pipeline run
+- Saves path like: `<project_path>\.agentic\pipelines\<pipeline_name>\<timestamp>`
+
+**PipelineRunService.java:**
+- Added `saveRun()` method to persist run with runDir
+
+**PipelineRunController.java:**
+- New endpoint: `GET /api/pipeline-runs/{runId}/steps/{stepOrder}/file-output`
+- Returns file content OR error if file doesn't exist
+
+---
+
+### Major Changes: Keyboard Shortcuts - Full Implementation
+
+#### Library Removal (2026-04-26)
+- **REMOVED:** `ng-keyboard-shortcuts` plugin from package.json
+- **DELETED:** `keyboard-shortcuts.service.ts` - no longer needed
+- **DELETED:** `shortcuts-help-dialog` folder - helper dialog component
+- **REASON:** Replaced with native Angular `@HostListener` decorator for keyboard shortcuts
+
+#### New Implementation Pattern
+All keyboard shortcuts now use Angular's native `@HostListener` decorator:
+
+```typescript
+import { Component, HostListener } from '@angular/core';
+
+@HostListener('document:keydown.control.b')
+onToggleLeftPanel(): void {
+  this.toggleLeftPanel();
+}
+```
+
+#### Info Menu & Shortcuts Dialog
+- Created `ShortcutsDialogComponent` (`components/shortcuts-dialog/shortcuts-dialog.component.ts`)
+- Menu "Info" now opens shortcuts modal instead of empty dropdown
+- Modal displays all available keyboard shortcuts
+
+### Issues Resolved This Session
+
+1. **Removed ng-keyboard-shortcuts Plugin**
+   - Removed from package.json
+   - Deleted keyboard-shortcuts.service.ts
+   - Removed ShortcutsHelpDialogComponent
+   - Cleaned up all imports from components
+   - Removed KeyboardShortcutsModule from app.ts
+   - Removed ng-keyboard-shortcuts from app.html template
+   - Removed openShortcutsHelp references from menu-bar
+
+2. **Ctrl+B - Toggle Left Panel (Native Angular)**
+   - Implemented using `@HostListener('document:keydown.control.b')`
+   - Works on all main pages: project, agents, scripts, instructions, namespaces, templates
+   - Files modified: Each component has the HostListener method added
+
+3. **Ctrl+Enter - Modal Confirm/Save (Native Angular)**
+   - Added to ALL dialog components for quick save/confirm:
+   - new-project-dialog, open-project-dialog, export-dialog, import-dialog
+   - backup-dialog, confirm-dialog, create-file-dialog, edit-file-dialog
+   - add-instruction-file-dialog, path-info-dialog, prompt-dialog
+   - update-dialog, select-agent-dialog, project-agents-dialog
+   - edit-pipeline-dialog, project-readme-dialog, step-settings-dialog
+   - step-io-dialog, step-cli-dialog, output-dialog
+   - prompt-editor-modal (Edit Agent Prompt modal)
+   - Total: 20 dialog components
+
+4. **Ctrl+Shift+E - Open in Editor (Native Angular)**
+   - Opens the editor modal for the selected item
+   - Pages with this feature:
+     - agents: `openPromptEditor()` - Edit Agent Prompt
+     - scripts: `openContentEditor()` - Edit Script Content
+     - instructions: `openInstructionsEditor()` - Edit Instruction Instructions
+
+### New Shortcuts Implemented (2026-04-26)
+
+#### Navigation Shortcuts (MenuBarComponent)
+| Shortcut | Action | Location |
+|----------|--------|-----------|
+| Ctrl+Shift+A | Go to Agents | MenuBarComponent |
+| Ctrl+Shift+S | Go to Scripts | MenuBarComponent |
+| Ctrl+Shift+T | Go to Templates | MenuBarComponent |
+| Ctrl+Shift+N | Go to Namespaces | MenuBarComponent |
+| Ctrl+Shift+I | Go to Instructions | MenuBarComponent |
+| Ctrl+Shift+L | Go to Pipelines | MenuBarComponent |
+| Ctrl+Shift+P | Go to Project | MenuBarComponent (if not on project/menu page) |
+| Ctrl+Shift+Q | Open Shortcuts Info | MenuBarComponent |
+| Ctrl+Shift+X | Open Tools Menu | MenuBarComponent |
+| Ctrl+B | Toggle Left Panel | MenuBarComponent |
+
+#### Editor Shortcuts (agents, scripts, instructions pages)
+| Shortcut | Action | Page |
+|----------|--------|--------|
+| Ctrl+Shift+E | Open in Editor | agents, scripts, instructions |
+| Ctrl+Shift+K | Copy to Clipboard | agents, scripts, instructions |
+
+#### Project Shortcuts (project page)
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Shift+R | Run Pipeline |
+
+#### Pipelines Page Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Shift+P | Go Back to Project |
+
+### Key Implementation Details
+
+**MenuBarComponent Pattern:**
+```typescript
+private keydownHandler!: (event: KeyboardEvent) => void;
+
+ngOnInit(): void {
+  this.keydownHandler = (event: KeyboardEvent) => {
+    if (!event.ctrlKey || !event.shiftKey) return;
+    const key = event.key.toLowerCase();
+    switch (key) {
+      case 'a':
+        event.preventDefault();
+        this.router.navigate(['/agents']);
+        break;
+      // ... more cases
+    }
+  };
+  document.addEventListener('keydown', this.keydownHandler);
+}
+
+ngOnDestroy(): void {
+  if (this.keydownHandler) {
+    document.removeEventListener('keydown', this.keydownHandler);
+  }
+}
+```
+
+**Page-Specific Pattern:**
+```typescript
+@HostListener('document:keydown.control.shift.e')
+onOpenInEditor(): void {
+  if (this.selectedItem) {
+    this.openEditor();
+  }
+}
+```
+
+## 📝 Style & Coding Rules
+
+- **Java:** Follow Google Java Style; use Lombok
+- **Angular:** TS Interfaces; use AsyncPipe; Standalone Components
+- **Endpoints:** Plural and kebab-case
+- **Keyboard Shortcuts:** Use `@HostListener` decorator (no external libraries)
+
+---
+
+## 📋 Keyboard Shortcuts Summary (Updated 2026-04-26)
+
+### Navigation (MenuBarComponent)
+
+| Shortcut | Action | Component |
+|----------|--------|-----------|
+| Ctrl+Shift+A | Go to Agents | MenuBarComponent |
+| Ctrl+Shift+S | Go to Scripts | MenuBarComponent |
+| Ctrl+Shift+T | Go to Templates | MenuBarComponent |
+| Ctrl+Shift+N | Go to Namespaces | MenuBarComponent |
+| Ctrl+Shift+I | Go to Instructions | MenuBarComponent |
+| Ctrl+Shift+L | Go to Pipelines | MenuBarComponent |
+| Ctrl+Shift+P | Go to Project | MenuBarComponent |
+| Ctrl+Shift+Q | Open Shortcuts Info | MenuBarComponent |
+| Ctrl+Shift+X | Open Tools Menu | MenuBarComponent |
+| Ctrl+B | Toggle Left Panel | MenuBarComponent |
+
+### Editor (agents, scripts, instructions)
+
+| Shortcut | Action | Page |
+|----------|--------|--------|
+| Ctrl+Shift+E | Open in Editor | agents, scripts, instructions |
+| Ctrl+Shift+K | Copy to Clipboard | agents, scripts, instructions |
+
+### Project
+
+| Shortcut | Action | Page |
+|----------|--------|--------|
+| Ctrl+Shift+R | Run Pipeline | project |
+
+### Pipelines Page
+
+| Shortcut | Action | Page |
+|----------|--------|--------|
+| Ctrl+Shift+P | Go Back to Project | pipelines |
+
+### Dialogs (All)
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Enter | Confirm/Save |
+
+### Notes
+- All shortcuts use native Angular `@HostListener` decorator
+- Keyboard shortcuts modal accessible via Ctrl+Shift+Q or clicking Info button
+- Shortcuts dialog shows all available shortcuts organized by category
+
+---
+
+## 🚀 Next Steps
+
+1. [x] Implement sync button in instructions page
+2. [x] Create sync dialog modal for file selection
+3. [x] Add backend endpoint for filesystem sync
+4. [ ] Test sync functionality end-to-end
+
+---
+
+### Duplicate Pipeline Feature (Session: 2026-05-03)
+
+Added "Duplicate Pipeline" button on the project page, next to the delete button in the pipeline list.
+
+**Backend changes:**
+- `PipelineRepository.java` - Added `findByProject_IdAndName()` and `findByProject_IdAndNameStartingWith()` methods
+- `PipelineService.java` - Added `duplicatePipeline(sourcePipelineId, newName)` method with smart name generation:
+  - Suggests `Acopy` for pipeline `A`
+  - If `Acopy` exists, suggests `Acopy(1)`, then `Acopy(2)`, etc.
+  - Copies all steps with their configuration (agent, script, I/O, CLI, parameters, etc.)
+  - New pipeline status is always "pending"
+- `PipelineController.java` - New endpoint: `POST /api/projects/{projectId}/pipelines/{id}/duplicate` (body: `{ "name": "..." }`)
+
+**Frontend changes:**
+- `duplicate-pipeline-dialog/` - New dialog component for naming the duplicated pipeline
+- `api.service.ts` - Added `duplicatePipeline(projectId, pipelineId, name)` method
+- `project.component.ts` - Added `duplicatePipeline()` method and `generateDuplicateName()` helper
+- `project.component.html` - Added duplicate button (content_copy icon) next to delete button
+- `project.component.css` - Added `.icon-btn.duplicate-btn` styles
+
+---
+
+## ⚠️ Native Build Error - Spring AOT Process
+
+### Problema
+Ao rodar `clean-binaries.bat` (mvn -Pnative clean package), o build falha com:
+
+```
+org.springframework.boot.SpringApplication$AbandonedRunException
+java.lang.IllegalStateException: No application context available after calling main method
+```
+
+### Causa Raiz
+- O Maven `process-aot` goal executa a aplicação para gerar metadados AOT
+- O Spring detecta isso como "execução abandonada" (quando Maven termina forcibly)
+- O erro `AbandonedRunException` é lançado
+
+### Solução Implementada (2026-04-26)
+
+**BackendApplication.java** - No catch:
+1. Se for `AbandonedRunException` (AOT): return normalmente
+2. Se for erro real: mostra erro no terminal + System.exit(1)
+
+```java
+} catch (Exception e) {
+    if (e instanceof org.springframework.boot.SpringApplication.AbandonedRunException) {
+        return;  // AOT - sai com 0
+    }
+    // Erro real: mostra erro e sai com 1
+    System.err.println("=== ERRO AO INICIAR APLICACAO ===");
+    System.err.println("Tipo: " + e.getClass().getName());
+    System.err.println("Mensagem: " + e.getMessage());
+    e.printStackTrace(System.err);
+    System.err.println("==============================");
+    System.err.println("A aplicacao nao foi iniciada. Verifique o erro acima.");
+    System.exit(1);
+}
+```
+
+**Importante:** O System.exit(1) é necessário para o Maven process-aot detectar falha (AOT espera exit 0 only em sucesso).
+
+### Error Handler Template
+- Template: `src/main/resources/error-template.html`
+- Output: `<user_home>/.agentic/logs/erro.html`
+- Abre com: `Desktop.getDesktop().browse(file.toUri())`
+
+---
+
+### Recipe Engine (Session: 2026-05-08)
+
+A declarative YAML recipe system that creates and manages all system resources (projects, agents, scripts, pipelines, targets, templates) and executes pipeline operations without GUI interaction.
+
+**Package:** `io.github.akumosstl.agentic.backend.recipe`
+
+**Backend files created:**
+- `recipe/RecipeYaml.java` - Top-level YAML model
+- `recipe/RecipeHeader.java` - Recipe metadata (name, version, description)
+- `recipe/RecipeTarget.java` - Target definition
+- `recipe/RecipeProject.java` - Project definition
+- `recipe/RecipeAgent.java` - Agent definition
+- `recipe/RecipeScript.java` - Script definition
+- `recipe/RecipeTemplate.java` - Template definition
+- `recipe/RecipePipeline.java` - Pipeline definition
+- `recipe/RecipeStep.java` - Step definition
+- `recipe/RecipeStepIO.java` - Step I/O definition
+- `recipe/RecipeTask.java` - Task definition (create/run/stop/call)
+- `recipe/RecipeRetry.java` - Retry config
+- `recipe/RecipeLoop.java` - Loop config (always/until_success/until_failure)
+- `recipe/RecipeParser.java` - YAML parsing + validation (circular dep detection, ref existence)
+- `recipe/RecipeParameterResolver.java` - Resolves {{param:X}}, {{env:VAR}}, {{file:path}}, {{task:ID:result}}
+- `recipe/RecipeExecutor.java` - Core execution engine (topological sort, background thread, retry, loop)
+- `model/Recipe.java` - JPA entity for recipe runs
+- `model/RecipeTaskResult.java` - JPA entity for task results
+- `repository/RecipeRepository.java` - findTop20ByOrderByCreatedAtDesc, findByStatus
+- `repository/RecipeTaskResultRepository.java` - findByRecipeIdOrderByTaskId, findByRecipeIdAndStatus
+- `controller/RecipeController.java` - REST API: /api/recipes (execute, validate, list, get, stop, delete)
+- `mcp/tools/RecipeTools.java` - MCP tools: execute_recipe, execute_recipe_from_path, validate_recipe, list_recipes, get_recipe, stop_recipe
+
+**Backend files modified:**
+- `pom.xml` - Added jackson-dataformat-yaml dependency
+- `service/PipelineStepService.java` - Added saveStep() method; prompt override (inputContent takes priority over agent.getPrompt())
+- `mcp/McpConfig.java` - Registered RecipeTools
+
+**Recipe template:**
+- `backend/recipes/recipe-template.yml` - Full example recipe with all resource types
+
+**REST API Endpoints:**
+- `POST /api/recipes/execute` - Execute recipe from YAML content
+- `POST /api/recipes/execute-from-path` - Execute recipe from file path
+- `POST /api/recipes/validate` - Validate recipe YAML without execution
+- `GET /api/recipes` - List 20 most recent recipes
+- `GET /api/recipes/{id}` - Get recipe details
+- `GET /api/recipes/{id}/tasks` - Get recipe task results
+- `DELETE /api/recipes/{id}` - Delete recipe
+- `POST /api/recipes/{id}/stop` - Stop running recipe
+
+### Recipe File Visual Editor (Session: 2026-05-08)
+
+A visual editor for creating and managing recipe YAML files, accessible from the Stack > Recipe menu.
+
+**Backend files created:**
+- `model/RecipeFile.java` - JPA entity for saved recipe YAML files (name, version, description, yamlContent, timestamps)
+- `repository/RecipeFileRepository.java` - Pagination + search by name
+- `controller/RecipeFileController.java` - REST API: `/api/recipe-files` (CRUD + search with pagination)
+
+**REST API Endpoints (Recipe Files):**
+- `GET /api/recipe-files?page=&size=` - List recipe files (paginated)
+- `GET /api/recipe-files/search?term=&page=&size=` - Search recipe files by name
+- `GET /api/recipe-files/{id}` - Get recipe file by ID
+- `POST /api/recipe-files` - Create recipe file
+- `PUT /api/recipe-files/{id}` - Update recipe file
+- `DELETE /api/recipe-files/{id}` - Delete recipe file
+
+**Frontend files created:**
+- `screens/recipe/recipe.component.ts` - Component with visual/raw toggle editor
+- `screens/recipe/recipe.component.html` - Template with left panel (list+search+pagination) and right panel (visual form + raw YAML editor)
+- `screens/recipe/recipe.component.css` - Dark theme styles matching app pattern
+
+**Frontend files modified:**
+- `services/api.service.ts` - Added RecipeFile interface + CRUD API methods
+- `app.routes.ts` - Added `/recipe` route
+- `components/menu-bar/menu-bar.component.ts` - Added Recipe menu item under Stack menu, Ctrl+Shift+Y shortcut
+
+**Features:**
+- Left panel: paginated list of saved recipes with search by name
+- Visual editor: form fields for recipe metadata (name, version, description) and dynamic parameter key-value pairs
+- Raw editor: monospace YAML textarea with syntax-appropriate formatting
+- Toggle between Visual and Raw modes (converts between form and YAML)
+- Copy button in raw mode to copy YAML to clipboard
+- Save button persists recipe to database
+- Ctrl+B toggles left panel, Ctrl+Shift+Y navigates to recipe page
+
+### Recipe Form Bug Fix (Session: 2026-05-08)
+
+**Problem:** Clicking a recipe in the list didn't populate form fields (name, version, description) because `yamlContentToForm()` parsed YAML `recipe:` section but the entity's own `name`/`version`/`description` fields were ignored.
+
+**Fix (Frontend - recipe.component.ts):**
+- `selectRecipeFile()`: After YAML parsing, override form fields with entity's `name`/`version`/`description` from the DB
+- `saveRecipeFile()`: Always use form field values (`recipeName`, `recipeVersion`, `recipeDescription`) as source of truth for the RecipeFile entity data; sync raw YAML before saving
+- `switchToVisual()`: Apply entity metadata after YAML parsing
+- After create/update responses, also override form fields from the returned entity
+
+**Fix (Backend - RecipeFileController.java):**
+- `updateRecipeFile()`: Changed from replacing the entire entity (which could null out `createdAt`) to selectively updating only `name`, `version`, `description`, `yamlContent` on the existing entity

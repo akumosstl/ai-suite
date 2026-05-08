@@ -1,20 +1,18 @@
 package io.github.akumosstl.agentic.backend.controller;
 
 import io.github.akumosstl.agentic.backend.model.Project;
-import io.github.akumosstl.agentic.backend.model.Skill;
-import io.github.akumosstl.agentic.backend.model.Command;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Agent;
-import io.github.akumosstl.agentic.backend.model.Instruction;
-import io.github.akumosstl.agentic.backend.model.Plugin;
-import io.github.akumosstl.agentic.backend.model.Tool;
 import io.github.akumosstl.agentic.backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +20,9 @@ import java.util.Map;
 /**
  * Controlador REST para gerenciamento de Projetos.
  * 
- * Fornece endpoints para gerenciar projetos e suas associações
- * (agentes, skills, commands, scripts, instructions, plugins, tools).
- * Suporta manipulação de arquivos de projeto.
+ * Fornece endpoints para gerenciar projetos e suas associa��es
+ * (agentes, scripts).
+ * Suporta manipula��o de arquivos de projeto.
  * 
  * @author Sistema Agentic
  * @version 1.0
@@ -34,40 +32,10 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class ProjectController {
     
+    private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
+    
     @Autowired
     private ProjectService projectService;
-    
-    // Skills endpoints
-    @GetMapping("/{id}/skills")
-    public List<Skill> getProjectSkills(@PathVariable Long id) {
-        return projectService.getProjectSkills(id);
-    }
-    
-    @PostMapping("/{id}/skills")
-    public Project addSkillsToProject(@PathVariable Long id, @RequestBody List<Long> skillIds) {
-        return projectService.addSkillsToProject(id, skillIds);
-    }
-    
-    @DeleteMapping("/{projectId}/skills/{skillId}")
-    public Project removeSkillFromProject(@PathVariable Long projectId, @PathVariable Long skillId) {
-        return projectService.removeSkillFromProject(projectId, skillId);
-    }
-    
-    // Commands endpoints
-    @GetMapping("/{id}/commands")
-    public List<Command> getProjectCommands(@PathVariable Long id) {
-        return projectService.getProjectCommands(id);
-    }
-    
-    @PostMapping("/{id}/commands")
-    public Project addCommandsToProject(@PathVariable Long id, @RequestBody List<Long> commandIds) {
-        return projectService.addCommandsToProject(id, commandIds);
-    }
-    
-    @DeleteMapping("/{projectId}/commands/{commandId}")
-    public Project removeCommandFromProject(@PathVariable Long projectId, @PathVariable Long commandId) {
-        return projectService.removeCommandFromProject(projectId, commandId);
-    }
     
     // Scripts endpoints
     @GetMapping("/{id}/scripts")
@@ -75,12 +43,23 @@ public class ProjectController {
         return projectService.getProjectScripts(id);
     }
     
-    @PostMapping("/{id}/scripts")
-    public Project addScriptsToProject(@PathVariable Long id, @RequestBody List<Long> scriptIds) {
-        return projectService.addScriptsToProject(id, scriptIds);
+@PostMapping("/{id}/scripts")
+    public Project addScriptsToProject(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        List<Long> scriptIds = (List<Long>) request.get("scriptIds");
+        Boolean force = request.get("force") != null ? (Boolean) request.get("force") : false;
+        return projectService.addScriptsToProject(id, scriptIds, force);
     }
     
-    @DeleteMapping("/{projectId}/scripts/{scriptId}")
+    @PostMapping("/{id}/agents")
+    public Project addAgentsToProject(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        List<Long> agentIds = ((List<Number>) request.get("agentIds")).stream()
+            .map(Number::longValue)
+            .collect(java.util.stream.Collectors.toList());
+        Boolean force = request.get("force") != null ? (Boolean) request.get("force") : false;
+        return projectService.addAgentsToProject(id, agentIds, force);
+    }
+    
+  @DeleteMapping("/{projectId}/scripts/{scriptId}")
     public Project removeScriptFromProject(@PathVariable Long projectId, @PathVariable Long scriptId) {
         return projectService.removeScriptFromProject(projectId, scriptId);
     }
@@ -91,65 +70,17 @@ public class ProjectController {
         return projectService.getProjectAgents(id);
     }
     
-    @PostMapping("/{id}/agents")
-    public Project addAgentsToProject(@PathVariable Long id, @RequestBody List<Long> agentIds) {
-        return projectService.addAgentsToProject(id, agentIds);
-    }
-    
     @DeleteMapping("/{projectId}/agents/{agentId}")
     public Project removeAgentFromProject(@PathVariable Long projectId, @PathVariable Long agentId) {
         return projectService.removeAgentFromProject(projectId, agentId);
     }
     
-    // Instructions endpoints
-    @GetMapping("/{id}/instructions")
-    public List<Instruction> getProjectInstructions(@PathVariable Long id) {
-        return projectService.getProjectInstructions(id);
-    }
-    
-    @PostMapping("/{id}/instructions")
-    public Project addInstructionsToProject(@PathVariable Long id, @RequestBody List<Long> instructionIds) {
-        return projectService.addInstructionsToProject(id, instructionIds);
-    }
-    
-    @DeleteMapping("/{projectId}/instructions/{instructionId}")
-    public Project removeInstructionFromProject(@PathVariable Long projectId, @PathVariable Long instructionId) {
-        return projectService.removeInstructionFromProject(projectId, instructionId);
-    }
-    
-    // Plugins endpoints
-    @GetMapping("/{id}/plugins")
-    public List<Plugin> getProjectPlugins(@PathVariable Long id) {
-        return projectService.getProjectPlugins(id);
-    }
-    
-    @PostMapping("/{id}/plugins")
-    public Project addPluginsToProject(@PathVariable Long id, @RequestBody List<Long> pluginIds) {
-        return projectService.addPluginsToProject(id, pluginIds);
-    }
-    
-    @DeleteMapping("/{projectId}/plugins/{pluginId}")
-    public Project removePluginFromProject(@PathVariable Long projectId, @PathVariable Long pluginId) {
-        return projectService.removePluginFromProject(projectId, pluginId);
-    }
-    
-    // Tools endpoints
-    @GetMapping("/{id}/tools")
-    public List<Tool> getProjectTools(@PathVariable Long id) {
-        return projectService.getProjectTools(id);
-    }
-    
-    @PostMapping("/{id}/tools")
-    public Project addToolsToProject(@PathVariable Long id, @RequestBody List<Long> toolIds) {
-        return projectService.addToolsToProject(id, toolIds);
-    }
-    
-    @DeleteMapping("/{projectId}/tools/{toolId}")
-    public Project removeToolFromProject(@PathVariable Long projectId, @PathVariable Long toolId) {
-        return projectService.removeToolFromProject(projectId, toolId);
-    }
-    
-    @GetMapping
+  @GetMapping("/{id}/files")
+  public List<Object> getProjectFiles(@PathVariable Long id) {
+    return new ArrayList<>();
+  }
+
+  @GetMapping
     public ResponseEntity<Map<String, Object>> getRecentProjects(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -221,97 +152,12 @@ public class ProjectController {
         response.put("totalPages", (int) Math.ceil((double) totalElements / size));
         response.put("searchTerm", term);
         
-        return ResponseEntity.ok(response);
-    }
-    
-    @PostMapping("/{id}/files")
-    public ResponseEntity<Map<String, String>> createProjectFile(@PathVariable Long id, @RequestBody Map<String, String> fileData) {
-        String fileName = fileData.get("fileName");
-        String content = fileData.get("content");
-        
-        Project project = projectService.getProjectById(id);
-        String projectPath = project.getPath();
-        
-        if (projectPath == null || projectPath.isEmpty()) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Project path is not set");
-            return ResponseEntity.badRequest().body(error);
-        }
-        
-        try {
-            projectService.createProjectFile(id, fileName, content);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File created successfully");
-            response.put("fileName", fileName);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-    
-    @GetMapping("/{id}/files")
-    public ResponseEntity<?> getProjectFiles(@PathVariable Long id) {
-        try {
-            List<String> files = projectService.getProjectFiles(id);
-            return ResponseEntity.ok(files);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-    
-    @GetMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> getProjectFileContent(@PathVariable Long id, @PathVariable String fileName) {
-        try {
-            String content = projectService.getProjectFileContent(id, fileName);
-            Map<String, String> response = new HashMap<>();
-            response.put("fileName", fileName);
-            response.put("content", content);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-    
-    @PutMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> updateProjectFile(@PathVariable Long id, @PathVariable String fileName, @RequestBody Map<String, String> fileData) {
-        try {
-            String content = fileData.get("content");
-            projectService.updateProjectFile(id, fileName, content);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File updated successfully");
-            response.put("fileName", fileName);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-    
-    @DeleteMapping("/{id}/files/{fileName}")
-    public ResponseEntity<?> deleteProjectFile(@PathVariable Long id, @PathVariable String fileName) {
-        try {
-            projectService.deleteProjectFile(id, fileName);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "File deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-    
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("message", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
-    }
+    return ResponseEntity.ok(response);
+  }
+
+  public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+    Map<String, String> error = new HashMap<>();
+    error.put("message", ex.getMessage());
+    return ResponseEntity.badRequest().body(error);
+  }
 }

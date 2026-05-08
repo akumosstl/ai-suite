@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgClass } from '@angular/common';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
@@ -16,21 +16,8 @@ import { PipelineResultDialogComponent } from '../../components/pipeline-result-
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ApiService, Project, Pipeline, PipelineStep, Agent, Target } from '../../services/api.service';
+import { ApiService, Project, Pipeline, PipelineStep, Agent, Target, ProjectFile } from '../../services/api.service';
 import { SelectAgentDialogComponent, SelectedStep } from '../../components/select-agent-dialog/select-agent-dialog.component';
-import { SelectSkillDialogComponent } from '../../components/select-skill-dialog/select-skill-dialog.component';
-import { SelectCommandDialogComponent } from '../../components/select-command-dialog/select-command-dialog.component';
-import { SelectScriptDialogComponent } from '../../components/select-script-dialog/select-script-dialog.component';
-import { SelectInstructionDialogComponent } from '../../components/select-instruction-dialog/select-instruction-dialog.component';
-import { SelectPluginDialogComponent } from '../../components/select-plugin-dialog/select-plugin-dialog.component';
-import { SelectToolDialogComponent } from '../../components/select-tool-dialog/select-tool-dialog.component';
-import { ProjectAgentsDialogComponent } from '../../components/project-agents-dialog/project-agents-dialog.component';
-import { ProjectSkillsDialogComponent } from '../../components/project-skills-dialog/project-skills-dialog.component';
-import { ProjectCommandsDialogComponent } from '../../components/project-commands-dialog/project-commands-dialog.component';
-import { ProjectScriptsDialogComponent } from '../../components/project-scripts-dialog/project-scripts-dialog.component';
-import { ProjectInstructionsDialogComponent } from '../../components/project-instructions-dialog/project-instructions-dialog.component';
-import { ProjectPluginsDialogComponent } from '../../components/project-plugins-dialog/project-plugins-dialog.component';
-import { ProjectToolsDialogComponent } from '../../components/project-tools-dialog/project-tools-dialog.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { ProjectContextService } from '../../services/project-context.service';
 import { StepIODialogComponent } from '../../components/step-io-dialog/step-io-dialog.component';
@@ -39,6 +26,7 @@ import { StepSettingsDialogComponent } from '../../components/step-settings-dial
 import { CreateFileDialogComponent } from '../../components/create-file-dialog/create-file-dialog.component';
 import { EditPipelineDialogComponent } from '../../components/edit-pipeline-dialog/edit-pipeline-dialog.component';
 import { ProjectReadmeDialogComponent } from '../../components/project-readme-dialog/project-readme-dialog.component';
+import { DuplicatePipelineDialogComponent } from '../../components/duplicate-pipeline-dialog/duplicate-pipeline-dialog.component';
 
 /**
  * Componente principal de gerenciamento de projetos e pipelines.
@@ -51,7 +39,7 @@ import { ProjectReadmeDialogComponent } from '../../components/project-readme-di
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, SelectSkillDialogComponent, SelectCommandDialogComponent, SelectScriptDialogComponent, SelectInstructionDialogComponent, SelectPluginDialogComponent, SelectToolDialogComponent, ProjectSkillsDialogComponent, ProjectCommandsDialogComponent, ProjectScriptsDialogComponent, ProjectAgentsDialogComponent, ProjectInstructionsDialogComponent, ProjectPluginsDialogComponent, ProjectToolsDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent],
+  imports: [CommonModule, NgClass, MenuBarComponent, MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, FormsModule, MatDialogModule, DragDropModule, PipelineResultDialogComponent, SelectAgentDialogComponent, PanelToggleComponent, StepIODialogComponent, StepCliDialogComponent, StepSettingsDialogComponent, PromptDialogComponent, CreateFileDialogComponent, EditPipelineDialogComponent, ProjectReadmeDialogComponent, DuplicatePipelineDialogComponent],
   templateUrl: './project.component.html',
   styleUrl: './project.component.css'
 })
@@ -77,7 +65,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   message: string = '';
   messageType: 'success' | 'error' = 'success';
   leftPanelCollapsed = false;
-  baseUrl = 'http://localhost:8080/';
+  baseUrl = 'http://localhost:1488/';
   newPipeline: Pipeline = {
     name: '',
     description: '',
@@ -98,8 +86,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
   isReorderingSteps = false;
   isSavingProject = false;
   endpointsExpanded = false;
+  projectFiles: ProjectFile[] = [];
 
   private runningCheckInterval: any;
+  private keydownHandler!: (event: KeyboardEvent) => void;
 
   constructor(
     private route: ActivatedRoute,
@@ -107,7 +97,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
-    private projectContext: ProjectContextService
+    private projectContext: ProjectContextService,
+    private ngZone: NgZone
   ) { }
 
   /**
@@ -162,6 +153,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         localStorage.setItem('lastProjectId', stateProject.id.toString())
         this.projectContext.setProjectId(stateProject.id)
         this.projectContext.setFromProject(true)
+        this.loadProjectFiles(stateProject.id)
       }
       this.restoreSelectedPipeline()
       this.cdr.detectChanges()
@@ -181,14 +173,33 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.pipelines = [];
       }
     });
+
+    this.keydownHandler = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'r') {
+          event.preventDefault();
+          event.stopPropagation();
+          console.log('Shortcut Ctrl+Shift+R detected');
+          this.runPipeline();
+        }
+      }
+      if (!event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === 'x' && this.isRunningPipeline) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('Shortcut Ctrl+X detected');
+        this.stopPipeline();
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler);
   }
 
-  /**
-   * Limpa o intervalo de verificação quando o componente é destruído.
-   */
   ngOnDestroy() {
     if (this.runningCheckInterval) {
       clearInterval(this.runningCheckInterval);
+    }
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
     }
   }
 
@@ -204,6 +215,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         console.log('Project loaded:', project);
         this.project = project;
         this.loadPipelines(id);
+        this.loadProjectFiles(id);
         this.projectContext.setProjectId(id);
         this.projectContext.setFromProject(true);
         this.loading = false;
@@ -212,6 +224,20 @@ export class ProjectComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading project:', error);
         this.loading = false;
+      }
+    });
+  }
+
+  loadProjectFiles(projectId: number) {
+    console.log('loadProjectFiles called for project:', projectId);
+    this.apiService.getProjectFiles(projectId).subscribe({
+      next: (files) => {
+        this.projectFiles = files;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading project files:', error);
+        this.projectFiles = [];
       }
     });
   }
@@ -317,6 +343,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     });
   }
 
+
   /**
    * Exibe uma mensagem temporária na interface.
    * @param msg - Mensagem a ser exibida
@@ -403,6 +430,39 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.leftPanelCollapsed = !this.leftPanelCollapsed;
   }
 
+  @HostListener('document:keydown.control.b')
+  onToggleLeftPanel(): void {
+    this.toggleLeftPanel();
+  }
+
+  @HostListener('document:keydown.control.alt.r')
+  onRunPipelineBackground(): void {
+    this.runPipelineBackground();
+  }
+
+  runPipelineBackground() {
+    if (!this.selectedPipeline?.id || this.pipelineSteps.length === 0 || !this.project?.id) {
+      return;
+    }
+
+    this.isRunningPipeline = true;
+    this.runningPipelineId = this.selectedPipeline.id;
+    const pipelineId = this.selectedPipeline.id;
+    const projectId = this.project.id;
+
+    this.apiService.runPipeline(projectId, pipelineId).subscribe({
+      next: () => {
+        this.showMessage('Pipeline started in background', 'success');
+      },
+      error: (err) => {
+        console.error('Error running pipeline:', err);
+        this.isRunningPipeline = false;
+        this.runningPipelineId = null;
+        this.showMessage('Error running pipeline: ' + err.message, 'error');
+      }
+    });
+  }
+
   /**
    * Exibe o formulário para criação de uma nova pipeline.
    */
@@ -444,7 +504,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
         this.dialog.open(PipelineResultDialogComponent, {
           data: {
             success: true,
-            message: 'Pipeline criada com sucesso!'
+            message: 'Pipeline created successfully!'
           }
         }).afterClosed().subscribe(() => {
           if (this.project) {
@@ -530,17 +590,20 @@ export class ProjectComponent implements OnInit, OnDestroy {
       data: {
         id: this.selectedPipeline.id,
         name: this.selectedPipeline.name,
-        description: this.selectedPipeline.description || ''
+        description: this.selectedPipeline.description || '',
+        outputExtension: this.selectedPipeline.outputExtension
       }
     });
 
-    dialogRef.afterClosed().subscribe((result: { name: string; description: string } | undefined) => {
+    dialogRef.afterClosed().subscribe((result: { name: string; description: string; outputExtension?: string } | undefined) => {
       if (result && this.selectedPipeline && this.project?.id && this.selectedPipeline.id) {
         const pipelineId = this.selectedPipeline.id;
         const updatedPipeline: Pipeline = {
           ...this.selectedPipeline,
           name: result.name,
           description: result.description
+          ,
+          outputExtension: result.outputExtension
         };
 
         this.apiService.updatePipeline(this.project.id, pipelineId, updatedPipeline).subscribe({
@@ -634,286 +697,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
           });
         }
       }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar as skills do projeto.
-   */
-  openViewSkillsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open skills dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectSkillsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar uma skill ao projeto.
-   */
-  openAddSkillDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open add skill dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectSkillDialogComponent, {
-      width: '600px',
-      data: { projectId: this.project.id }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedSkills) => {
-      if (selectedSkills && selectedSkills.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedSkills.length} skill(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar os comandos do projeto.
-   */
-  openViewCommandsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open commands dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectCommandsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar um comando ao projeto.
-   */
-  openAddCommandDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open add command dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectCommandDialogComponent, {
-      width: '600px',
-      data: { projectId: this.project.id }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedCommands) => {
-      if (selectedCommands && selectedCommands.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedCommands.length} command(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar os scripts do projeto.
-   */
-  openViewScriptsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open scripts dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectScriptsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar um script ao projeto.
-   */
-  openAddScriptDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open add script dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectScriptDialogComponent, {
-      width: '600px',
-      data: { projectId: this.project.id }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedScripts) => {
-      if (selectedScripts && selectedScripts.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedScripts.length} script(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar os agentes do projeto.
-   */
-  openViewAgentsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open agents dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectAgentsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar um agente ao projeto.
-   */
-  openAddAgentDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add agent dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectAgentDialogComponent, {
-      width: '600px',
-      data: { projectId, mode: 'project' }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedAgents: Agent[]) => {
-      if (selectedAgents && selectedAgents.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedAgents.length} agent(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar as instruções do projeto.
-   */
-  openViewInstructionsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open instructions dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectInstructionsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  /**
-   * Abre o diálogo para adicionar uma instrução ao projeto.
-   */
-  openAddInstructionDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add instruction dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectInstructionDialogComponent, {
-      width: '600px',
-      data: { projectId }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedInstructions) => {
-      if (selectedInstructions && selectedInstructions.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedInstructions.length} instruction(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Abre o diálogo para visualizar os plugins do projeto.
-   */
-  openViewPluginsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open plugins dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectPluginsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  openAddPluginDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add plugin dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectPluginDialogComponent, {
-      width: '600px',
-      data: { projectId }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedPlugins) => {
-      if (selectedPlugins && selectedPlugins.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedPlugins.length} plugin(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  openViewToolsDialog() {
-    if (!this.project?.id) {
-      console.warn('Cannot open tools dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(ProjectToolsDialogComponent, {
-      width: '900px',
-      data: { projectId: this.project.id }
-    });
-  }
-
-  openAddToolDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open add tool dialog: project not loaded');
-      return;
-    }
-    const dialogRef = this.dialog.open(SelectToolDialogComponent, {
-      width: '600px',
-      data: { projectId }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedTools) => {
-      if (selectedTools && selectedTools.length > 0) {
-        this.dialog.open(PipelineResultDialogComponent, {
-          data: {
-            success: true,
-            message: `${selectedTools.length} tool(s) added to project!`
-          }
-        });
-      }
-    });
-  }
-
-  openCreateFileDialog() {
-    const projectId = this.project?.id;
-    if (!projectId) {
-      console.warn('Cannot open create file dialog: project not loaded');
-      return;
-    }
-    this.dialog.open(CreateFileDialogComponent, {
-      width: '600px',
-      data: { projectId }
     });
   }
 
@@ -1097,24 +880,27 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.dialog.open(PipelineResultDialogComponent, {
       data: {
         success: false,
-        message: `Deseja realmente excluir a pipeline "${pipelineName}"?`,
+        message: `Do you really want to delete the pipeline "${pipelineName}"?`,
         showConfirm: true,
-        confirmText: 'Excluir',
-        cancelText: 'Cancelar'
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
       }
     }).afterClosed().subscribe((confirmed) => {
       if (confirmed) {
         this.apiService.deletePipeline(projectId, pipeline.id!).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Delete response:', response);
+            this.pipelines = this.pipelines.filter(p => p.id !== pipeline.id);
+            if (this.selectedPipeline?.id === pipeline.id) {
+              this.selectedPipeline = null;
+            }
+            this.cdr.detectChanges();
             this.dialog.open(PipelineResultDialogComponent, {
               data: {
                 success: true,
-                message: `Pipeline "${pipelineName}" excluída com sucesso!`
+                message: `Pipeline "${pipelineName}" deleted successfully!`
               }
             }).afterClosed().subscribe(() => {
-              if (this.selectedPipeline?.id === pipeline.id) {
-                this.selectedPipeline = null;
-              }
               if (this.project) {
                 this.loadPipelines(this.project.id!);
               }
@@ -1132,6 +918,64 @@ export class ProjectComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  duplicatePipeline(pipeline: Pipeline, event: Event) {
+    event.stopPropagation();
+
+    if (!pipeline.id || !this.project?.id) {
+      return;
+    }
+
+    const suggestedName = this.generateDuplicateName(pipeline.name);
+    const projectId = this.project.id;
+
+    this.dialog.open(DuplicatePipelineDialogComponent, {
+      width: '500px',
+      data: { name: suggestedName }
+    }).afterClosed().subscribe((newName: string | undefined) => {
+      if (newName && this.project?.id) {
+        this.apiService.duplicatePipeline(this.project.id, pipeline.id!, newName).subscribe({
+          next: (duplicated) => {
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: true,
+                message: `Pipeline "${newName}" created successfully!`
+              }
+            }).afterClosed().subscribe(() => {
+              if (this.project) {
+                this.loadPipelines(this.project.id!);
+              }
+              this.pipelinesExpanded = true;
+            });
+          },
+          error: (error) => {
+            console.error('Error duplicating pipeline:', error);
+            this.dialog.open(PipelineResultDialogComponent, {
+              data: {
+                success: false,
+                message: 'Failed to duplicate pipeline. Please try again.'
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  generateDuplicateName(baseName: string): string {
+    const candidate = baseName + 'copy';
+    const existingNames = this.pipelines.map(p => p.name.toLowerCase());
+
+    if (!existingNames.includes(candidate.toLowerCase())) {
+      return candidate;
+    }
+
+    let counter = 1;
+    while (existingNames.includes((candidate + '(' + counter + ')').toLowerCase())) {
+      counter++;
+    }
+    return candidate + '(' + counter + ')';
   }
 
   openInput(step: PipelineStep): void {

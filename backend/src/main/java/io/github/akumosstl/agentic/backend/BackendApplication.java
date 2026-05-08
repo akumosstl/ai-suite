@@ -1,37 +1,35 @@
 package io.github.akumosstl.agentic.backend;
 
-import java.awt.Desktop;
-import java.io.File;
-import java.net.URI;
+import io.github.akumosstl.agentic.backend.config.AgenticConfigLoader;
+import io.github.akumosstl.agentic.backend.config.StartupErrorListener;
+import io.github.akumosstl.agentic.backend.controller.ExitController;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.EventListener;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.boot.SpringBootConfiguration;
-import io.github.akumosstl.agentic.backend.controller.ExitController;
-import io.github.akumosstl.agentic.backend.config.AgenticConfigLoader;
 
 /**
  * Classe principal da aplicação Spring Boot.
  * 
  * Inicializa o servidor backend, cria diretórios necessários
  * e abre o navegador automaticamente após a inicialização.
- * 
- * @author Sistema Agentic
- * @version 1.0
  */
 @SpringBootApplication
 @SpringBootConfiguration
 public class BackendApplication {
+
     public static void main(String[] args) {
         ensureAgenticToolsDirectory();
-        ConfigurableApplicationContext context = SpringApplication.run(BackendApplication.class, args);
+        
+        SpringApplication app = new SpringApplication(BackendApplication.class);
+        app.addListeners(new StartupErrorListener());
+        ConfigurableApplicationContext context = app.run(args);
         ExitController.setContext(context);
     }
 
@@ -40,26 +38,9 @@ public class BackendApplication {
         int port = AgenticConfigLoader.getServerPort();
         String url = "http://localhost:" + port;
         System.out.println("Attempting to open browser at: " + url);
-        
-        boolean opened = false;
-        
-        try {
-            if (Desktop.isDesktopSupported()) {
-                System.out.println("Desktop.isDesktopSupported(): true");
-                Desktop desktop = Desktop.getDesktop();
-                desktop.browse(new URI(url));
-                System.out.println("Opened browser via Desktop API");
-                opened = true;
-            } else {
-                System.out.println("Desktop.isDesktopSupported(): false, trying fallback...");
-                opened = openBrowserFallback(url);
-            }
-        } catch (Exception e) {
-            System.err.println("Desktop API failed: " + e.getClass().getName() + ": " + e.getMessage());
-            System.out.println("Trying fallback...");
-            opened = openBrowserFallback(url);
-        }
-        
+
+        boolean opened = openBrowserFallback(url);
+
         if (opened) {
             System.out.println("Browser opened successfully at: " + url);
         }

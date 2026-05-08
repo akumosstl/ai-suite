@@ -12,6 +12,11 @@
       <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/arquitetura_releases/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="maven-central" />
+      <option name="name" value="Maven Central" />
+      <option name="url" value="https://repo1.maven.org/maven2/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="revisions-porto" />
       <option name="name" value="revisions-porto" />
       <option name="url" value="https://nexusportoprd.portoseguro.brasil/repository/Revisions_Porto/" />
