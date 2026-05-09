@@ -1,0 +1,32 @@
+recipe:
+  name: Test Recipe
+  version: "1.0"
+  description: Simple test recipe for curl
+
+agents:
+  - id: agent1
+    name: Test Agent
+    namespace: test
+    category: general
+    description: Test agent created by recipe
+    prompt: You are a test agent.
+
+projects:
+  - id: project1
+    name: Test Project
+    description: Test project created by recipe
+    path: test-workspace/project1
+    status: active
+
+tasks:
+  - id: t-create-agent
+    type: create
+    resource: agent
+    ref: agent1
+
+  - id: t-create-project
+    type: create
+    resource: project
+    ref: project1
+    depends_on:
+      - t-create-agent

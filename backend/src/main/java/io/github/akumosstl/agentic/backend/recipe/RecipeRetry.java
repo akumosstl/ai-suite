@@ -1,8 +1,10 @@
 package io.github.akumosstl.agentic.backend.recipe;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeRetry {
     @JsonProperty("max_attempts")
     private Integer maxAttempts;

@@ -212,4 +212,13 @@ curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: applica
 python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
 
 python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
+
+
+python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
+
+
+
+
+curl -X POST http://localhost:1488/api/recipes/execute-from-path -H "Content-Type: application/json" -d "{\"path\":\"C:/Users/USER/projects/github/ai-suite/test-recipe.yml\"}"
+
 ```

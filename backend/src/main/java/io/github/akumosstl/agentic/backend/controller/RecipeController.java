@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import com.google.gson.Gson;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -64,6 +68,42 @@ public class RecipeController {
             }
 
             Recipe recipe = recipeExecutor.executeFromPath(filePath, params);
+            return ResponseEntity.ok(recipe);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/execute-raw")
+    public ResponseEntity<?> executeRecipeRaw(HttpServletRequest request,
+                                               @RequestParam(value = "parameters", required = false) String parametersJson) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = request.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!sb.isEmpty()) sb.append("\n");
+                sb.append(line);
+            }
+            String yamlContent = sb.toString();
+
+            if (yamlContent == null || yamlContent.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "YAML content is required"));
+            }
+
+            Map<String, Object> params = null;
+            if (parametersJson != null && !parametersJson.isBlank()) {
+                try {
+                    params = new Gson().fromJson(parametersJson, Map.class);
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Invalid parameters JSON: " + e.getMessage()));
+                }
+            }
+
+            Recipe recipe = recipeExecutor.execute(yamlContent, params);
             return ResponseEntity.ok(recipe);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

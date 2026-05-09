@@ -1,5 +1,56 @@
 mvn spring-boot:run -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 
+## Recipe Execution API
+
+### Execute Recipe from Raw YAML (Recommended)
+
+Send the YAML file directly - no JSON conversion needed:
+
+```cmd
+REM Windows CMD (tudo em uma linha, sem \)
+curl -X POST http://localhost:1488/api/recipes/execute-raw -H "Content-Type: text/plain" --data-binary @test-recipe.yml
+```
+
+```powershell
+# Windows PowerShell
+curl -X POST http://localhost:1488/api/recipes/execute-raw -H "Content-Type: text/plain" --data-binary @test-recipe.yml
+```
+
+With parameters (URL-encoded JSON):
+```cmd
+curl -X POST "http://localhost:1488/api/recipes/execute-raw?parameters=%7B%22env%22%3A%22development%22%7D" -H "Content-Type: text/plain" --data-binary @test-recipe.yml
+```
+
+**Parameters format:** URL-encoded JSON in query string.
+- Original: `{"env":"development","version":"1.0"}`
+- URL-encoded: `%7B%22env%22%3A%22development%22%2C%22version%22%3A%221.0%22%7D`
+
+### Execute Recipe from JSON Body
+
+Alternative method using JSON body (requires YAML to be escaped):
+
+```bash
+curl -X POST http://localhost:1488/api/recipes/execute \
+  -H "Content-Type: application/json" \
+  -d '{"yaml": "recipe:\n  name: test\n  version: 1.0\ntasks: []", "parameters": {"key": "value"}}'
+```
+
+### Validate Recipe
+
+```bash
+curl -X POST http://localhost:1488/api/recipes/validate \
+  -H "Content-Type: application/json" \
+  -d '{"yaml": "recipe:\n  name: test\n  version: 1.0\ntasks: []"}'
+```
+
+### Execute Recipe from File Path
+
+```bash
+curl -X POST http://localhost:1488/api/recipes/execute-from-path \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/path/to/recipe.yml", "parameters": {"key": "value"}}'
+```
+
 ## API Documentation (Swagger)
 
 After starting the backend, access the Swagger UI at:

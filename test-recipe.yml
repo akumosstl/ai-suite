@@ -3,6 +3,8 @@ recipe:
   version: "1.0.0"
   description: "Complete recipe with all available fields for testing purposes"
 
+project_path: "C:/Users/USER/.agentic-workspace"
+
 parameters:
   input_path: "./data/input"
   output_path: "./data/output"
@@ -69,7 +71,7 @@ projects:
   - id: "project-001"
     name: "Main Project"
     description: "Primary project for data processing"
-    path: "./data/main-project"
+    path: "C:/Users/USER/projects/github/ai-suite/backend/.agentic-workspace/main-project"
     target: "production"
     status: "active"
     readme: "This is the main project README"

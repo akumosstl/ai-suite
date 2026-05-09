@@ -1,5 +1,8 @@
 package io.github.akumosstl.agentic.backend.recipe;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeAgent {
     private String id;
     private String name;

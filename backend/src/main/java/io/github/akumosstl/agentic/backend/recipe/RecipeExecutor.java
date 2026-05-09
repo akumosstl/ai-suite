@@ -54,6 +54,18 @@ public class RecipeExecutor {
                 recipeYaml.getParameters(), recipeYaml.getEnv(), new HashMap<>());
             recipeYaml = resolver.resolveAll(recipeYaml);
 
+            String topLevelProjectPath = recipeYaml.getProjectPath();
+            if (topLevelProjectPath != null && !topLevelProjectPath.isBlank()) {
+                File pp = new File(topLevelProjectPath);
+                if (!pp.isAbsolute()) {
+                    pp = pp.getAbsoluteFile();
+                }
+                if (!pp.exists()) {
+                    pp.mkdirs();
+                }
+                recipeYaml.setProjectPath(pp.getAbsolutePath());
+            }
+
             String validationError = recipeParser.validate(recipeYaml);
             if (validationError != null) {
                 throw new IllegalArgumentException(validationError);
@@ -300,10 +312,38 @@ public class RecipeExecutor {
         RecipeProject rp = findById(recipeYaml.getProjects(), ref);
         if (rp == null) throw new RuntimeException("Project not found in recipe: " + ref);
 
+        String projectName = resolver.resolve(rp.getName());
+
+        var existingProject = projectService.getRecentProjects(0, 100).stream()
+                .filter(p -> p.getName().equals(projectName))
+                .findFirst();
+
+        if (existingProject.isPresent()) {
+            Project existing = existingProject.get();
+            logger.info("Project '{}' already exists, skipping creation", projectName);
+            resolver.registerTaskResult("_project:" + rp.getId(), existing.getId());
+            return existing.getId();
+        }
+
         Project project = new Project();
-        project.setName(resolver.resolve(rp.getName()));
+        project.setName(projectName);
         project.setDescription(resolver.resolve(rp.getDescription()));
-        project.setPath(resolver.resolve(rp.getPath()));
+
+        String projectPath = resolver.resolve(rp.getPath());
+        if (projectPath == null || projectPath.isEmpty()) {
+            projectPath = recipeYaml.getProjectPath();
+        }
+        if (projectPath != null && !projectPath.isEmpty()) {
+            File pp = new File(projectPath);
+            if (!pp.isAbsolute()) {
+                pp = pp.getAbsoluteFile();
+            }
+            projectPath = pp.getAbsolutePath();
+            if (!pp.exists()) {
+                pp.mkdirs();
+            }
+        }
+        project.setPath(projectPath);
         project.setTarget(resolver.resolve(rp.getTarget()));
         project.setStatus(resolver.resolve(rp.getStatus()) != null ? resolver.resolve(rp.getStatus()) : "active");
         project.setReadme(resolver.resolve(rp.getReadme()));

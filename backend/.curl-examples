@@ -1,0 +1,48 @@
+# ============================================
+# Recipe Execution Endpoints - curl Examples
+# ============================================
+
+# 1. Execute Recipe from Raw YAML (NEW - Simplified)
+# Accepts direct YAML content with any Content-Type
+# Optional: parameters as query parameter (URL-encoded JSON)
+
+# Linux/Mac:
+curl -X POST http://localhost:1488/api/recipes/execute-raw \
+  -H "Content-Type: application/json" \
+  --data-binary @test-recipe.yml
+
+# Windows PowerShell:
+curl -X POST http://localhost:1488/api/recipes/execute-raw \
+  -H "Content-Type: application/json" \
+  --data-binary @test-recipe.yml
+
+# Windows CMD:
+curl -X POST http://localhost:1488/api/recipes/execute-raw -H "Content-Type: application/json" --data-binary @test-recipe.yml
+
+# With parameters (URL-encoded JSON):
+curl -X POST "http://localhost:1488/api/recipes/execute-raw?parameters=%7B%22env%22%3A%22development%22%7D" \
+  -H "Content-Type: application/json" \
+  --data-binary @test-recipe.yml
+
+# URL-encoded parameters example:
+# Original: {"env":"development","version":"1.0"}
+# URL-encoded: %7B%22env%22%3A%22development%22%2C%22version%22%3A%221.0%22%7D
+
+# 2. Execute Recipe from JSON body (Original method)
+# Requires YAML content to be converted to JSON first
+
+curl -X POST http://localhost:1488/api/recipes/execute \
+  -H "Content-Type: application/json" \
+  -d "{\"yaml\": \"recipe:\\n  name: test\\n  version: 1.0\\ntasks: []\", \"parameters\": {\"key\": \"value\"}}"
+
+# 3. Validate Recipe
+
+curl -X POST http://localhost:1488/api/recipes/validate \
+  -H "Content-Type: application/json" \
+  -d "{\"yaml\": \"recipe:\\n  name: test\\n  version: 1.0\\ntasks: []\"}"
+
+# 4. Execute Recipe from File Path
+
+curl -X POST http://localhost:1488/api/recipes/execute-from-path \
+  -H "Content-Type: application/json" \
+  -d "{\"path\": \"/path/to/recipe.yml\", \"parameters\": {\"key\": \"value\"}}"

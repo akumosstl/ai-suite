@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,6 +86,10 @@ public class ProjectService {
         String projectPath = project.getPath();
         if (projectPath != null && !projectPath.isEmpty()) {
             File path = new File(projectPath);
+            if (!path.isAbsolute()) {
+                path = path.getAbsoluteFile();
+                project.setPath(path.getAbsolutePath());
+            }
             if (!path.exists()) {
                 boolean created = path.mkdirs();
                 if (!created && !path.exists()) {
@@ -95,6 +100,21 @@ public class ProjectService {
                 throw new RuntimeException("Path is not a directory: " + projectPath);
             }
         }
+        return projectRepository.save(project);
+    }
+
+    public Project findOrCreateProject(String name, String description, String path, String target, String status, String readme) {
+        Optional<Project> existing = projectRepository.findByName(name);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Project project = new Project();
+        project.setName(name);
+        project.setDescription(description != null ? description : "");
+        project.setPath(path);
+        project.setTarget(target);
+        project.setStatus(status != null ? status : "active");
+        project.setReadme(readme);
         return projectRepository.save(project);
     }
     

@@ -1,7 +1,9 @@
 package io.github.akumosstl.agentic.backend.recipe;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeStep {
     private String id;
     private Integer order;

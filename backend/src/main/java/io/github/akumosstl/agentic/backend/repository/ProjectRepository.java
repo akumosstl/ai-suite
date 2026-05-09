@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositório JPA para a entidade Project.
@@ -31,4 +32,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByStatus(String status);
     
     List<Project> findByTargetId(Long targetId);
+
+    Optional<Project> findByName(String name);
 }

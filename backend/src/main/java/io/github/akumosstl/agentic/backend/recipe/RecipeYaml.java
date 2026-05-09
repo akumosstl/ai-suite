@@ -1,9 +1,11 @@
 package io.github.akumosstl.agentic.backend.recipe;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeYaml {
     private RecipeHeader recipe;
     private Map<String, Object> parameters;
@@ -15,6 +17,8 @@ public class RecipeYaml {
     private List<RecipeTemplate> templates;
     private List<RecipePipeline> pipelines;
     private List<RecipeTask> tasks;
+    @JsonProperty("project_path")
+    private String projectPath;
 
     public RecipeHeader getRecipe() { return recipe; }
     public void setRecipe(RecipeHeader recipe) { this.recipe = recipe; }
@@ -45,4 +49,9 @@ public class RecipeYaml {
 
     public List<RecipeTask> getTasks() { return tasks; }
     public void setTasks(List<RecipeTask> tasks) { this.tasks = tasks; }
+
+    @JsonProperty("project_path")
+    public String getProjectPath() { return projectPath; }
+    @JsonProperty("project_path")
+    public void setProjectPath(String projectPath) { this.projectPath = projectPath; }
 }
