@@ -350,4 +350,4 @@ Detailed guides for each feature:
 
 ## Version
 
-**3.3.1** - Release Date: 2026-05-04
+**4.0.0** - Release Date: 2026-05-04

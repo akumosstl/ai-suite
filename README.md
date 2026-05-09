@@ -202,23 +202,10 @@ User documentation is available in the [docs](docs/) folder. See [docs/README.md
 
 ```bash
 
-curl -X POST http://localhost:8080/api/recipe-files -H "Content-Type: application/json" -d @test-recipe.json
-
-
-
-curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d "{\"yaml\": $(cat test-recipe.yml | jq -Rs .)}"
-
-
-python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
-
-python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
-
-
-python -c "import json; print(json.dumps({'yaml': open('test-recipe.yml').read()}))" > body.json && curl -X POST http://localhost:1488/api/recipes/execute -H "Content-Type: application/json" -d @body.json
-
-
-
-
 curl -X POST http://localhost:1488/api/recipes/execute-from-path -H "Content-Type: application/json" -d "{\"path\":\"C:/Users/USER/projects/github/ai-suite/test-recipe.yml\"}"
+
+rem agents
+
+curl -X POST http://localhost:1488/api/recipes/execute-from-path -H "Content-Type: application/json" -d "{\"path\":\"C:/Users/USER/projects/github/ai-suite/agents.yml\"}"
 
 ```
