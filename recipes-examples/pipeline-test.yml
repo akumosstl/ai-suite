@@ -1,0 +1,67 @@
+recipe:
+  name: "Pipeline Test"
+  version: "1.0"
+  description: "Creates pipelines in the 'hello' project and runs them using project-scoped resolution"
+
+parameters:
+  project_name: "hello"
+  pipeline_name: "review-pipeline"
+
+agents:
+  - id: "analyst"
+    name: "Code Analyst"
+    namespace: "analysis"
+    category: "review"
+    description: "Analyzes code structure and patterns"
+    prompt: "You are a code analyst. Identify patterns, issues, and improvement opportunities."
+    path: "./agents/analyst"
+
+  - id: "reporter"
+    name: "Report Generator"
+    namespace: "reports"
+    category: "documentation"
+    description: "Generates reports from analysis results"
+    prompt: "You are a report generator. Produce structured reports from the provided data."
+    path: "./agents/reporter"
+
+pipelines:
+  - id: "review-pipeline"
+    name: "{{param:pipeline_name}}"
+    project_name: "hello"
+    description: "Pipeline that reviews code and generates a report"
+    type: "sequential"
+    output_extension: ".md"
+    steps:
+      - order: 1
+        agent: "analyst"
+        prompt: "Analyze the code in the project and identify key patterns."
+        type: "agent"
+
+      - order: 2
+        agent: "reporter"
+        prompt: "Generate a summary report based on the analysis results."
+        type: "agent"
+
+tasks:
+  - id: "t-create-analyst"
+    type: "create"
+    resource: "agent"
+    ref: "analyst"
+
+  - id: "t-create-reporter"
+    type: "create"
+    resource: "agent"
+    ref: "reporter"
+
+  - id: "t-create-pipeline"
+    type: "create"
+    resource: "pipeline"
+    ref: "review-pipeline"
+    depends_on: ["t-create-analyst", "t-create-reporter"]
+
+  - id: "t-run-pipeline"
+    type: "run"
+    project: "hello"
+    pipeline_ref: "review-pipeline"
+    wait: true
+    depends_on: ["t-create-pipeline"]

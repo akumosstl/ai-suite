@@ -8,6 +8,8 @@ import java.util.List;
 public class RecipePipeline {
     private String id;
     private String project;
+    @JsonProperty("project_name")
+    private String projectName;
     private String name;
     private String description;
     private String type;
@@ -20,6 +22,9 @@ public class RecipePipeline {
 
     public String getProject() { return project; }
     public void setProject(String project) { this.project = project; }
+
+    public String getProjectName() { return projectName; }
+    public void setProjectName(String projectName) { this.projectName = projectName; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

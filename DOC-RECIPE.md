@@ -15,8 +15,9 @@ A Recipe is a declarative YAML file that automates the creation and execution of
   - [Project Path](#project-path)
   - [Declarable Resources](#declarable-resources)
   - [Tasks](#tasks)
-  - [Dependencies](#dependencies-depends_on)
-  - [Retry](#retry)
+- [Dependencies](#dependencies-depends_on)
+- [Project-Scoped Pipeline Resolution](#project-scoped-pipeline-resolution)
+- [Retry](#retry)
   - [Loop](#loop)
   - [Placeholder Resolution](#placeholder-resolution)
 - [Full Template Example](#full-template-example)
@@ -265,35 +266,53 @@ projects:
 
 ```yaml
 pipelines:
-  - id: "my-pipeline"
-    name: "Build Pipeline"
-    project: "my-project"
-    description: "Build and test"
-    type: "sequential"
-    output_extension: ".txt"
-    steps:
-      - order: 1
-        agent: "my-agent"
-        prompt: "Review the code and provide feedback."
-        type: "agent"
-      - order: 2
-        script: "my-script"
-        type: "script"
-        runtime: "bash"
-      - order: 3
-        prompt: "Generate a summary report."
-        type: "agent"
+- id: "my-pipeline"
+  name: "Build Pipeline"
+  project: "my-project"
+  description: "Build and test"
+  type: "sequential"
+  output_extension: ".txt"
+  steps:
+  - order: 1
+    agent: "my-agent"
+    prompt: "Review the code and provide feedback."
+    type: "agent"
+  - order: 2
+    script: "my-script"
+    type: "script"
+    runtime: "bash"
+  - order: 3
+    prompt: "Generate a summary report."
+    type: "agent"
+```
+
+**Pipeline referencing an existing project by name (created in a separate recipe):**
+
+```yaml
+pipelines:
+- id: "my-pipeline"
+  name: "Build Pipeline"
+  project_name: "hello"
+  description: "Build and test"
+  type: "sequential"
+  steps:
+  - order: 1
+    agent: "my-agent"
+    type: "agent"
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `id` | **Yes** | Unique reference ID within the recipe |
-| `project` | **Yes** | Reference to a project ID declared above |
+| `project` | Yes* | Reference to a project ID declared in the `projects` section of this recipe |
+| `project_name` | Yes* | Name of an existing project in the database (useful when the project was created in a separate recipe) |
 | `name` | **Yes** | Pipeline display name |
 | `description` | No | Pipeline description |
 | `type` | No | `sequential` (default) |
 | `output_extension` | No | File extension for output |
 | `steps` | No | List of pipeline steps |
+
+\* At least one of `project` or `project_name` is required. Use `project` when the project is declared in the same recipe, or `project_name` when referencing an existing project by its database name.
 
 **Step fields:**
 
@@ -367,7 +386,48 @@ tasks:
 | `create` | Creates a resource declared above | `resource`, `ref` |
 | `run` | Runs a pipeline | `pipeline_ref`, `pipeline_id`, or `pipeline_name`, `wait`, `repeat`, `loop` |
 | `stop` | Stops a running pipeline | `pipeline_ref`, `pipeline_id`, or `pipeline_name` |
-| `call` | Calls (runs) an existing pipeline by name | `pipeline_ref`, `pipeline_name`, `wait` |
+| `call` | Calls (runs) an existing pipeline by name | `pipeline_ref`, `pipeline_name`, `project`, `wait` |
+
+#### Project-Scoped Pipeline Resolution
+
+The `project` field scopes the pipeline lookup to a specific project in the database. When `project` is specified, `pipeline_ref` and `pipeline_name` search **only within that project**, not globally.
+
+**How it works:**
+
+1. The engine resolves the `project` value to a database project ID (by name in the DB or by recipe reference)
+2. It then searches for the pipeline by name **within that project only** using `findByProject_IdAndName`
+
+**Use case:** Run a pipeline that already exists in a specific project, without declaring it in the recipe's `pipelines` section.
+
+```yaml
+tasks:
+  - id: "t-run-pipeline"
+    type: "run"
+    project: "hello"
+    pipeline_ref: "pipeline-original-001"
+    wait: true
+    depends_on: ["t-create-pipeline"]
+```
+
+```yaml
+tasks:
+  - id: "t-call-existing"
+    type: "call"
+    project: "my-project"
+    pipeline_name: "code-review"
+    wait: true
+```
+
+**Resolution priority when `project` is set:**
+
+| Priority | Field | Behavior |
+|----------|-------|----------|
+| 1 | `pipeline_ref` + `project` | Resolves project by name, then finds pipeline by name within that project |
+| 2 | `pipeline_name` + `project` | Same as above using `pipeline_name` instead |
+
+**When `project` is NOT set:** The original behavior applies — `pipeline_ref` looks up the recipe's declared pipelines or task result registry, and `pipeline_name` does a global search across all projects.
+
+**Validation:** When `project` is specified, `pipeline_ref` is **not** required to be declared in the recipe's `pipelines` section. This allows referencing pipelines that already exist in the database.
 
 #### Task Fields
 
@@ -378,9 +438,10 @@ tasks:
 | `resource` | Yes for `create` | `project`, `agent`, `script`, `pipeline`, `target`, `template` |
 | `ref` | Yes for `create` | ID of the declared resource to create |
 | `depends_on` | No | List of task IDs that must complete before this task runs |
-| `pipeline_ref` | For `run`/`stop`/`call` | Reference to a pipeline ID declared in `pipelines` |
+| `pipeline_ref` | For `run`/`stop`/`call` | Reference to a pipeline ID declared in `pipelines`, or a pipeline name when used with `project` |
 | `pipeline_id` | No | Direct database ID of an existing pipeline |
 | `pipeline_name` | No | Name of an existing pipeline to find by name |
+| `project` | No | Project name to scope pipeline lookup (see [Project-Scoped Pipeline Resolution](#project-scoped-pipeline-resolution)) |
 | `wait` | No | `true` = wait for pipeline to finish before proceeding (default: `false`) |
 | `repeat` | No | Run the pipeline N times sequentially (default: `1`) |
 | `retry` | No | Retry configuration block |
@@ -745,7 +806,10 @@ The engine validates the recipe before execution. A recipe is **invalid** if:
 | `depends_on` references non-existent task | `Task 'X' depends_on non-existent task: Y` |
 | Circular dependency detected | `Circular dependency detected involving task: X` |
 | `ref` points to undeclared resource | `Task 'X' ref 'Y' not found in declared Zs` |
-| `pipeline_ref` points to undeclared pipeline | `Task 'X' pipeline_ref 'Y' not found in declared pipelines` |
+| `pipeline_ref` points to undeclared pipeline (without `project`) | `Task 'X' pipeline_ref 'Y' not found in declared pipelines. Either declare it in the 'pipelines' section or specify a 'project' to look up an existing pipeline.` |
+| Pipeline has neither `project` nor `project_name` | `Pipeline 'X' must have either 'project' (recipe ref) or 'project_name' (database name)` |
+| Pipeline `project` ref not found in declared projects | `Pipeline 'X' project 'Y' not found in declared projects. Use 'project_name' to reference an existing project by its database name.` |
+| Project name already exists in database | `Project with name 'X' already exists` |
 
 Use `validate_recipe` (MCP) or `POST /api/recipes/validate` (REST) to check a recipe before executing.
 
@@ -803,9 +867,13 @@ Failed tasks do not roll back previously created resources. If a recipe creates 
 | `Required field 'recipe.name' is missing` | Add the `recipe` block with a `name` field |
 | `Circular dependency detected` | Remove the cycle in your `depends_on` chains |
 | `ref 'X' not found in declared agents` | Make sure the agent `id` in the `agents` section matches the task `ref` |
-| `Cannot resolve project for pipeline` | Ensure the pipeline's `project` field references a declared project ID |
+| `Cannot resolve project for pipeline` | Use `project` (recipe ref) or `project_name` (database name) in the pipeline declaration |
+| `Project 'X' not found in database for pipeline` | The `project_name` value does not match any project name in the database. Create the project first |
+| `Project with name 'X' already exists` | Project names must be unique. Delete the existing project or use a different name |
 | `{{param:X}} (not found)` | Add the parameter to the `parameters` section or pass it as an override |
 | `{{env:VAR}} (not set)` | Set the variable in the `env` block or as a system environment variable |
 | `{{file:PATH}} (error: ...)` | Check that the file path exists and is readable |
 | Recipe stays `running` forever | Check if a pipeline is stuck. Use `stop_recipe` to abort |
 | Pipeline not found by `pipeline_name` | The pipeline must exist in the database. Create it first or use `pipeline_ref` |
+| `Cannot resolve project 'X' for task` | The project name in the `project` field does not exist in the database. Create the project first or verify the name |
+| Pipeline not found within project | When using `project` + `pipeline_ref`, the pipeline name must exist in that specific project. Check the pipeline name and project association |

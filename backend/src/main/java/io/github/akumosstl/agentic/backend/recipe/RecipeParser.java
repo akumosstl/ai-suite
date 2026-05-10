@@ -81,12 +81,30 @@ public class RecipeParser {
         }
 
         Set<String> declaredIds = new HashSet<>();
-        if (recipe.getProjects() != null) declaredIds.addAll(recipe.getProjects().stream().map(RecipeProject::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
+        Set<String> declaredProjectIds = new HashSet<>();
+        if (recipe.getProjects() != null) {
+            declaredIds.addAll(recipe.getProjects().stream().map(RecipeProject::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
+            declaredProjectIds.addAll(recipe.getProjects().stream().map(RecipeProject::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
+            declaredProjectIds.addAll(recipe.getProjects().stream().map(RecipeProject::getName).filter(Objects::nonNull).collect(Collectors.toSet()));
+        }
         if (recipe.getAgents() != null) declaredIds.addAll(recipe.getAgents().stream().map(RecipeAgent::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
         if (recipe.getScripts() != null) declaredIds.addAll(recipe.getScripts().stream().map(RecipeScript::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
         if (recipe.getPipelines() != null) declaredIds.addAll(recipe.getPipelines().stream().map(RecipePipeline::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
         if (recipe.getTargets() != null) declaredIds.addAll(recipe.getTargets().stream().map(RecipeTarget::getName).filter(Objects::nonNull).collect(Collectors.toSet()));
         if (recipe.getTemplates() != null) declaredIds.addAll(recipe.getTemplates().stream().map(RecipeTemplate::getId).filter(Objects::nonNull).collect(Collectors.toSet()));
+
+        if (recipe.getPipelines() != null) {
+            for (RecipePipeline pipe : recipe.getPipelines()) {
+                boolean hasProject = pipe.getProject() != null && !pipe.getProject().isEmpty();
+                boolean hasProjectName = pipe.getProjectName() != null && !pipe.getProjectName().isEmpty();
+                if (!hasProject && !hasProjectName) {
+                    return "Pipeline '" + pipe.getId() + "' must have either 'project' (recipe ref) or 'project_name' (database name)";
+                }
+                if (hasProject && !hasProjectName && !declaredProjectIds.contains(pipe.getProject())) {
+                    return "Pipeline '" + pipe.getId() + "' project '" + pipe.getProject() + "' not found in declared projects. Use 'project_name' to reference an existing project by its database name.";
+                }
+            }
+        }
 
         if (recipe.getTasks() != null) {
             for (RecipeTask task : recipe.getTasks()) {
@@ -95,11 +113,12 @@ public class RecipeParser {
                         return "Task '" + task.getId() + "' ref '" + task.getRef() + "' not found in declared " + task.getResource() + "s";
                     }
                 }
-                if (task.getPipelineRef() != null && !task.getPipelineRef().isEmpty()) {
-                    if (!declaredIds.contains(task.getPipelineRef())) {
-                        return "Task '" + task.getId() + "' pipeline_ref '" + task.getPipelineRef() + "' not found in declared pipelines";
-                    }
+            if (task.getPipelineRef() != null && !task.getPipelineRef().isEmpty()) {
+                boolean hasProject = task.getProject() != null && !task.getProject().isEmpty();
+                if (!hasProject && !declaredIds.contains(task.getPipelineRef())) {
+                    return "Task '" + task.getId() + "' pipeline_ref '" + task.getPipelineRef() + "' not found in declared pipelines. Either declare it in the 'pipelines' section or specify a 'project' to look up an existing pipeline.";
                 }
+            }
             }
         }
 

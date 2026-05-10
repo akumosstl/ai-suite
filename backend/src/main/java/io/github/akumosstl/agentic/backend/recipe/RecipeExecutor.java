@@ -432,9 +432,21 @@ public class RecipeExecutor {
         RecipePipeline rpipe = findById(recipeYaml.getPipelines(), ref);
         if (rpipe == null) throw new RuntimeException("Pipeline not found in recipe: " + ref);
 
-        Long projectId = resolveProjectId(recipeYaml, rpipe.getProject(), resolver);
+        Long projectId = null;
+        if (rpipe.getProjectName() != null && !rpipe.getProjectName().isEmpty()) {
+            String projectName = resolver.resolve(rpipe.getProjectName());
+            Optional<Project> found = projectService.findByName(projectName);
+            if (found.isPresent()) {
+                projectId = found.get().getId();
+            } else {
+                throw new RuntimeException("Project '" + projectName + "' not found in database for pipeline: " + rpipe.getName());
+            }
+        }
         if (projectId == null) {
-            throw new RuntimeException("Cannot resolve project for pipeline: " + rpipe.getName());
+            projectId = resolveProjectId(recipeYaml, rpipe.getProject(), resolver);
+        }
+        if (projectId == null) {
+            throw new RuntimeException("Cannot resolve project for pipeline: " + rpipe.getName() + ". Use 'project' (recipe ref) or 'project_name' (database name).");
         }
 
         List<Pipeline> existingPipelines = pipelineService.getPipelineRepository().findByProject_IdAndName(projectId, resolver.resolve(rpipe.getName()));
@@ -626,9 +638,36 @@ public class RecipeExecutor {
     }
 
     private Long resolvePipelineId(RecipeYaml recipeYaml, RecipeTask task,
-                                   RecipeParameterResolver resolver) {
+            RecipeParameterResolver resolver) {
         if (task.getPipelineId() != null) {
             return task.getPipelineId();
+        }
+
+        if (task.getProject() != null && !task.getProject().isEmpty()) {
+            Long projectId = resolveProjectIdByName(recipeYaml, task.getProject(), resolver);
+            if (projectId == null) {
+                throw new RuntimeException("Cannot resolve project '" + task.getProject() + "' for task: " + task.getId());
+            }
+
+            if (task.getPipelineRef() != null) {
+                String pipelineName = resolver.resolve(task.getPipelineRef());
+                List<Pipeline> pipelines = pipelineService.getPipelineRepository()
+                        .findByProject_IdAndName(projectId, pipelineName);
+                if (!pipelines.isEmpty()) {
+                    return pipelines.get(0).getId();
+                }
+            }
+
+            if (task.getPipelineName() != null) {
+                String pipelineName = resolver.resolve(task.getPipelineName());
+                List<Pipeline> pipelines = pipelineService.getPipelineRepository()
+                        .findByProject_IdAndName(projectId, pipelineName);
+                if (!pipelines.isEmpty()) {
+                    return pipelines.get(0).getId();
+                }
+            }
+
+            return null;
         }
 
         if (task.getPipelineRef() != null) {
@@ -651,8 +690,44 @@ public class RecipeExecutor {
         return null;
     }
 
+    private Long resolveProjectIdByName(RecipeYaml recipeYaml, String projectRef,
+            RecipeParameterResolver resolver) {
+        String resolvedRef = resolver.resolve(projectRef);
+
+        Long id = resolver.getTaskResult(resolvedRef);
+        if (id != null) return id;
+        id = resolver.getTaskResult("_project:" + resolvedRef);
+        if (id != null) return id;
+
+        if (recipeYaml.getProjects() != null) {
+            for (RecipeProject rp : recipeYaml.getProjects()) {
+                if (resolvedRef.equals(rp.getId()) || resolvedRef.equals(rp.getName())) {
+                    Long fromResult = resolver.getTaskResult("_project:" + rp.getId());
+                    if (fromResult != null) return fromResult;
+
+                    String name = resolver.resolve(rp.getName());
+                    try {
+                        Optional<Project> found = projectService.findByName(name);
+                        if (found.isPresent()) return found.get().getId();
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
+        }
+
+        try {
+            Optional<Project> found = projectService.findByName(resolvedRef);
+            if (found.isPresent()) return found.get().getId();
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return null;
+    }
+
     private Long resolveProjectId(RecipeYaml recipeYaml, String projectRef,
-                                  RecipeParameterResolver resolver) {
+            RecipeParameterResolver resolver) {
         if (projectRef == null || projectRef.isEmpty()) return null;
 
         Long id = resolver.getTaskResult(projectRef);
@@ -663,17 +738,26 @@ public class RecipeExecutor {
         if (recipeYaml.getProjects() != null) {
             for (RecipeProject rp : recipeYaml.getProjects()) {
                 if (projectRef.equals(rp.getId()) || projectRef.equals(rp.getName())) {
+                    Long fromResult = resolver.getTaskResult("_project:" + rp.getId());
+                    if (fromResult != null) return fromResult;
+
                     String name = resolver.resolve(rp.getName());
                     try {
-                        List<Project> projects = projectService.getTop10RecentProjects();
-                        for (Project p : projects) {
-                            if (name.equals(p.getName())) return p.getId();
-                        }
+                        Optional<Project> found = projectService.findByName(name);
+                        if (found.isPresent()) return found.get().getId();
                     } catch (Exception e) {
                         // ignore
                     }
                 }
             }
+        }
+
+        String resolvedRef = resolver.resolve(projectRef);
+        try {
+            Optional<Project> found = projectService.findByName(resolvedRef);
+            if (found.isPresent()) return found.get().getId();
+        } catch (Exception e) {
+            // ignore
         }
 
         return null;

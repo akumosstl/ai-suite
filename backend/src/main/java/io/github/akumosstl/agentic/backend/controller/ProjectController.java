@@ -107,8 +107,17 @@ public class ProjectController {
     }
     
     @PostMapping
-    public Project createProject(@RequestBody Project project) {
-        return projectService.createProject(project);
+    public ResponseEntity<?> createProject(@RequestBody Project project) {
+        try {
+            return ResponseEntity.ok(projectService.createProject(project));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", e.getMessage());
+                return ResponseEntity.badRequest().body(error);
+            }
+            throw e;
+        }
     }
     
     @PutMapping("/{id}")

@@ -1,0 +1,157 @@
+recipe:
+  name: "Full Test Recipe"
+  version: "1.0.0"
+  description: "Complete recipe with all available fields for testing purposes"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+parameters:
+  input_path: "./data/input"
+  output_path: "./data/output"
+  max_retries: 3
+  timeout: 300
+
+env:
+  NODE_ENV: "production"
+  DEBUG: "false"
+  API_URL: "https://api.example.com"
+
+targets:
+  - name: "production"
+    agents_path: "/opt/agents"
+    scripts_path: "/opt/scripts"
+    cli: "opencode"
+  - name: "staging"
+    agents_path: "/staging/agents"
+    scripts_path: "/staging/scripts"
+    cli: "copilot"
+
+agents:
+  - id: "agent-001"
+    name: "Data Processor"
+    namespace: "processing"
+    category: "transform"
+    description: "Agent responsible for data transformation"
+    prompt: "You are a data processing agent that transforms input data into structured output."
+    path: "/agents/data-processor"
+  - id: "agent-002"
+    name: "Validator"
+    namespace: "validation"
+    category: "quality"
+    description: "Agent for validating data integrity"
+    prompt: "You are a validation agent that ensures data quality and integrity."
+    path: "/agents/validator"
+
+scripts:
+  - id: "script-001"
+    name: "pre-process.sh"
+    namespace: "utils"
+    category: "preprocessing"
+    description: "Preprocessing script for data cleanup"
+    content: |
+      #!/bin/bash
+      echo 'Running preprocessing...'
+      echo 'Input: ./data/input'
+      ls -la
+    scope: "global"
+    path: "/scripts/pre-process.sh"
+  - id: "script-002"
+    name: "post-process.py"
+    namespace: "utils"
+    category: "postprocessing"
+    description: "Postprocessing script for data formatting"
+    content: |
+      #!/usr/bin/env python3
+      print('Running postprocessing...')
+      print('Output: ./data/output')
+    scope: "global"
+    path: "/scripts/post-process.py"
+
+projects:
+  - id: "project-001"
+    name: "Main Project"
+    description: "Primary project for data processing"
+    path: "C:/Users/USER/projects/github/ai-suite/backend/.agentic-workspace/main-project"
+    target: "production"
+    status: "active"
+    readme: "This is the main project README"
+    agents:
+      - "agent-001"
+      - "agent-002"
+    scripts:
+      - "script-001"
+      - "script-002"
+
+templates:
+  - id: "template-001"
+    name: "JSON Output Template"
+    type: "output"
+    description: "Template for JSON output formatting"
+    template: '{"result": "{{result}}", "status": "{{status}}"}'
+
+pipelines:
+  - id: "pipeline-001"
+    name: "Main Pipeline"
+    description: "Main data processing pipeline"
+    project: "project-001"
+    type: "sequential"
+    output_extension: "json"
+    steps:
+      - order: 1
+        agent: "agent-001"
+        type: "agent"
+        parameters: '{"max_tokens": 1000}'
+      - order: 2
+        script: "script-001"
+        type: "script"
+        cli: "opencode"
+      - order: 3
+        agent: "agent-002"
+        type: "agent"
+        prompt: "Validate the output from previous steps."
+      - order: 4
+        script: "script-002"
+        type: "script"
+
+tasks:
+  - id: "t-create-target"
+    type: "create"
+    resource: "target"
+    ref: "production"
+  - id: "t-create-agent-1"
+    type: "create"
+    resource: "agent"
+    ref: "agent-001"
+    depends_on: ["t-create-target"]
+  - id: "t-create-agent-2"
+    type: "create"
+    resource: "agent"
+    ref: "agent-002"
+    depends_on: ["t-create-target"]
+  - id: "t-create-script-1"
+    type: "create"
+    resource: "script"
+    ref: "script-001"
+  - id: "t-create-script-2"
+    type: "create"
+    resource: "script"
+    ref: "script-002"
+  - id: "t-create-template"
+    type: "create"
+    resource: "template"
+    ref: "template-001"
+  - id: "t-create-project"
+    type: "create"
+    resource: "project"
+    ref: "project-001"
+    depends_on: ["t-create-agent-1", "t-create-agent-2", "t-create-script-1", "t-create-script-2"]
+  - id: "t-create-pipeline"
+    type: "create"
+    resource: "pipeline"
+    ref: "pipeline-001"
+    depends_on: ["t-create-project"]
+  - id: "t-run-pipeline"
+    type: "run"
+    pipeline_ref: "pipeline-001"
+    wait: true
+    depends_on: ["t-create-pipeline"]

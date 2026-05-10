@@ -1,5 +1,7 @@
 package io.github.akumosstl.agentic.backend.config;
 
+import io.github.akumosstl.agentic.backend.controller.NamespaceController;
+import io.github.akumosstl.agentic.backend.controller.TargetController;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.model.Event;
 import io.github.akumosstl.agentic.backend.model.Pipeline;
@@ -7,9 +9,25 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineRunStep;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Project;
+import io.github.akumosstl.agentic.backend.model.Recipe;
+import io.github.akumosstl.agentic.backend.model.RecipeFile;
+import io.github.akumosstl.agentic.backend.model.RecipeTaskResult;
 import io.github.akumosstl.agentic.backend.model.Script;
 import io.github.akumosstl.agentic.backend.model.Target;
 import io.github.akumosstl.agentic.backend.model.Template;
+import io.github.akumosstl.agentic.backend.recipe.RecipeAgent;
+import io.github.akumosstl.agentic.backend.recipe.RecipeHeader;
+import io.github.akumosstl.agentic.backend.recipe.RecipeLoop;
+import io.github.akumosstl.agentic.backend.recipe.RecipePipeline;
+import io.github.akumosstl.agentic.backend.recipe.RecipeProject;
+import io.github.akumosstl.agentic.backend.recipe.RecipeRetry;
+import io.github.akumosstl.agentic.backend.recipe.RecipeScript;
+import io.github.akumosstl.agentic.backend.recipe.RecipeStep;
+import io.github.akumosstl.agentic.backend.recipe.RecipeStepIO;
+import io.github.akumosstl.agentic.backend.recipe.RecipeTarget;
+import io.github.akumosstl.agentic.backend.recipe.RecipeTask;
+import io.github.akumosstl.agentic.backend.recipe.RecipeTemplate;
+import io.github.akumosstl.agentic.backend.recipe.RecipeYaml;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.Annotations;
@@ -184,16 +202,38 @@ import org.springframework.context.annotation.Configuration;
 		Role.class,
 		LoggingLevel.class,
 
-		Project.class,
-		Pipeline.class,
-		PipelineStep.class,
-		PipelineRun.class,
-		PipelineRunStep.class,
+  Project.class,
+  Pipeline.class,
+  PipelineStep.class,
+  PipelineRun.class,
+  PipelineRunStep.class,
   Agent.class,
   Script.class,
   Target.class,
-		Template.class,
-		Event.class
+  Template.class,
+  Event.class,
+
+  Recipe.class,
+  RecipeFile.class,
+  RecipeTaskResult.class,
+
+  RecipeYaml.class,
+  RecipeHeader.class,
+  RecipeTarget.class,
+  RecipeProject.class,
+  RecipeAgent.class,
+  RecipeScript.class,
+  RecipeTemplate.class,
+  RecipePipeline.class,
+  RecipeStep.class,
+  RecipeStepIO.class,
+  RecipeTask.class,
+  RecipeRetry.class,
+  RecipeLoop.class,
+
+  NamespaceController.NamespaceItems.class,
+  NamespaceController.ClearResult.class,
+  TargetController.ErrorResponse.class
 })
 public class NativeImageReflectionConfig {
 }

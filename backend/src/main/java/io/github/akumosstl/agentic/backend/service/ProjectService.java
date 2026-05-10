@@ -83,6 +83,11 @@ public class ProjectService {
     }
     
     public Project createProject(Project project) {
+        Optional<Project> existing = projectRepository.findByName(project.getName());
+        if (existing.isPresent()) {
+            throw new RuntimeException("Project with name '" + project.getName() + "' already exists");
+        }
+
         String projectPath = project.getPath();
         if (projectPath != null && !projectPath.isEmpty()) {
             File path = new File(projectPath);
@@ -101,6 +106,10 @@ public class ProjectService {
             }
         }
         return projectRepository.save(project);
+    }
+
+    public Optional<Project> findByName(String name) {
+        return projectRepository.findByName(name);
     }
 
     public Project findOrCreateProject(String name, String description, String path, String target, String status, String readme) {

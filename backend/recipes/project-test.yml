@@ -1,0 +1,68 @@
+recipe:
+  name: "Project Test"
+  version: "1.0"
+  description: "Creates a project with a target and associated agents"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+parameters:
+  project_name: "hello"
+
+targets:
+  - name: "dev"
+    agents_path: "./agents"
+    scripts_path: "./scripts"
+    cli: "opencode"
+
+agents:
+  - id: "reviewer"
+    name: "Code Reviewer"
+    namespace: "quality"
+    category: "review"
+    description: "Reviews code for quality and best practices"
+    prompt: "You are a code reviewer. Analyze the code and provide constructive feedback."
+    path: "./agents/reviewer"
+
+  - id: "summarizer"
+    name: "Summarizer"
+    namespace: "docs"
+    category: "documentation"
+    description: "Generates summaries and documentation"
+    prompt: "You are a documentation agent. Generate clear and concise summaries."
+    path: "./agents/summarizer"
+
+projects:
+  - id: "hello-project"
+    name: "{{param:project_name}}"
+    description: "Test project created by project-test recipe"
+    path: "C:/Users/USER/.agentic-workspace/{{param:project_name}}"
+    target: "dev"
+    status: "active"
+    readme: "# Hello Project\n\nCreated by project-test recipe."
+    agents:
+      - "reviewer"
+      - "summarizer"
+
+tasks:
+  - id: "t-create-target"
+    type: "create"
+    resource: "target"
+    ref: "dev"
+
+  - id: "t-create-reviewer"
+    type: "create"
+    resource: "agent"
+    ref: "reviewer"
+    depends_on: ["t-create-target"]
+
+  - id: "t-create-summarizer"
+    type: "create"
+    resource: "agent"
+    ref: "summarizer"
+    depends_on: ["t-create-target"]
+
+  - id: "t-create-project"
+    type: "create"
+    resource: "project"
+    ref: "hello-project"
+    depends_on: ["t-create-reviewer", "t-create-summarizer"]

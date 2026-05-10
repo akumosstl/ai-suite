@@ -1,0 +1,59 @@
+recipe:
+  name: "Run pipelines Test Recipe"
+  version: "1.0.0"
+  description: "Recipe for testing pipeline execution with all available fields"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+agents:
+  - id: "agent-original"
+    name: "Hello"
+    namespace: "hello-original"
+    category: "original"
+    description: "original agent to test pipeline execution"
+    prompt: "Tell me a joke."
+    path: "/agents/original"
+  - id: "agent-original-1"
+    name: "hello-original-1"
+    namespace: "validation"
+    category: "quality"
+    description: "Agent for validating data integrity"
+    prompt: "Tell me a joke."
+    path: "/agents/validator"
+
+pipelines:
+  - id: "pipeline-original-001"
+    name: "Original Pipeline"
+    description: "Main original processing pipeline"
+    project: "project-test"
+    type: "sequential"
+    output_extension: "json"
+    steps:
+      - order: 1
+        agent: "agent-original"
+        type: "agent"
+      - order: 3
+        agent: "agent-original-1"
+        type: "agent"
+      
+tasks:
+  - id: "t-create-agent-1"
+    type: "create"
+    resource: "agent"
+    ref: "agent-original"
+
+  - id: "t-create-agent-2"
+    type: "create"
+    resource: "agent"
+    ref: "agent-original-1"
+
+  - id: "t-create-pipeline"
+    type: "create"
+    resource: "pipeline"
+    ref: "pipeline-original-001"
+
+  - id: "t-run-pipeline"
+    type: "run"
+    pipeline_ref: "pipeline-original-001"
+    wait: true
+    depends_on: ["t-create-pipeline"]
