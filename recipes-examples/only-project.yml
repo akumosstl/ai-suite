@@ -1,0 +1,36 @@
+recipe:
+  name: "Project Test"
+  version: "1.0"
+  description: "Creates a project with a target and associated agents"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+parameters:
+  project_name: "hello2"
+
+targets:
+  - name: "dev"
+    agents_path: "./agents"
+    scripts_path: "./scripts"
+    cli: "opencode"
+
+projects:
+  - id: "hello2-project"
+    name: "{{param:project_name}}"
+    description: "Test project created by project-test recipe"
+    path: "C:/Users/USER/.agentic-workspace/{{param:project_name}}"
+    target: "dev"
+    status: "active"
+    readme: "# Hello Project\n\nCreated by project-test recipe."
+
+tasks:
+  - id: "t-create-target"
+    type: "create"
+    resource: "target"
+    ref: "dev"
+
+  - id: "t-create-project"
+    type: "create"
+    resource: "project"
+    ref: "hello2-project"
+    depends_on: ["t-create-target"]

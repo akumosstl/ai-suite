@@ -12,44 +12,44 @@ import java.util.List;
 
 /**
  * Repositório JPA para a entidade Pipeline.
- * 
+ * <p>
  * Fornece métodos de acesso ao banco de dados para a entidade Pipeline,
  * incluindo buscas por projeto e status.
- * 
+ *
  * @author Sistema Agentic
  * @version 1.0
  */
 @Repository
 public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
-    
+
     List<Pipeline> findTop10ByProject_IdOrderByCreatedAtDesc(Long projectId);
-    
+
     Page<Pipeline> findByProject_IdOrderByCreatedAtDesc(Long projectId, Pageable pageable);
-    
+
     List<Pipeline> findByProject_IdOrderByCreatedAtDesc(Long projectId);
-    
+
     List<Pipeline> findByProject_IdAndName(Long projectId, String name);
 
     List<Pipeline> findByProject_IdAndNameStartingWith(Long projectId, String namePrefix);
 
     List<Pipeline> findByProject_IdAndStatus(Long projectId, String status);
-    
+
     List<Pipeline> findByStatus(String status);
-    
+
     List<Pipeline> findAll();
-    
+
     @Modifying
     @Query(value = "DELETE FROM pipeline_step WHERE pipeline_id = :pipelineId", nativeQuery = true)
     void deleteStepsByPipelineId(Long pipelineId);
-    
+
     @Modifying
     @Query(value = "DELETE FROM pipeline WHERE id = :pipelineId", nativeQuery = true)
     void deleteByIdNative(Long pipelineId);
-    
+
     @Modifying
     @Query(value = "DELETE FROM pipeline WHERE project_id = :projectId", nativeQuery = true)
     void deleteByProjectId(Long projectId);
-    
+
     @Modifying
     @Query(value = "DELETE FROM pipeline_step WHERE pipeline_id IN (SELECT id FROM pipeline WHERE project_id = :projectId)", nativeQuery = true)
     void deleteStepsByProjectId(Long projectId);

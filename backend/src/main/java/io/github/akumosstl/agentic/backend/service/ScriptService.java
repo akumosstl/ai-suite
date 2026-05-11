@@ -1,10 +1,10 @@
 package io.github.akumosstl.agentic.backend.service;
 
-import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
+import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Script;
-import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -96,11 +96,11 @@ public class ScriptService {
     public List<String> getDistinctNamespaces() {
         return scriptRepository.findDistinctNamespaces();
     }
-    
+
     public List<String> getDistinctCategories() {
         return scriptRepository.findDistinctCategories();
     }
-    
+
     public List<Script> getScriptsByNamespace(String namespace) {
         return scriptRepository.findByNamespace(namespace);
     }

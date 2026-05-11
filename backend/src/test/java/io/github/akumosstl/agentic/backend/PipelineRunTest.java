@@ -7,9 +7,6 @@ import io.github.akumosstl.agentic.backend.model.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class PipelineRunTest {
@@ -23,10 +20,10 @@ class PipelineRunTest {
         testProject = new Project();
         testProject.setId(1L);
         testProject.setName("Test Project");
-        
+
         testPipeline = new Pipeline("Test Pipeline", "Test Description", testProject);
         testPipeline.setId(1L);
-        
+
         pipelineRun = new PipelineRun(testPipeline);
     }
 
@@ -62,10 +59,10 @@ class PipelineRunTest {
     void testAddStep() {
         PipelineRunStep step1 = new PipelineRunStep(1);
         PipelineRunStep step2 = new PipelineRunStep(2);
-        
+
         pipelineRun.addStep(step1);
         pipelineRun.addStep(step2);
-        
+
         assertEquals(2, pipelineRun.getSteps().size());
         assertEquals(step1, pipelineRun.getSteps().get(0));
         assertEquals(step2, pipelineRun.getSteps().get(1));
@@ -76,9 +73,9 @@ class PipelineRunTest {
         PipelineRunStep step1 = new PipelineRunStep(1);
         step1.setStatus("pending");
         step1.setAgentName("Test Agent");
-        
+
         pipelineRun.addStep(step1);
-        
+
         assertEquals(1, pipelineRun.getSteps().get(0).getStepOrder());
         assertEquals("pending", pipelineRun.getSteps().get(0).getStatus());
         assertEquals("Test Agent", pipelineRun.getSteps().get(0).getAgentName());
@@ -88,7 +85,7 @@ class PipelineRunTest {
     void testPipelineRunSetters() {
         pipelineRun.setStatus("completed");
         assertEquals("completed", pipelineRun.getStatus());
-        
+
         pipelineRun.setId(100L);
         assertEquals(100L, pipelineRun.getId());
     }

@@ -5,8 +5,6 @@ import io.github.akumosstl.agentic.backend.model.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class PipelineTest {
@@ -19,7 +17,7 @@ class PipelineTest {
         testProject = new Project();
         testProject.setId(1L);
         testProject.setName("Test Project");
-        
+
         pipeline = new Pipeline("Test Pipeline", "Test Description", testProject);
     }
 
@@ -29,7 +27,7 @@ class PipelineTest {
         assertEquals("Test Pipeline", pipeline.getName());
         assertEquals("Test Description", pipeline.getDescription());
         assertEquals(testProject, pipeline.getProject());
-        
+
         pipeline.setStatus("pending");
         assertEquals("pending", pipeline.getStatus());
     }
@@ -43,10 +41,10 @@ class PipelineTest {
     @Test
     void testPipelineTypeField() {
         assertNull(pipeline.getType());
-        
+
         pipeline.setType("sequential");
         assertEquals("sequential", pipeline.getType());
-        
+
         pipeline.setType("step_by_step");
         assertEquals("step_by_step", pipeline.getType());
     }
@@ -54,10 +52,10 @@ class PipelineTest {
     @Test
     void testPipelineOutputExtension() {
         assertNull(pipeline.getOutputExtension());
-        
+
         pipeline.setOutputExtension("json");
         assertEquals("json", pipeline.getOutputExtension());
-        
+
         pipeline.setOutputExtension("txt");
         assertEquals("txt", pipeline.getOutputExtension());
     }
@@ -93,7 +91,7 @@ class PipelineTest {
     @Test
     void testPipelineId() {
         assertNull(pipeline.getId());
-        
+
         pipeline.setId(100L);
         assertEquals(100L, pipeline.getId());
     }
@@ -102,7 +100,7 @@ class PipelineTest {
     void testPipelineWithNullProject() {
         Pipeline pipelineNoProject = new Pipeline();
         pipelineNoProject.setName("Standalone Pipeline");
-        
+
         assertNull(pipelineNoProject.getProject());
         assertNull(pipelineNoProject.getProjectId());
     }

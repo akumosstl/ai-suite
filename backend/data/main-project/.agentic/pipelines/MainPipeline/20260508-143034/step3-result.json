@@ -1,8 +1,0 @@
-[0m
-> build · minimax-m2.5-free
-[0m
-[93m[1m! [0mpermission requested: external_directory (C:\Users\USER\*); auto-rejecting
-[0m✗ [0mread failed
-[91m[1mError: [0mThe user rejected permission to use this specific tool call.
-
---- Step completed ---

@@ -5,6 +5,8 @@ import io.github.akumosstl.agentic.backend.model.PipelineRun;
 import io.github.akumosstl.agentic.backend.model.PipelineRunStep;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.repository.PipelineRunRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,8 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class PipelineRunService {
     private final PipelineRunRepository pipelineRunRepository;
     private final PipelineStepService pipelineStepService;
     private final ObjectProvider<PipelineService> pipelineServiceProvider;
-    
+
     @Autowired
     public PipelineRunService(
             PipelineRunRepository pipelineRunRepository,
@@ -37,40 +37,40 @@ public class PipelineRunService {
         this.pipelineStepService = pipelineStepService;
         this.pipelineServiceProvider = pipelineServiceProvider;
     }
-    
+
     private PipelineService getPipelineService() {
         return pipelineServiceProvider.getObject();
     }
-    
+
     public List<PipelineRun> getTop20RunsByPipeline(Long pipelineId) {
         return pipelineRunRepository.findTop20ByPipeline_IdOrderByCreatedAtDesc(pipelineId);
     }
-    
+
     public List<PipelineRun> getTop20RunsByProject(Long projectId) {
         return pipelineRunRepository.findTop20ByPipeline_Project_IdOrderByCreatedAtDesc(projectId);
     }
-    
+
     public Page<PipelineRun> getRunsByPipeline(Long pipelineId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId, pageable);
     }
-    
+
     public PipelineRun getRunById(Long id) {
         return pipelineRunRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pipeline run not found"));
     }
-    
+
     public Long getPipelineIdByRunId(Long runId) {
         PipelineRun run = getRunById(runId);
         return run.getPipeline().getId();
     }
-    
+
     @Transactional
     public PipelineRun createRun(Long pipelineId) {
         Pipeline pipeline = getPipelineService().getPipelineById(pipelineId);
         PipelineRun run = new PipelineRun(pipeline);
         run.setStatus("running");
-        
+
         List<PipelineStep> steps = pipelineStepService.getStepsByPipeline(pipelineId);
         if (steps != null) {
             for (PipelineStep step : steps) {
@@ -87,14 +87,14 @@ public class PipelineRunService {
                 run.addStep(runStep);
             }
         }
-        
+
         return pipelineRunRepository.save(run);
     }
-    
+
     @Transactional
     public PipelineRun updateRunStep(Long runId, Integer stepOrder, String status, String outputContent, String outputType) {
         PipelineRun run = getRunById(runId);
-        
+
         for (PipelineRunStep step : run.getSteps()) {
             if (step.getStepOrder().equals(stepOrder)) {
                 step.setStatus(status);
@@ -107,10 +107,10 @@ public class PipelineRunService {
                 break;
             }
         }
-        
+
         return pipelineRunRepository.save(run);
     }
-    
+
     @Transactional
     public PipelineRun completeRun(Long runId, String finalStatus) {
         PipelineRun run = getRunById(runId);
@@ -118,19 +118,19 @@ public class PipelineRunService {
         run.setCompletedAt(LocalDateTime.now());
         return pipelineRunRepository.save(run);
     }
-    
+
     @Transactional
     public PipelineRun saveRun(PipelineRun run) {
         return pipelineRunRepository.save(run);
     }
-    
+
     @Transactional
     public void deleteRun(Long id) {
         PipelineRun run = getRunById(id);
         run.getSteps().clear();
         pipelineRunRepository.delete(run);
     }
-    
+
     @Transactional
     public void deleteRunsByPipeline(Long pipelineId) {
         List<PipelineRun> runs = pipelineRunRepository.findByPipeline_IdOrderByCreatedAtDesc(pipelineId);
@@ -139,7 +139,7 @@ public class PipelineRunService {
         }
         pipelineRunRepository.deleteAll(runs);
     }
-    
+
     public Page<PipelineRun> getAllRuns(int page, int size, String projectName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         if (projectName != null && !projectName.isEmpty()) {
@@ -147,12 +147,12 @@ public class PipelineRunService {
         }
         return pipelineRunRepository.findAll(pageable);
     }
-    
+
     public List<PipelineRun> getTop20AllRuns() {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").descending());
         return pipelineRunRepository.findAll(pageable).getContent();
     }
-    
+
     @Transactional
     public int deleteAllNonRunningRuns() {
         logger.info("Starting cleanup of non-running pipeline runs using native query");

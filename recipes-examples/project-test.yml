@@ -6,7 +6,7 @@ recipe:
 project_path: "C:/Users/USER/.agentic-workspace"
 
 parameters:
-  project_name: "hello"
+  project_name: "hello2"
 
 targets:
   - name: "dev"

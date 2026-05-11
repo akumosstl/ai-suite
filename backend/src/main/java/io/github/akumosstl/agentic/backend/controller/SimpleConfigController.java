@@ -11,10 +11,10 @@ import java.util.Map;
 
 /**
  * Controlador REST para configurações da aplicação.
- * 
+ * <p>
  * Fornece endpoint para o frontend obter configurações,
  * incluindo a porta do servidor.
- * 
+ *
  * @author Sistema Agentic
  * @version 1.0
  */
@@ -22,13 +22,13 @@ import java.util.Map;
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class SimpleConfigController {
-    
+
     @Autowired
     private ConfigService configService;
-    
+
     /**
      * Retorna as configurações da aplicação para o frontend.
-     * 
+     *
      * @return Configurações incluindo porta do servidor
      */
     @GetMapping("/config")

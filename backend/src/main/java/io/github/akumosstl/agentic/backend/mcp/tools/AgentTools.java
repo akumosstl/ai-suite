@@ -4,8 +4,8 @@ import io.github.akumosstl.agentic.backend.mcp.JsonSchemaBuilder;
 import io.github.akumosstl.agentic.backend.mcp.McpResponseFormatter;
 import io.github.akumosstl.agentic.backend.model.Agent;
 import io.github.akumosstl.agentic.backend.service.AgentService;
-import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
+import io.modelcontextprotocol.spec.McpSchema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

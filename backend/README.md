@@ -17,11 +17,13 @@ curl -X POST http://localhost:1488/api/recipes/execute-raw -H "Content-Type: tex
 ```
 
 With parameters (URL-encoded JSON):
+
 ```cmd
 curl -X POST "http://localhost:1488/api/recipes/execute-raw?parameters=%7B%22env%22%3A%22development%22%7D" -H "Content-Type: text/plain" --data-binary @test-recipe.yml
 ```
 
 **Parameters format:** URL-encoded JSON in query string.
+
 - Original: `{"env":"development","version":"1.0"}`
 - URL-encoded: `%7B%22env%22%3A%22development%22%2C%22version%22%3A%221.0%22%7D`
 
@@ -59,7 +61,6 @@ http://localhost:8080/swagger-ui.html
 
 This provides interactive API docs for all controllers.
 
-
 mvnDebug clean install
 mvn spring-boot:run -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 
@@ -84,9 +85,12 @@ The executable will be generated in `target/`.
 
 ### GraalVM Tracing Agent
 
-If you encounter reflection/serialization errors at runtime (e.g., `Cannot construct instance of...` or `No serializer found for class...`), it means the native image is missing reflection metadata for classes used dynamically by Jackson or other libraries.
+If you encounter reflection/serialization errors at runtime (e.g., `Cannot construct instance of...` or
+`No serializer found for class...`), it means the native image is missing reflection metadata for classes used
+dynamically by Jackson or other libraries.
 
-The **GraalVM Tracing Agent** captures all reflection, serialization, proxy, and resource accesses at runtime and generates the required native-image configuration files automatically.
+The **GraalVM Tracing Agent** captures all reflection, serialization, proxy, and resource accesses at runtime and
+generates the required native-image configuration files automatically.
 
 #### Step 1: Run with the tracing agent
 
@@ -95,7 +99,8 @@ cd backend
 mvn -Pnative -Dagent=true spring-boot:run
 ```
 
-This starts the app with the GraalVM tracing agent attached. The agent records all reflection accesses into `target/native/agent-output/`.
+This starts the app with the GraalVM tracing agent attached. The agent records all reflection accesses into
+`target/native/agent-output/`.
 
 #### Step 2: Exercise the application
 
@@ -146,7 +151,10 @@ mvn -Pnative native:compile
 
 ### Manual reflection registration
 
-As an alternative to the tracing agent, classes can be registered via `@RegisterReflectionForBinding` in `NativeImageReflectionConfig.java`. This is already configured for MCP SDK and JPA entity classes. If you add new classes that need reflection (e.g., new MCP tool response types), add them to the `@RegisterReflectionForBinding` annotation in:
+As an alternative to the tracing agent, classes can be registered via `@RegisterReflectionForBinding` in
+`NativeImageReflectionConfig.java`. This is already configured for MCP SDK and JPA entity classes. If you add new
+classes that need reflection (e.g., new MCP tool response types), add them to the `@RegisterReflectionForBinding`
+annotation in:
 
 ```
 src/main/java/io/github/akumosstl/agentic/backend/config/NativeImageReflectionConfig.java
@@ -154,9 +162,9 @@ src/main/java/io/github/akumosstl/agentic/backend/config/NativeImageReflectionCo
 
 ### Troubleshooting native image errors
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Cannot construct instance of...` | Class not registered for reflection | Add to `@RegisterReflectionForBinding` or re-run tracing agent |
-| `No serializer found for class...` | Class not registered for serialization | Add to `@RegisterReflectionForBinding` or add `SerializationFeature.FAIL_ON_EMPTY_BEANS` disabled |
-| `ClassNotFoundException` at runtime | Class not included in image | Check `--allow-incomplete-classpath` in `native-image.properties` or add the dependency |
-| MCP endpoints return 500 | MCP SDK classes missing reflection | Ensure all `McpSchema$*` and `McpError` classes are registered |
+| Error                               | Cause                                  | Fix                                                                                               |
+|-------------------------------------|----------------------------------------|---------------------------------------------------------------------------------------------------|
+| `Cannot construct instance of...`   | Class not registered for reflection    | Add to `@RegisterReflectionForBinding` or re-run tracing agent                                    |
+| `No serializer found for class...`  | Class not registered for serialization | Add to `@RegisterReflectionForBinding` or add `SerializationFeature.FAIL_ON_EMPTY_BEANS` disabled |
+| `ClassNotFoundException` at runtime | Class not included in image            | Check `--allow-incomplete-classpath` in `native-image.properties` or add the dependency           |
+| MCP endpoints return 500            | MCP SDK classes missing reflection     | Ensure all `McpSchema$*` and `McpError` classes are registered                                    |

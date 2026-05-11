@@ -398,6 +398,23 @@ export interface SprintReview {
   feedback?: string;
 }
 
+export interface Diagram {
+  id?: number;
+  name: string;
+  description?: string;
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PipelineSummary {
+  projectId: number;
+  projectName: string;
+  pipelineId: number;
+  pipelineName: string;
+  pipelineStatus: string;
+}
+
 /**
  * Serviço de comunicação com a API backend.
  * 
@@ -1344,6 +1361,54 @@ export class ApiService {
   deleteRecipeFile(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/recipe-files/${id}`).pipe(
       catchError(this.handleError('deleteRecipeFile', null))
+    );
+  }
+
+  // Diagrams
+  getDiagrams(page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/diagrams`, {
+      params: new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('getDiagrams', [])));
+  }
+
+  searchDiagrams(term: string, page = 0, size = 10): Observable<any> {
+    return this.http.get(`${this.baseUrl}/diagrams/search`, {
+      params: new HttpParams()
+        .set('term', term)
+        .set('page', page.toString())
+        .set('size', size.toString())
+    }).pipe(catchError(this.handleError('searchDiagrams', [])));
+  }
+
+  getDiagram(id: number): Observable<Diagram> {
+    return this.http.get<Diagram>(`${this.baseUrl}/diagrams/${id}`).pipe(
+      catchError(this.handleError('getDiagram', {} as Diagram))
+    );
+  }
+
+  createDiagram(diagram: Diagram): Observable<Diagram> {
+    return this.http.post<Diagram>(`${this.baseUrl}/diagrams`, diagram).pipe(
+      catchError(this.handleError('createDiagram', diagram))
+    );
+  }
+
+  updateDiagram(id: number, diagram: Diagram): Observable<Diagram> {
+    return this.http.put<Diagram>(`${this.baseUrl}/diagrams/${id}`, diagram).pipe(
+      catchError(this.handleError('updateDiagram', diagram))
+    );
+  }
+
+  deleteDiagram(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/diagrams/${id}`).pipe(
+      catchError(this.handleError('deleteDiagram', null))
+    );
+  }
+
+  getAllProjectPipelines(): Observable<PipelineSummary[]> {
+    return this.http.get<PipelineSummary[]>(`${this.baseUrl}/projects/all/pipelines`).pipe(
+      catchError(this.handleError('getAllProjectPipelines', []))
     );
   }
 

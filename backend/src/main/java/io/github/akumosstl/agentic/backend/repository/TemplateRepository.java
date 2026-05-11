@@ -12,10 +12,10 @@ import java.util.Optional;
 @Repository
 public interface TemplateRepository extends JpaRepository<Template, Long> {
     List<Template> findByTypeOrderByCreatedAtDesc(String type);
-    
+
     Page<Template> findByType(String type, Pageable pageable);
-    
+
     List<Template> findByTypeAndNameContainingIgnoreCase(String type, String name);
-    
+
     Optional<Template> findByNameAndType(String name, String type);
 }

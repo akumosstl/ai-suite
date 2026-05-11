@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 
 /**
  * Classe principal da aplicação Spring Boot.
- * 
+ * <p>
  * Inicializa o servidor backend, cria diretórios necessários
  * e abre o navegador automaticamente após a inicialização.
  */
@@ -26,11 +26,32 @@ public class BackendApplication {
 
     public static void main(String[] args) {
         ensureAgenticToolsDirectory();
-        
+
         SpringApplication app = new SpringApplication(BackendApplication.class);
         app.addListeners(new StartupErrorListener());
         ConfigurableApplicationContext context = app.run(args);
         ExitController.setContext(context);
+    }
+
+    private static void ensureAgenticToolsDirectory() {
+        String userHome = System.getenv("USERPROFILE");
+        if (userHome == null) {
+            userHome = System.getenv("HOME");
+        }
+        if (userHome == null) {
+            System.err.println("WARNING: Could not determine user home directory");
+            return;
+        }
+
+        Path toolsPath = Paths.get(userHome, ".agentic", "tools");
+        if (!Files.exists(toolsPath)) {
+            try {
+                Files.createDirectories(toolsPath);
+                System.out.println("Created tools directory: " + toolsPath);
+            } catch (Exception e) {
+                System.err.println("WARNING: Could not create tools directory: " + e.getMessage());
+            }
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -45,12 +66,12 @@ public class BackendApplication {
             System.out.println("Browser opened successfully at: " + url);
         }
     }
-    
+
     private boolean openBrowserFallback(String url) {
         try {
             String os = System.getProperty("os.name").toLowerCase();
             Runtime runtime = Runtime.getRuntime();
-            
+
             if (os.contains("win")) {
                 runtime.exec("cmd /c start " + url);
             } else if (os.contains("mac")) {
@@ -62,27 +83,6 @@ public class BackendApplication {
         } catch (Exception e) {
             System.err.println("Fallback also failed: " + e.getMessage());
             return false;
-        }
-    }
-
-    private static void ensureAgenticToolsDirectory() {
-        String userHome = System.getenv("USERPROFILE");
-        if (userHome == null) {
-            userHome = System.getenv("HOME");
-        }
-        if (userHome == null) {
-            System.err.println("WARNING: Could not determine user home directory");
-            return;
-        }
-        
-        Path toolsPath = Paths.get(userHome, ".agentic", "tools");
-        if (!Files.exists(toolsPath)) {
-            try {
-                Files.createDirectories(toolsPath);
-                System.out.println("Created tools directory: " + toolsPath);
-            } catch (Exception e) {
-                System.err.println("WARNING: Could not create tools directory: " + e.getMessage());
-            }
         }
     }
 }

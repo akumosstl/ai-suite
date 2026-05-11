@@ -1,0 +1,214 @@
+<div class="diagram-container">
+  <app-menu-bar></app-menu-bar>
+
+  <div class="content" [class.left-collapsed]="leftPanelCollapsed">
+    <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon>account_tree</mat-icon>
+          <span>Diagrams</span>
+        </div>
+        <button class="icon-btn add-btn" (click)="newDiagram()" title="New diagram">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <div class="search-section">
+        <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+          <mat-label>Search by name...</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <button class="icon-btn search-btn" (click)="search()" title="Search">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button class="icon-btn clear-btn" (click)="clearSearch()" title="Clear" *ngIf="searchTerm">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="loading-state">
+        <mat-spinner diameter="32" color="primary"></mat-spinner>
+        <span>Loading diagrams...</span>
+      </div>
+
+      <div class="diagram-list">
+        <div class="list-item" *ngFor="let diagram of diagrams"
+             [class.selected]="diagram === selectedDiagram"
+             (click)="selectDiagram(diagram)">
+          <div class="item-avatar">
+            <mat-icon>account_tree</mat-icon>
+          </div>
+          <div class="item-info">
+            <span class="item-name">{{ diagram.name }}</span>
+            <span class="item-meta">{{ diagram.updatedAt | date:'short' }}</span>
+          </div>
+          <button class="icon-btn delete-btn" (click)="deleteDiagram(diagram, $event)" title="Delete diagram">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <mat-icon class="chevron">chevron_right</mat-icon>
+        </div>
+
+        <div *ngIf="diagrams.length === 0 && !loading" class="empty-state">
+          <mat-icon>account_tree</mat-icon>
+          <span>No diagrams found</span>
+          <small>Create your first diagram</small>
+        </div>
+      </div>
+
+      <mat-paginator class="custom-paginator"
+        [length]="totalElements"
+        [pageSize]="pageSize"
+        [pageIndex]="currentPage"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+
+      <div class="pipeline-palette">
+        <div class="palette-header">
+          <mat-icon>alt_route</mat-icon>
+          <span>Pipeline Palette</span>
+        </div>
+        <div *ngIf="pipelineLoading" class="loading-state small">
+          <mat-spinner diameter="20" color="primary"></mat-spinner>
+        </div>
+        <div *ngIf="!pipelineLoading && pipelineGroups.length === 0" class="empty-palette">
+          <span>No pipelines available</span>
+        </div>
+        <div class="pipeline-groups">
+          <div *ngFor="let group of pipelineGroups" class="pipeline-group">
+            <div class="group-header" (click)="togglePipelineGroup(group)">
+              <mat-icon class="expand-icon">{{ group.expanded ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              <mat-icon>folder</mat-icon>
+              <span class="group-name">{{ group.projectName }}</span>
+              <span class="badge small">{{ group.pipelines.length }}</span>
+            </div>
+            <div class="group-pipelines" *ngIf="group.expanded">
+              <div *ngFor="let pipeline of group.pipelines"
+                   class="pipeline-item"
+                   draggable="true"
+                   (dragstart)="onPipelineDragStart($event, pipeline)"
+                   title="Drag to canvas">
+                <span class="pipeline-status-dot" [ngClass]="'status-' + (pipeline.pipelineStatus || 'pending')"></span>
+                <span class="pipeline-name">{{ pipeline.pipelineName }}</span>
+                <mat-icon class="drag-handle">drag_indicator</mat-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-panel-toggle
+      [isCollapsed]="leftPanelCollapsed"
+      (toggle)="toggleLeftPanel()"
+      [class.collapsed]="leftPanelCollapsed">
+    </app-panel-toggle>
+
+    <div class="right-panel">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="tool-btn" (click)="saveDiagram()" matTooltip="Save (Ctrl+S)" matTooltipPosition="below">
+            <mat-icon>save</mat-icon>
+          </button>
+          <button class="tool-btn" (click)="newDiagram()" matTooltip="New Diagram" matTooltipPosition="below">
+            <mat-icon>note_add</mat-icon>
+          </button>
+          <div class="toolbar-separator"></div>
+          <button class="tool-btn" (click)="undo()" matTooltip="Undo (Ctrl+Z)" matTooltipPosition="below">
+            <mat-icon>undo</mat-icon>
+          </button>
+          <button class="tool-btn" (click)="redo()" matTooltip="Redo (Ctrl+Y)" matTooltipPosition="below">
+            <mat-icon>redo</mat-icon>
+          </button>
+          <div class="toolbar-separator"></div>
+          <button class="tool-btn" (click)="zoomIn()" matTooltip="Zoom In" matTooltipPosition="below">
+            <mat-icon>zoom_in</mat-icon>
+          </button>
+          <span class="zoom-label">{{ currentZoom }}%</span>
+          <button class="tool-btn" (click)="zoomOut()" matTooltip="Zoom Out" matTooltipPosition="below">
+            <mat-icon>zoom_out</mat-icon>
+          </button>
+          <button class="tool-btn" (click)="zoomActual()" matTooltip="Actual Size" matTooltipPosition="below">
+            <mat-icon>fullscreen</mat-icon>
+          </button>
+          <button class="tool-btn" (click)="fitToWindow()" matTooltip="Fit to Window" matTooltipPosition="below">
+            <mat-icon>fit_screen</mat-icon>
+          </button>
+        </div>
+        <div class="toolbar-center">
+            <button class="tool-btn" [class.active]="currentTool === 'select'" (click)="setTool('select')" matTooltip="Select / Connect" matTooltipPosition="below">
+              <mat-icon>near_me</mat-icon>
+            </button>
+            <button class="tool-btn" [class.active]="currentTool === 'hand'" (click)="setTool('hand')" matTooltip="Pan / Hand" matTooltipPosition="below">
+              <mat-icon>pan_tool</mat-icon>
+            </button>
+          <button class="tool-btn" [class.active]="currentTool === 'rectangle'" (click)="setTool('rectangle')" matTooltip="Rectangle" matTooltipPosition="below">
+            <mat-icon>crop_square</mat-icon>
+          </button>
+          <button class="tool-btn" [class.active]="currentTool === 'ellipse'" (click)="setTool('ellipse')" matTooltip="Ellipse" matTooltipPosition="below">
+            <mat-icon>circle</mat-icon>
+          </button>
+          <button class="tool-btn" [class.active]="currentTool === 'rhombus'" (click)="setTool('rhombus')" matTooltip="Decision" matTooltipPosition="below">
+            <mat-icon>change_history</mat-icon>
+          </button>
+        <button class="tool-btn" [class.active]="currentTool === 'text'" (click)="setTool('text')" matTooltip="Text Label" matTooltipPosition="below">
+          <mat-icon>text_fields</mat-icon>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="tool-btn" [class.active]="currentTool === 'line'" (click)="setTool('line')" matTooltip="Line (click 2 shapes)" matTooltipPosition="below">
+          <mat-icon>horizontal_rule</mat-icon>
+        </button>
+        <button class="tool-btn" [class.active]="currentTool === 'arrow'" (click)="setTool('arrow')" matTooltip="Arrow (click 2 shapes)" matTooltipPosition="below">
+          <mat-icon>trending_flat</mat-icon>
+        </button>
+        <div class="toolbar-separator"></div>
+          <button class="tool-btn" (click)="deleteSelected()" matTooltip="Delete Selected (Del)" matTooltipPosition="below">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+        <div class="toolbar-right">
+        <div class="color-picker-group">
+          <label class="color-label">Edge</label>
+          <input type="color" [value]="edgeColor" (input)="onEdgeColorChange($any($event.target).value)" class="color-input" title="Edge Color">
+        </div>
+        <div class="edge-style-group">
+          <label class="color-label">Style</label>
+          <select [ngModel]="edgeStyle" (ngModelChange)="onEdgeStyleChange($event)" class="edge-style-select" title="Edge Style">
+            <option value="orthogonal">Orthogonal</option>
+            <option value="straight">Straight</option>
+            <option value="curved">Curved</option>
+          </select>
+        </div>
+        <div class="toolbar-separator"></div>
+          <div class="color-picker-group">
+            <label class="color-label">Fill</label>
+            <input type="color" [value]="fillColor" (input)="onFillColorChange($any($event.target).value)" class="color-input" title="Fill Color">
+          </div>
+          <div class="color-picker-group">
+            <label class="color-label">Stroke</label>
+            <input type="color" [value]="strokeColor" (input)="onStrokeColorChange($any($event.target).value)" class="color-input" title="Stroke Color">
+          </div>
+          <div class="color-picker-group">
+            <label class="color-label">Font</label>
+            <input type="color" [value]="fontColor" (input)="onFontColorChange($any($event.target).value)" class="color-input" title="Font Color">
+          </div>
+          <div class="toolbar-separator"></div>
+          <button class="tool-btn" (click)="exportSvg()" matTooltip="Export SVG" matTooltipPosition="below">
+            <mat-icon>code</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="statusMessage" class="status-bar" [ngClass]="getStatusClass()">
+        {{ statusMessage }}
+        <button class="status-close" (click)="statusMessage = ''">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div #graphContainer class="graph-canvas" (click)="onCanvasClick($event)">
+      </div>
+    </div>
+  </div>
+</div>

@@ -31,7 +31,7 @@ class PipelineExecutionTest {
     @Test
     void testPipelineStatusTransitions() {
         Pipeline pipeline = new Pipeline();
-        
+
         pipeline.setStatus("pending");
         assertEquals("pending", pipeline.getStatus());
 
@@ -51,7 +51,7 @@ class PipelineExecutionTest {
     @Test
     void testPipelineTypes() {
         Pipeline pipeline = new Pipeline();
-        
+
         pipeline.setType("sequential");
         assertEquals("sequential", pipeline.getType());
 
@@ -100,9 +100,9 @@ class PipelineExecutionTest {
     void testPlaceholderReplacement() {
         String prompt = "Review the following file: {{previous-output-file}}";
         String previousOutput = "C:/test/output.txt";
-        
+
         String replaced = prompt.replace("{{previous-output-file}}", previousOutput.replace("\\", "/"));
-        
+
         assertTrue(replaced.contains("C:/test/output.txt"));
         assertFalse(replaced.contains("{{previous-output-file}}"));
     }
@@ -110,12 +110,12 @@ class PipelineExecutionTest {
     @Test
     void testAtomicBooleanPause() {
         AtomicBoolean paused = new AtomicBoolean(true);
-        
+
         assertTrue(paused.get());
-        
+
         paused.set(false);
         assertFalse(paused.get());
-        
+
         paused.compareAndSet(false, true);
         assertTrue(paused.get());
     }

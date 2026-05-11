@@ -92,11 +92,16 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
             <mat-icon>alt_route</mat-icon>
             <span>Pipelines</span>
           </button>
-          <button mat-menu-item routerLink="/recipe" class="menu-item">
-            <mat-icon>restaurant</mat-icon>
-            <span>Recipe</span>
-          </button>
-        </mat-menu>
+        <button mat-menu-item routerLink="/recipe" class="menu-item">
+          <mat-icon>restaurant</mat-icon>
+          <span>Recipe</span>
+        </button>
+        <div class="menu-separator"></div>
+        <button mat-menu-item routerLink="/diagram" class="menu-item">
+          <mat-icon>account_tree</mat-icon>
+          <span>Diagram</span>
+        </button>
+      </mat-menu>
 
           <button class="menu-button" (click)="openPluginsModal()">
             <mat-icon>extension</mat-icon>
@@ -118,16 +123,16 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
           <span>Namespace</span>
         </button>
         <div class="menu-separator"></div>
-        <button mat-menu-item (click)="checkUpdate()" class="menu-item">
-          <mat-icon>system_update</mat-icon>
-          <span>Update</span>
-        </button>
-      </mat-menu>
-
-      <button class="menu-button" (click)="openShortcuts()">
-        <mat-icon>info</mat-icon>
-        <span>Info</span>
-      </button>
+          <button mat-menu-item (click)="checkUpdate()" class="menu-item">
+            <mat-icon>system_update</mat-icon>
+            <span>Update</span>
+          </button>
+          <div class="menu-separator"></div>
+          <button mat-menu-item (click)="openShortcuts()" class="menu-item">
+            <mat-icon>keyboard</mat-icon>
+            <span>Shortcut</span>
+          </button>
+        </mat-menu>
         </ng-container>
         
         <ng-container *ngIf="isMainPage(); else homeButton">
@@ -389,6 +394,10 @@ ngOnInit(): void {
           event.preventDefault();
           this.router.navigate(['/recipe']);
           break;
+        case 'd':
+          event.preventDefault();
+          this.router.navigate(['/diagram']);
+          break;
         case 'p':
           event.preventDefault();
           if (!this.isMainPage() && !this.isProjectPage()) {
@@ -427,7 +436,7 @@ ngOnDestroy(): void {
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe'];
+    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe', '/diagram'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;

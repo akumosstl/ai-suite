@@ -13,10 +13,10 @@ import java.util.Map;
 
 /**
  * Controlador REST para gerenciamento de Scripts.
- * 
+ * <p>
  * Fornece endpoints para criar, listar, atualizar e excluir scripts.
  * Suporta paginação, busca e filtragem por namespace.
- * 
+ *
  * @author Sistema Agentic
  * @version 1.0
  */
@@ -103,7 +103,7 @@ public class ScriptController {
         response.put("totalPages", (int) Math.ceil((double) totalElements / size));
         response.put("searchTerm", term);
         response.put("namespace", namespace);
-        
+
         return ResponseEntity.ok(response);
     }
 

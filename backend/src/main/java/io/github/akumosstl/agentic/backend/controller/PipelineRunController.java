@@ -15,10 +15,10 @@ import java.util.Map;
 
 /**
  * Controlador REST para gerenciamento de Execuções de Pipeline (PipelineRun).
- * 
+ * <p>
  * Fornece endpoints para criar, listar e atualizar execuções de pipelines.
  * Gerencia etapas de execução e conclusão de runs.
- * 
+ *
  * @author Sistema Agentic
  * @version 1.0
  */
@@ -26,19 +26,19 @@ import java.util.Map;
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class PipelineRunController {
-    
+
     @Autowired
     private PipelineRunService pipelineRunService;
-    
+
     @Autowired
     private PipelineService pipelineService;
-    
+
     /**
      * Lista execuções de pipelines de um projeto.
-     * 
+     *
      * @param projectId ID do projeto
-     * @param page Número da página
-     * @param size Tamanho da página
+     * @param page      Número da página
+     * @param size      Tamanho da página
      * @return Lista de execuções com paginação
      */
     @GetMapping("/projects/{projectId}/pipeline-runs")
@@ -47,27 +47,27 @@ public class PipelineRunController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<PipelineRun> runPage = pipelineRunService.getRunsByPipeline(projectId, page, size);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("runs", runPage.getContent());
         response.put("currentPage", page);
         response.put("totalElements", runPage.getTotalElements());
         response.put("totalPages", runPage.getTotalPages());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/projects/{projectId}/pipeline-runs/top20")
     public List<PipelineRun> getTop20RunsByProject(@PathVariable Long projectId) {
         return pipelineRunService.getTop20RunsByProject(projectId);
     }
-    
+
     /**
      * Lista execuções de um pipeline específico.
-     * 
+     *
      * @param pipelineId ID do pipeline
-     * @param page Número da página
-     * @param size Tamanho da página
+     * @param page       Número da página
+     * @param size       Tamanho da página
      * @return Lista de execuções
      */
     @GetMapping("/pipelines/{pipelineId}/runs")
@@ -76,24 +76,24 @@ public class PipelineRunController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<PipelineRun> runPage = pipelineRunService.getRunsByPipeline(pipelineId, page, size);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("runs", runPage.getContent());
         response.put("currentPage", page);
         response.put("totalElements", runPage.getTotalElements());
         response.put("totalPages", runPage.getTotalPages());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/pipelines/{pipelineId}/runs/top20")
     public List<PipelineRun> getTop20RunsByPipeline(@PathVariable Long pipelineId) {
         return pipelineRunService.getTop20RunsByPipeline(pipelineId);
     }
-    
+
     /**
      * Busca uma execução pelo ID.
-     * 
+     *
      * @param id ID da execução
      * @return Execução encontrada
      */
@@ -101,11 +101,11 @@ public class PipelineRunController {
     public PipelineRun getRunById(@PathVariable Long id) {
         return pipelineRunService.getRunById(id);
     }
-    
+
     /**
      * Obtém a saída de uma etapa específica de uma execução.
-     * 
-     * @param runId ID da execução
+     *
+     * @param runId     ID da execução
      * @param stepOrder Ordem da etapa
      * @return Dados da etapa
      */
@@ -115,7 +115,7 @@ public class PipelineRunController {
             @PathVariable Integer stepOrder) {
         PipelineRun run = pipelineRunService.getRunById(runId);
         Map<String, Object> response = new HashMap<>();
-        
+
         if (run != null && run.getSteps() != null) {
             for (PipelineRunStep step : run.getSteps()) {
                 if (step.getStepOrder() != null && step.getStepOrder().equals(stepOrder)) {
@@ -140,13 +140,13 @@ public class PipelineRunController {
                 }
             }
         }
-        
+
         return response;
     }
-    
+
     /**
      * Cria uma nova execução para um pipeline.
-     * 
+     *
      * @param pipelineId ID do pipeline
      * @return Execução criada
      */
@@ -155,7 +155,7 @@ public class PipelineRunController {
         System.out.println("DEBUG: createRun called with pipelineId=" + pipelineId);
         PipelineRun run = pipelineRunService.createRun(pipelineId);
         System.out.println("DEBUG: Created run " + run.getId() + " for pipeline " + run.getPipeline().getId());
-        
+
         new Thread(() -> {
             try {
                 System.out.println("DEBUG: Starting pipeline execution for pipelineId=" + pipelineId + ", runId=" + run.getId());
@@ -164,16 +164,16 @@ public class PipelineRunController {
                 System.err.println("Error starting pipeline run: " + e.getMessage());
             }
         }).start();
-        
+
         return run;
     }
-    
+
     /**
      * Atualiza uma etapa de uma execução.
-     * 
-     * @param runId ID da execução
+     *
+     * @param runId     ID da execução
      * @param stepOrder Ordem da etapa
-     * @param body Dados atualizados (status, outputContent, outputType)
+     * @param body      Dados atualizados (status, outputContent, outputType)
      * @return Execução atualizada
      */
     @PutMapping("/pipeline-runs/{runId}/steps/{stepOrder}")
@@ -186,12 +186,12 @@ public class PipelineRunController {
         String outputType = body.get("outputType");
         return pipelineRunService.updateRunStep(runId, stepOrder, status, outputContent, outputType);
     }
-    
+
     /**
      * Finaliza uma execução.
-     * 
+     *
      * @param runId ID da execução
-     * @param body Status final (sucesso ou falha)
+     * @param body  Status final (sucesso ou falha)
      * @return Execução finalizada
      */
     @PutMapping("/pipeline-runs/{runId}/complete")
@@ -199,79 +199,79 @@ public class PipelineRunController {
         String finalStatus = body.get("status");
         return pipelineRunService.completeRun(runId, finalStatus);
     }
-    
+
     /**
      * Exclui uma execução.
-     * 
+     *
      * @param id ID da execução
      * @return Response com mensagem
      */
     @DeleteMapping("/pipeline-runs/{id}")
     public ResponseEntity<Map<String, String>> deleteRun(@PathVariable Long id) {
         pipelineRunService.deleteRun(id);
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Pipeline run deleted successfully");
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/all-pipeline-runs")
     public ResponseEntity<Map<String, Object>> getAllRuns(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String projectName) {
         Page<PipelineRun> runPage = pipelineRunService.getAllRuns(page, size, projectName);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("runs", runPage.getContent());
         response.put("currentPage", page);
         response.put("totalElements", runPage.getTotalElements());
         response.put("totalPages", runPage.getTotalPages());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/all-pipeline-runs/top20")
     public List<PipelineRun> getTop20AllRuns() {
         return pipelineRunService.getTop20AllRuns();
     }
-    
+
     @GetMapping("/pipeline-runs/{runId}/steps/{stepOrder}/file-output")
     public ResponseEntity<Map<String, Object>> getStepFileOutput(
             @PathVariable Long runId,
             @PathVariable Integer stepOrder) {
         PipelineRun run = pipelineRunService.getRunById(runId);
         Map<String, Object> response = new HashMap<>();
-        
+
         if (run == null) {
             response.put("error", "Pipeline run not found");
             return ResponseEntity.notFound().build();
         }
-        
+
         String runDir = run.getRunDir();
         if (runDir == null || runDir.isEmpty()) {
             response.put("error", "Run directory not available");
             response.put("message", "Output file no longer exists");
             return ResponseEntity.ok(response);
         }
-        
+
         String pipelineName = run.getPipeline() != null ? run.getPipeline().getName() : "pipeline";
         pipelineName = pipelineName.replaceAll("\\s+", "");
-        String outputExtension = run.getPipeline() != null && run.getPipeline().getOutputExtension() != null 
-            ? run.getPipeline().getOutputExtension() 
-            : "txt";
-        
+        String outputExtension = run.getPipeline() != null && run.getPipeline().getOutputExtension() != null
+                ? run.getPipeline().getOutputExtension()
+                : "txt";
+
         String outputFileName = "step" + stepOrder + "-result." + outputExtension;
         java.io.File outputFile = new java.io.File(runDir, outputFileName);
-        
+
         if (!outputFile.exists()) {
             response.put("fileExists", false);
             response.put("message", "Output file no longer exists");
             response.put("expectedPath", outputFile.getAbsolutePath());
             return ResponseEntity.ok(response);
         }
-        
+
         try {
             String content = java.nio.file.Files.readString(outputFile.toPath());
             response.put("fileExists", true);
@@ -283,15 +283,15 @@ public class PipelineRunController {
             return ResponseEntity.status(500).build();
         }
     }
-    
+
     @DeleteMapping("/all-pipeline-runs/cleanup")
     public ResponseEntity<Map<String, Object>> cleanupAllRuns() {
         int deletedCount = pipelineRunService.deleteAllNonRunningRuns();
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("deletedCount", deletedCount);
         response.put("message", "Cleanup completed successfully");
-        
+
         return ResponseEntity.ok(response);
     }
 }

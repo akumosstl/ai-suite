@@ -482,3 +482,66 @@ A visual editor for creating and managing recipe YAML files, accessible from the
 5. **Pipeline not added to project** — When pipeline already existed (via findOrCreate), steps were being added on every run. Fixed by only adding steps when creating a new pipeline (`isNewPipeline` flag).
 
 **Services with findOrCreate:** TargetService, AgentService, ScriptService, TemplateService, PipelineService
+
+---
+
+### Diagram Feature (Session: 2026-05-11)
+
+A visual pipeline flow diagram editor using maxGraph (TypeScript fork of mxGraph), accessible from the Stack > Diagram menu.
+
+**Backend files created:**
+- `model/Diagram.java` - JPA entity (id, name, description, content TEXT, createdAt, updatedAt)
+- `repository/DiagramRepository.java` - Pagination + search by name + findTop20
+- `controller/DiagramController.java` - REST API: `/api/diagrams` (CRUD + search with pagination)
+
+**Backend files modified:**
+- `controller/ProjectController.java` - Added `GET /api/projects/all/pipelines` endpoint returning flat list of `{projectId, projectName, pipelineId, pipelineName, pipelineStatus}`
+
+**Frontend files created:**
+- `screens/diagram/diagram.component.ts` - Full component with maxGraph Graph, undo/redo, shape tools, color pickers, drag-drop pipeline nodes, zoom, export PNG/SVG, keyboard shortcuts
+- `screens/diagram/diagram.component.html` - Template with menu-bar, toolbar, left panel (diagram list + search + pagination + pipeline palette), main canvas
+- `screens/diagram/diagram.component.css` - Dark theme styles
+
+**Frontend files modified:**
+- `package.json` - Added `@maxgraph/core` dependency
+- `app.routes.ts` - Added `/diagram` route
+- `components/menu-bar/menu-bar.component.ts` - Added Diagram menu item, Ctrl+Shift+D shortcut
+- `services/api.service.ts` - Added Diagram + PipelineSummary interfaces, 7 API methods
+
+**Key maxGraph API notes:**
+- `graph.getView().getScale()` for zoom level (not `getZoomScale()`)
+- `graph.getPlugin<PanningHandler>('PanningHandler')` for panning control (not `graph.panningHandler`)
+- `setCellStyles(key: keyof CellStateStyle, ...)` requires typed key, not raw string
+- `ModelXmlSerializer` for XML save/load of graph model
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)
+
+### Diagram Connection Lines Feature (Session: 2026-05-11)
+
+Added line/arrow connection tools to the diagram editor for connecting shapes.
+
+**Frontend files modified:**
+- `screens/diagram/diagram.component.ts`:
+  - Added `line` and `arrow` to `currentTool` union type
+  - Added `edgeColor`, `edgeStyle` (orthogonal/straight/curved), `connectionSource` state
+  - `setTool()`: resets `connectionSource` on tool switch
+  - `insertEdge()`: creates edge between two cells with current edge style/color/arrow settings
+  - `onCanvasClick()`: handles click-to-connect flow (click source shape → click target shape → edge created)
+  - `onEdgeColorChange()`: updates selected edges' stroke color
+  - `onEdgeStyleChange()`: updates selected edges' style (orthogonal/straight/curved)
+  - `getEdgeStyleValue()`: maps `edgeStyle` to maxGraph edgeStyle string
+  - Graph click listener: updated to also extract edge style/color when clicking an edge
+- `screens/diagram/diagram.component.html`:
+  - Added Line (`horizontal_rule` icon) and Arrow (`trending_flat` icon) tool buttons in toolbar-center
+  - Added Edge color picker and Edge style dropdown (orthogonal/straight/curved) in toolbar-right
+- `screens/diagram/diagram.component.css`:
+  - Added `.edge-style-group`, `.edge-style-select` styles for the dropdown
+
+**Usage:**
+1. Click Line or Arrow tool in toolbar
+2. Click first shape (source) — status shows "Click another shape to connect"
+3. Click second shape (target) — edge is created, tool resets to select
+4. Select an edge to change its color/style via the toolbar controls
+5. In select mode, drag from shape connection points also creates edges (maxGraph native behavior)
+
+**Build status:** Frontend compiles successfully (0 errors)

@@ -252,13 +252,13 @@ public final class McpResponseFormatter {
         return sb.toString();
     }
 
-  public static String formatTarget(Target t) {
+    public static String formatTarget(Target t) {
         StringBuilder sb = new StringBuilder();
         sb.append("## Target: ").append(t.getName()).append("\n");
         sb.append("- **ID**: ").append(t.getId()).append("\n");
         if (t.getAgentsPath() != null) sb.append("- **Agents Path**: ").append(t.getAgentsPath()).append("\n");
         if (t.getScriptsPath() != null) sb.append("- **Scripts Path**: ").append(t.getScriptsPath()).append("\n");
-    if (t.getCli() != null) sb.append("- **CLI**: ").append(t.getCli()).append("\n");
+        if (t.getCli() != null) sb.append("- **CLI**: ").append(t.getCli()).append("\n");
         return sb.toString();
     }
 

@@ -5,6 +5,7 @@ Este arquivo contém a lista de plugins disponíveis para o Agentic AI Suite.
 ## Como usar
 
 O arquivo `plugins.json` deve estar disponível em:
+
 ```
 https://github.com/akumosstl/akumosstl.github.io/blob/main/plugins.json
 ```
@@ -66,6 +67,7 @@ https://github.com/akumosstl/akumosstl.github.io/blob/main/plugins.json
 ## Testando
 
 Para testar se o arquivo está acessível:
+
 ```bash
 curl https://raw.githubusercontent.com/akumosstl/akumosstl.github.io/main/plugins.json
 ```

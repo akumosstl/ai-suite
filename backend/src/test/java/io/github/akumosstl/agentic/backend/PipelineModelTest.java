@@ -1,10 +1,10 @@
 package io.github.akumosstl.agentic.backend;
 
 import io.github.akumosstl.agentic.backend.model.Pipeline;
-import io.github.akumosstl.agentic.backend.model.Project;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class PipelineModelTest {
 
@@ -39,7 +39,7 @@ class PipelineModelTest {
         Pipeline pipeline = new Pipeline();
         pipeline.setOutputExtension("json");
         assertEquals("json", pipeline.getOutputExtension());
-        
+
         pipeline.setOutputExtension("txt");
         assertEquals("txt", pipeline.getOutputExtension());
     }
@@ -70,13 +70,13 @@ class PipelineModelTest {
         Pipeline pipeline = new Pipeline();
         pipeline.setStatus("running");
         assertEquals("running", pipeline.getStatus());
-        
+
         pipeline.setStatus("completed");
         assertEquals("completed", pipeline.getStatus());
-        
+
         pipeline.setStatus("failed");
         assertEquals("failed", pipeline.getStatus());
-        
+
         pipeline.setStatus("stopped");
         assertEquals("stopped", pipeline.getStatus());
     }

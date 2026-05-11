@@ -1,14 +1,16 @@
 package io.github.akumosstl.agentic.backend.controller;
 
 import io.github.akumosstl.agentic.backend.model.*;
-import io.github.akumosstl.agentic.backend.service.*;
-import io.github.akumosstl.agentic.backend.repository.*;
+import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
+import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
+import io.github.akumosstl.agentic.backend.service.AgentService;
+import io.github.akumosstl.agentic.backend.service.PipelineService;
+import io.github.akumosstl.agentic.backend.service.ScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/namespaces")
@@ -21,8 +23,8 @@ public class NamespaceController {
     @Autowired
     private ScriptService scriptService;
 
-  @Autowired
-  private PipelineService pipelineService;
+    @Autowired
+    private PipelineService pipelineService;
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -51,18 +53,18 @@ public class NamespaceController {
                     namespaces = scriptService.getDistinctCategories();
                 }
                 break;
-    default:
-      return ResponseEntity.badRequest().build();
-  }
-  return ResponseEntity.ok(namespaces);
-}
+            default:
+                return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(namespaces);
+    }
 
     @GetMapping("/all")
     public ResponseEntity<Map<String, List<String>>> getAllNamespaces() {
         Map<String, List<String>> result = new HashMap<>();
-  result.put("agents", agentService.getDistinctNamespaces());
-  result.put("scripts", scriptService.getDistinctNamespaces());
-  return ResponseEntity.ok(result);
+        result.put("agents", agentService.getDistinctNamespaces());
+        result.put("scripts", scriptService.getDistinctNamespaces());
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{type}/{namespace}")
@@ -70,7 +72,7 @@ public class NamespaceController {
             @PathVariable String type,
             @PathVariable String namespace,
             @RequestParam(required = false) String searchTerm) {
-        
+
         List<?> items = new ArrayList<>();
 
         switch (type) {
@@ -80,9 +82,9 @@ public class NamespaceController {
             case "scripts":
                 items = scriptService.getScriptsByNamespace(namespace);
                 break;
-    default:
-      return ResponseEntity.badRequest().build();
-  }
+            default:
+                return ResponseEntity.badRequest().build();
+        }
 
         NamespaceItems result = new NamespaceItems();
         result.setType(type);
@@ -97,9 +99,9 @@ public class NamespaceController {
     public ResponseEntity<List<Pipeline>> getPipelinesUsingNamespace(
             @PathVariable String type,
             @PathVariable String namespace) {
-        
+
         Set<Long> itemIds = getItemIdsByTypeAndNamespace(type, namespace);
-        
+
         List<Pipeline> allPipelines = pipelineService.getAllPipelines();
         List<Pipeline> referencedPipelines = new ArrayList<>();
 
@@ -113,7 +115,7 @@ public class NamespaceController {
                 }
                 return false;
             });
-            
+
             if (referencesNamespace) {
                 referencedPipelines.add(pipeline);
             }
@@ -126,34 +128,34 @@ public class NamespaceController {
     public ResponseEntity<List<Project>> getProjectsUsingNamespace(
             @PathVariable String type,
             @PathVariable String namespace) {
-        
+
         Set<Long> itemIds = getItemIdsByTypeAndNamespace(type, namespace);
         List<Project> allProjects = projectRepository.findAll();
         List<Project> referencedProjects = new ArrayList<>();
 
         for (Project project : allProjects) {
             boolean referencesNamespace = false;
-            
-    switch (type) {
-      case "scripts":
-        if (project.getScripts() != null) {
-          referencesNamespace = project.getScripts().stream()
-            .anyMatch(s -> itemIds.contains(s.getId()));
-        }
-        break;
-      case "agents":
-        if (project.getAgents() != null) {
-          referencesNamespace = project.getAgents().stream()
-            .anyMatch(a -> itemIds.contains(a.getId()));
-        }
-        break;
-    }
 
-    if (referencesNamespace) {
-      referencedProjects.add(project);
-    }
-  }
-        
+            switch (type) {
+                case "scripts":
+                    if (project.getScripts() != null) {
+                        referencesNamespace = project.getScripts().stream()
+                                .anyMatch(s -> itemIds.contains(s.getId()));
+                    }
+                    break;
+                case "agents":
+                    if (project.getAgents() != null) {
+                        referencesNamespace = project.getAgents().stream()
+                                .anyMatch(a -> itemIds.contains(a.getId()));
+                    }
+                    break;
+            }
+
+            if (referencesNamespace) {
+                referencedProjects.add(project);
+            }
+        }
+
         return ResponseEntity.ok(referencedProjects);
     }
 
@@ -161,19 +163,19 @@ public class NamespaceController {
     public ResponseEntity<ClearResult> clearNamespace(
             @PathVariable String type,
             @PathVariable String namespace) {
-        
+
         Set<Long> itemIds = getItemIdsByTypeAndNamespace(type, namespace);
-        
+
         int pipelinesUsingCount = countPipelinesUsingNamespace(type, itemIds);
         int projectsUsingCount = countProjectsUsingNamespace(type, itemIds);
-        
+
         if (pipelinesUsingCount > 0 || projectsUsingCount > 0) {
             ClearResult result = new ClearResult();
             result.setSuccess(false);
             result.setDeletedCount(0);
-            result.setMessage("Cannot clear namespace - it is used by " + 
-                pipelinesUsingCount + " pipeline(s) and " + 
-                projectsUsingCount + " project(s)");
+            result.setMessage("Cannot clear namespace - it is used by " +
+                    pipelinesUsingCount + " pipeline(s) and " +
+                    projectsUsingCount + " project(s)");
             return ResponseEntity.ok(result);
         }
 
@@ -202,7 +204,7 @@ public class NamespaceController {
 
     private Set<Long> getItemIdsByTypeAndNamespace(String type, String namespace) {
         Set<Long> itemIds = new HashSet<>();
-        
+
         switch (type) {
             case "agents":
                 List<Agent> agents = agentService.getAgentsByNamespace(namespace);
@@ -217,7 +219,7 @@ public class NamespaceController {
                 }
                 break;
         }
-        
+
         return itemIds;
     }
 
@@ -235,7 +237,7 @@ public class NamespaceController {
                 }
                 return false;
             });
-            
+
             if (referencesNamespace) count++;
         }
 
@@ -248,22 +250,22 @@ public class NamespaceController {
 
         for (Project project : allProjects) {
             boolean referencesNamespace = false;
-            
+
             switch (type) {
                 case "scripts":
                     if (project.getScripts() != null) {
                         referencesNamespace = project.getScripts().stream()
-                            .anyMatch(s -> itemIds.contains(s.getId()));
+                                .anyMatch(s -> itemIds.contains(s.getId()));
                     }
                     break;
                 case "agents":
                     if (project.getAgents() != null) {
                         referencesNamespace = project.getAgents().stream()
-                            .anyMatch(a -> itemIds.contains(a.getId()));
+                                .anyMatch(a -> itemIds.contains(a.getId()));
                     }
                     break;
             }
-            
+
             if (referencesNamespace) count++;
         }
 
@@ -276,14 +278,37 @@ public class NamespaceController {
         private List<?> items;
         private long totalCount;
 
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
-        public String getNamespace() { return namespace; }
-        public void setNamespace(String namespace) { this.namespace = namespace; }
-        public List<?> getItems() { return items; }
-        public void setItems(List<?> items) { this.items = items; }
-        public long getTotalCount() { return totalCount; }
-        public void setTotalCount(long totalCount) { this.totalCount = totalCount; }
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getNamespace() {
+            return namespace;
+        }
+
+        public void setNamespace(String namespace) {
+            this.namespace = namespace;
+        }
+
+        public List<?> getItems() {
+            return items;
+        }
+
+        public void setItems(List<?> items) {
+            this.items = items;
+        }
+
+        public long getTotalCount() {
+            return totalCount;
+        }
+
+        public void setTotalCount(long totalCount) {
+            this.totalCount = totalCount;
+        }
     }
 
     public static class ClearResult {
@@ -291,11 +316,28 @@ public class NamespaceController {
         private int deletedCount;
         private String message;
 
-        public boolean isSuccess() { return success; }
-        public void setSuccess(boolean success) { this.success = success; }
-        public int getDeletedCount() { return deletedCount; }
-        public void setDeletedCount(int deletedCount) { this.deletedCount = deletedCount; }
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public int getDeletedCount() {
+            return deletedCount;
+        }
+
+        public void setDeletedCount(int deletedCount) {
+            this.deletedCount = deletedCount;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 }

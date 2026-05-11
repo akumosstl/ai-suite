@@ -1,7 +1,7 @@
 package io.github.akumosstl.agentic.backend.exception;
 
 public class FileAlreadyExistsException extends RuntimeException {
-    
+
     private final String fileName;
     private final String filePath;
 

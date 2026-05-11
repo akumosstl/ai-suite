@@ -1,25 +1,31 @@
 # Testing Guide - Deletion Validation
 
 ## Overview
-This guide explains how to test the deletion validation feature to ensure agents, scripts, and other entities cannot be deleted if they have project or pipeline relationships.
+
+This guide explains how to test the deletion validation feature to ensure agents, scripts, and other entities cannot be
+deleted if they have project or pipeline relationships.
 
 ## Test Scenarios
 
 ### Test 1: Delete Agent Associated with Project
 
 **Setup:**
+
 1. Create a new Agent: `POST /api/agents` with name "TestAgent"
 2. Create a Project: `POST /api/projects` with name "TestProject"
 3. Associate the agent with the project (via project management UI or API)
 
 **Action:**
+
 ```
 DELETE /api/agents/{agentId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **400 Bad Request**
 - Response Body:
+
 ```json
 {
   "error": "Cannot delete agent because it is associated with project: TestProject"
@@ -31,19 +37,23 @@ DELETE /api/agents/{agentId}
 ### Test 2: Delete Agent Used in Pipeline
 
 **Setup:**
+
 1. Create a new Agent: `POST /api/agents` with name "PipelineAgent"
 2. Create a Pipeline: `POST /api/pipelines` with name "TestPipeline"
 3. Create a Pipeline Step using the Agent:
-   - `POST /api/pipelines/{pipelineId}/steps` with agent_id set to the agent
+    - `POST /api/pipelines/{pipelineId}/steps` with agent_id set to the agent
 
 **Action:**
+
 ```
 DELETE /api/agents/{agentId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **400 Bad Request**
 - Response Body:
+
 ```json
 {
   "error": "Cannot delete agent because it is associated with pipeline: TestPipeline"
@@ -55,17 +65,21 @@ DELETE /api/agents/{agentId}
 ### Test 3: Delete Agent with NO Relations (Should Succeed)
 
 **Setup:**
+
 1. Create a new Agent: `POST /api/agents` with name "OrphanAgent"
 2. Do NOT associate it with any project or pipeline
 
 **Action:**
+
 ```
 DELETE /api/agents/{agentId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **200 OK**
 - Response Body:
+
 ```json
 {
   "message": "Agent deleted successfully"
@@ -77,18 +91,22 @@ DELETE /api/agents/{agentId}
 ### Test 4: Delete Script Associated with Project
 
 **Setup:**
+
 1. Create a new Script: `POST /api/scripts` with name "TestScript"
 2. Create a Project: `POST /api/projects` with name "TestProject"
 3. Associate the script with the project (via project management)
 
 **Action:**
+
 ```
 DELETE /api/scripts/{scriptId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **400 Bad Request**
 - Response Body:
+
 ```json
 {
   "error": "Cannot delete script because it is associated with project: TestProject"
@@ -100,19 +118,23 @@ DELETE /api/scripts/{scriptId}
 ### Test 5: Delete Script Used in Pipeline
 
 **Setup:**
+
 1. Create a new Script: `POST /api/scripts` with name "PipelineScript"
 2. Create a Pipeline: `POST /api/pipelines` with name "TestPipeline"
 3. Create a Pipeline Step using the Script:
-   - `POST /api/pipelines/{pipelineId}/steps` with script_id set to the script
+    - `POST /api/pipelines/{pipelineId}/steps` with script_id set to the script
 
 **Action:**
+
 ```
 DELETE /api/scripts/{scriptId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **400 Bad Request**
 - Response Body:
+
 ```json
 {
   "error": "Cannot delete script because it is associated with pipeline: TestPipeline"
@@ -124,23 +146,28 @@ DELETE /api/scripts/{scriptId}
 ### Test 6: Delete Skill with File Cleanup
 
 **Setup:**
+
 1. Create a new Skill: `POST /api/skills` with name "TestSkill"
 2. Add files to the skill (if applicable via SkillFileController)
 3. Do NOT associate it with any project
 
 **Action:**
+
 ```
 DELETE /api/skills/{skillId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **200 OK**
 - Response Body:
+
 ```json
 {
   "message": "Skill deleted successfully"
 }
 ```
+
 - All associated skill files should be deleted from database
 
 ---
@@ -148,18 +175,22 @@ DELETE /api/skills/{skillId}
 ### Test 7: Delete Command Associated with Project
 
 **Setup:**
+
 1. Create a new Command: `POST /api/commands` with name "TestCommand"
 2. Create a Project: `POST /api/projects` with name "TestProject"
 3. Associate the command with the project
 
 **Action:**
+
 ```
 DELETE /api/commands/{commandId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **400 Bad Request**
 - Response Body:
+
 ```json
 {
   "error": "Cannot delete command because it is associated with project: TestProject"
@@ -171,23 +202,28 @@ DELETE /api/commands/{commandId}
 ### Test 8: Delete Tool with File Cleanup
 
 **Setup:**
+
 1. Create a new Tool: `POST /api/tools` with name "TestTool"
 2. Add files to the tool (if applicable via ToolFileController)
 3. Do NOT associate it with any project
 
 **Action:**
+
 ```
 DELETE /api/tools/{toolId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **200 OK**
 - Response Body:
+
 ```json
 {
   "message": "Tool deleted successfully"
 }
 ```
+
 - All associated tool files should be deleted from database
 
 ---
@@ -195,23 +231,28 @@ DELETE /api/tools/{toolId}
 ### Test 9: Delete Instruction with File Cleanup
 
 **Setup:**
+
 1. Create a new Instruction: `POST /api/instructions` with name "TestInstruction"
 2. Add files to the instruction (if applicable)
 3. Do NOT associate it with any project
 
 **Action:**
+
 ```
 DELETE /api/instructions/{instructionId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **200 OK**
 - Response Body:
+
 ```json
 {
   "message": "Instruction deleted successfully"
 }
 ```
+
 - All associated instruction files should be deleted from database
 
 ---
@@ -219,23 +260,28 @@ DELETE /api/instructions/{instructionId}
 ### Test 10: Delete Plugin with File Cleanup
 
 **Setup:**
+
 1. Create a new Plugin: `POST /api/plugins` with name "TestPlugin"
 2. Add files to the plugin (if applicable)
 3. Do NOT associate it with any project
 
 **Action:**
+
 ```
 DELETE /api/plugins/{pluginId}
 ```
 
 **Expected Result:**
+
 - HTTP Status: **200 OK**
 - Response Body:
+
 ```json
 {
   "message": "Plugin deleted successfully"
 }
 ```
+
 - All associated plugin files should be deleted from database
 
 ---
@@ -268,20 +314,20 @@ DELETE /api/plugins/{pluginId}
 ## Edge Cases to Test
 
 1. **Multiple Project Associations**
-   - Agent associated with Project A and Project B
-   - When attempting to delete, should show the first project found
+    - Agent associated with Project A and Project B
+    - When attempting to delete, should show the first project found
 
 2. **Multiple Pipeline Associations**
-   - Agent used in PipelineStep 1 and PipelineStep 2 of the same pipeline
-   - When attempting to delete, should show the pipeline name
+    - Agent used in PipelineStep 1 and PipelineStep 2 of the same pipeline
+    - When attempting to delete, should show the pipeline name
 
 3. **Orphaned Relationships**
-   - Agent that was previously in a project but has been removed
-   - Should delete successfully if no longer in any project/pipeline
+    - Agent that was previously in a project but has been removed
+    - Should delete successfully if no longer in any project/pipeline
 
 4. **Null Pipeline Name**
-   - Pipeline Step with null pipeline reference (data inconsistency)
-   - Error message should show "Unknown" instead of crashing
+    - Pipeline Step with null pipeline reference (data inconsistency)
+    - Error message should show "Unknown" instead of crashing
 
 ## Database Verification
 
@@ -316,6 +362,7 @@ All should return empty result sets.
 ## Regression Testing
 
 After each deployment, verify:
+
 1. Existing delete functionality still works for orphaned entities
 2. Error messages display correctly in frontend
 3. No unexpected database state after failed deletions

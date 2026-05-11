@@ -21,6 +21,10 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
     private static String databasePath;
     private static int serverPort = 1488;
 
+    public static int getServerPort() {
+        return serverPort;
+    }
+
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         try {
@@ -48,22 +52,23 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
 
     private void createDefaultConfig(File file) throws IOException {
         String defaultConfig = """
-            {
-              "version": "1.0.0",
-              "port": 1488,
-              "database": {
-                "path": "db/agentic_db"
-              }
-            }
-            """;
+                {
+                  "version": "1.0.0",
+                  "port": 1488,
+                  "database": {
+                    "path": "db/agentic_db"
+                  }
+                }
+                """;
         Files.writeString(file.toPath(), defaultConfig);
     }
 
     private void loadConfig(File file) throws IOException {
         Gson gson = new Gson();
         String content = Files.readString(file.toPath());
-        Map<String, Object> config = gson.fromJson(content, new TypeToken<Map<String, Object>>() {}.getType());
-        
+        Map<String, Object> config = gson.fromJson(content, new TypeToken<Map<String, Object>>() {
+        }.getType());
+
         Object portObj = config.get("port");
         if (portObj != null) {
             serverPort = ((Number) portObj).intValue();
@@ -86,9 +91,5 @@ public class AgenticConfigLoader implements BeanFactoryPostProcessor {
 
     private void setServerPort() {
         System.setProperty("server.port", String.valueOf(serverPort));
-    }
-
-    public static int getServerPort() {
-        return serverPort;
     }
 }
