@@ -32,7 +32,7 @@ export interface StepIODialogData {
     <div class="dialog-header">
       <mat-icon class="header-icon">{{ data.mode === 'input' ? 'input' : 'output' }}</mat-icon>
       <h2 class="dialog-title">{{ data.mode === 'input' ? 'Input' : 'Output' }} Configuration</h2>
-      <span class="step-label">Step: {{ data.step.agent?.name || 'Unknown' }}</span>
+      <span class="step-label">Step: {{ data.step.name || data.step.agent?.name || 'Unknown' }}</span>
     </div>
     
     <mat-dialog-content class="dialog-content">

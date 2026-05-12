@@ -74,9 +74,10 @@ public class PipelineRunService {
         List<PipelineStep> steps = pipelineStepService.getStepsByPipeline(pipelineId);
         if (steps != null) {
             for (PipelineStep step : steps) {
-                PipelineRunStep runStep = new PipelineRunStep(step.getStepOrder());
-                runStep.setStatus("ready");
-                runStep.setAgentName(step.getAgent() != null ? step.getAgent().getName() : null);
+            PipelineRunStep runStep = new PipelineRunStep(step.getStepOrder());
+            runStep.setStatus("ready");
+            runStep.setName(step.getName());
+            runStep.setAgentName(step.getAgent() != null ? step.getAgent().getName() : null);
                 runStep.setAgentNamespace(step.getAgent() != null ? step.getAgent().getNamespace() : null);
                 runStep.setScriptName(step.getScript() != null ? step.getScript().getName() : null);
                 runStep.setScriptNamespace(step.getScript() != null ? step.getScript().getNamespace() : null);

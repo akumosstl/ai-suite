@@ -34,7 +34,7 @@ export interface StepSettingsDialogData {
     <div class="dialog-header">
       <mat-icon class="header-icon">settings</mat-icon>
       <h2 class="dialog-title">Step Settings</h2>
-      <span class="step-label">Step: {{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+      <span class="step-label">Step: {{ step.name || step.agent?.name || step.script?.name || 'Unknown' }}</span>
     </div>
     
     <mat-dialog-content class="dialog-content">

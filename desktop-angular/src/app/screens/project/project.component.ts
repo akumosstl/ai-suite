@@ -705,7 +705,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const agentName = step.agent?.name || step.script?.name || 'Unknown';
+    const agentName = step.name || step.agent?.name || step.script?.name || 'Unknown';
     const pipelineId = this.selectedPipeline.id;
 
     this.dialog.open(PipelineResultDialogComponent, {
@@ -748,20 +748,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('DEBUG dropStep: prevIndex=', event.previousIndex, 'currIndex=', event.currentIndex);
-    console.log('DEBUG dropStep: before swap =', this.pipelineSteps.map(s => s.id));
+  moveItemInArray(this.pipelineSteps, event.previousIndex, event.currentIndex);
 
-    const temp = this.pipelineSteps[event.previousIndex];
-    this.pipelineSteps[event.previousIndex] = this.pipelineSteps[event.currentIndex];
-    this.pipelineSteps[event.currentIndex] = temp;
-
-    console.log('DEBUG dropStep: after swap =', this.pipelineSteps.map(s => s.id));
-    console.log('DEBUG dropStep: selectedPipeline =', this.selectedPipeline?.id);
-
-    if (!this.selectedPipeline?.id) {
-      console.log('DEBUG dropStep: early return - no pipeline selected');
-      return;
-    }
+  if (!this.selectedPipeline?.id) {
+    return;
+  }
 
     this.isReorderingSteps = true;
     const stepIdsInOrder = this.pipelineSteps.map(step => step.id!);

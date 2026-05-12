@@ -47,7 +47,7 @@
                         <span *ngIf="!step.status || step.status === 'pending' || step.status === 'ready'">{{ i + 1 }}</span>
                     </div>
                     <div class="step-details">
-                        <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                        <span class="step-name">{{ step.name || step.agent?.name || step.script?.name || 'Unknown' }}</span>
                         <span class="step-status-label" *ngIf="step.status">{{ step.status }}</span>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
                                 <mat-icon *ngIf="step.script">code</mat-icon>
                             </div>
                             <div class="step-info">
-                                <span class="step-name">{{ step.agent?.name || step.script?.name || 'Unknown' }}</span>
+                                <span class="step-name">{{ step.name || step.agent?.name || step.script?.name || 'Unknown' }}</span>
                                 <span class="step-namespace" *ngIf="step.agent?.namespace">{{ step.agent?.namespace
                                     }}</span>
                                 <span class="step-name" *ngIf="step.script?.namespace">{{ step.script?.namespace

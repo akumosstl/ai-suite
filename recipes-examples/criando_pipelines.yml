@@ -1,0 +1,50 @@
+recipe:
+  name: "Criando Pipelines"
+  version: "1.0"
+  description: "Cria pipeline no projeto_um com agents analisis.md e plan.md, e pipeline no projeto_dois com agent impl.md"
+
+pipelines:
+- id: "pipeline-analise-planejamento"
+  name: "Pipeline Analise e Planejamento"
+  project_name: "projeto_um"
+  description: "Pipeline de analise e planejamento no projeto_um"
+  type: "sequential"
+  output_extension: ".md"
+  steps:
+  - order: 1
+    name: "Analise de Login"
+    agent_name: "analisis.md"
+    agent_namespace: "development"
+    prompt: "Analise como implementar uma tela de login. Descreva os requisitos, componentes, fluxo de autenticacao, riscos e tecnologias recomendadas."
+    type: "agent"
+  - order: 2
+    name: "Plano de Implementacao"
+    agent_name: "plan.md"
+    agent_namespace: "development"
+    prompt: "Leia o documento de analise gerado no passo anterior e crie um plano de implementacao detalhado e sequencial."
+    type: "agent"
+
+- id: "pipeline-implementacao"
+  name: "Pipeline Implementacao"
+  project_name: "projeto_dois"
+  description: "Pipeline de implementacao no projeto_dois"
+  type: "sequential"
+  output_extension: ".md"
+  steps:
+  - order: 1
+    name: "Implementacao do Codigo"
+    agent_name: "impl.md"
+    agent_namespace: "development"
+    prompt: "Leia o plano de implementacao disponivel e implemente o codigo completo seguindo o plano passo a passo."
+    type: "agent"
+
+tasks:
+- id: "t-create-pipeline-analise"
+  type: "create"
+  resource: "pipeline"
+  ref: "pipeline-analise-planejamento"
+
+- id: "t-create-pipeline-impl"
+  type: "create"
+  resource: "pipeline"
+  ref: "pipeline-implementacao"

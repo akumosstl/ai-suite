@@ -1,11 +1,11 @@
 recipe:
   name: "Pipeline Test"
   version: "1.0"
-  description: "Creates pipelines in the 'hello' project and runs them using project-scoped resolution"
+  description: "Creates pipelines"
 
 parameters:
-  project_name: "hello"
-  pipeline_name: "review-pipeline"
+  project_name: "project_one"
+  pipeline_name: "wrapper-pipeline"
 
 agents:
   - id: "analyst"
@@ -25,10 +25,10 @@ agents:
     path: "./agents/reporter"
 
 pipelines:
-  - id: "review-pipeline"
+  - id: "wrapper-pipeline"
     name: "{{param:pipeline_name}}"
-    project_name: "hello"
-    description: "Pipeline that reviews code and generates a report"
+    project_name: "project_one"
+    description: "Pipeline for test"
     type: "sequential"
     output_extension: ".md"
     steps:
@@ -56,12 +56,6 @@ tasks:
   - id: "t-create-pipeline"
     type: "create"
     resource: "pipeline"
-    ref: "review-pipeline"
+    ref: "wrapper-pipeline"
     depends_on: ["t-create-analyst", "t-create-reporter"]
 
-  - id: "t-run-pipeline"
-    type: "run"
-    project: "hello"
-    pipeline_ref: "review-pipeline"
-    wait: true
-    depends_on: ["t-create-pipeline"]

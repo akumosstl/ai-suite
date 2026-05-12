@@ -1,0 +1,45 @@
+recipe:
+  name: "Criando Projetos"
+  version: "1.0"
+  description: "Cria dois projetos: projeto_um e projeto_dois"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+targets:
+- name: "dev"
+  cli: "opencode"
+
+projects:
+- id: "projeto_um"
+  name: "projeto_um"
+  description: "Projeto um para treinamento"
+  path: "C:/Users/USER/.agentic-workspace/projeto_um"
+  target: "dev"
+  status: "active"
+  readme: "# Projeto Um\n\nCriado pelo recipe de treinamento."
+
+- id: "projeto_dois"
+  name: "projeto_dois"
+  description: "Projeto dois para treinamento"
+  path: "C:/Users/USER/.agentic-workspace/projeto_dois"
+  target: "dev"
+  status: "active"
+  readme: "# Projeto Dois\n\nCriado pelo recipe de treinamento."
+
+tasks:
+- id: "t-create-target"
+  type: "create"
+  resource: "target"
+  ref: "dev"
+
+- id: "t-create-projeto-um"
+  type: "create"
+  resource: "project"
+  ref: "projeto_um"
+  depends_on: ["t-create-target"]
+
+- id: "t-create-projeto-dois"
+  type: "create"
+  resource: "project"
+  ref: "projeto_dois"
+  depends_on: ["t-create-target"]

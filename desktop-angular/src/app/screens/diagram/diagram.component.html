@@ -89,7 +89,9 @@
                    draggable="true"
                    (dragstart)="onPipelineDragStart($event, pipeline)"
                    title="Drag to canvas">
-                <span class="pipeline-status-dot" [ngClass]="'status-' + (pipeline.pipelineStatus || 'pending')"></span>
+                <span class="pipeline-status-dot"
+                [ngClass]="['status-' + (pipeline.pipelineStatus || 'pending'),
+                            (isMonitoring && pipeline.pipelineStatus === 'running' ? 'monitored' : '')]"></span>
                 <span class="pipeline-name">{{ pipeline.pipelineName }}</span>
                 <mat-icon class="drag-handle">drag_indicator</mat-icon>
               </div>
@@ -194,10 +196,14 @@
             <input type="color" [value]="fontColor" (input)="onFontColorChange($any($event.target).value)" class="color-input" title="Font Color">
           </div>
           <div class="toolbar-separator"></div>
-          <button class="tool-btn" (click)="exportSvg()" matTooltip="Export SVG" matTooltipPosition="below">
-            <mat-icon>code</mat-icon>
-          </button>
-        </div>
+    <button class="tool-btn" (click)="exportSvg()" matTooltip="Export SVG" matTooltipPosition="below">
+      <mat-icon>code</mat-icon>
+    </button>
+    <div class="toolbar-separator"></div>
+    <button class="tool-btn monitoring-btn" [class.active]="isMonitoring" (click)="toggleMonitoring()" matTooltip="Monitoring" matTooltipPosition="below">
+      <mat-icon>monitor_heart</mat-icon>
+    </button>
+  </div>
       </div>
 
       <div *ngIf="statusMessage" class="status-bar" [ngClass]="getStatusClass()">

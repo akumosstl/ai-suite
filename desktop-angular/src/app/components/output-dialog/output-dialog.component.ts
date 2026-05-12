@@ -24,7 +24,7 @@ export interface OutputDialogData {
       <div class="dialog-header">
         <mat-icon class="header-icon">{{ data.type === 'output' ? 'output' : 'input' }}</mat-icon>
         <h2 class="dialog-title">{{ data.type === 'output' ? 'Output' : 'Input' }}</h2>
-        <span class="step-label">{{ data.step.agentName || data.step.scriptName || 'Unknown' }}</span>
+        <span class="step-label">{{ data.step.name || data.step.agentName || data.step.scriptName || 'Unknown' }}</span>
         <button class="copy-btn" (click)="copyContent()" title="Copy to clipboard">
           <mat-icon>content_copy</mat-icon>
           <span>Copy</span>

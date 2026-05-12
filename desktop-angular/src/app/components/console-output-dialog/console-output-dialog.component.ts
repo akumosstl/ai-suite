@@ -26,7 +26,7 @@ export interface ConsoleOutputDialogData {
       <div class="dialog-header">
         <mat-icon class="header-icon">terminal</mat-icon>
         <h2 class="dialog-title">Console Output</h2>
-        <span class="step-label">{{ data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
+        <span class="step-label">{{ data.step.name || data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
         <span class="status-badge" [class]="currentStatus">{{ currentStatus || 'pending' }}</span>
         <button class="close-btn" (click)="close()">
           <mat-icon>close</mat-icon>

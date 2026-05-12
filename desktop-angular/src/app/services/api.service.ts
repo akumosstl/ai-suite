@@ -55,6 +55,7 @@ export interface Pipeline {
 export interface PipelineStep {
   id?: number;
   pipelineId?: number;
+  name?: string;
   agent?: Agent;
   agentId?: number;
   script?: Script;
@@ -106,6 +107,7 @@ export interface PipelineRun {
  */
 export interface PipelineRunStep {
   id?: number;
+  name?: string;
   stepOrder?: number;
   agentName?: string;
   agentNamespace?: string;

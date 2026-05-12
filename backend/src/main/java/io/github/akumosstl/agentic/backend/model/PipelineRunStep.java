@@ -31,6 +31,9 @@ public class PipelineRunStep {
     @Column(name = "step_order", nullable = false)
     private Integer stepOrder;
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "agent_name")
     private String agentName;
 
@@ -104,6 +107,14 @@ public class PipelineRunStep {
 
     public void setStepOrder(Integer stepOrder) {
         this.stepOrder = stepOrder;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getAgentName() {

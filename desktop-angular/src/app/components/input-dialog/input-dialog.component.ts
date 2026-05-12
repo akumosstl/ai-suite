@@ -37,7 +37,7 @@ export interface InputDialogData {
       <div class="dialog-header">
         <mat-icon class="header-icon">input</mat-icon>
         <h2 class="dialog-title">Input</h2>
-        <span class="step-label">{{ data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
+        <span class="step-label">{{ data.step.name || data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
         <button class="close-btn" (click)="close()">
           <mat-icon>close</mat-icon>
         </button>

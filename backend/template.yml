@@ -108,11 +108,16 @@ recipe:
       description: "Pipeline de review"      # Opcional
       type: "sequential"                     # Opcional (sequential|step_by_step)
       output_extension: "{{param:output_extension}}"  # Opcional
-      steps:
-        - order: 1                           # Obrigatório. Ordem do step
-          agent: "agent1"                    # Opcional. Ref para ID de agente (OU script)
-          script: "script1"                  # Opcional. Ref para ID de script (OU agent)
-          prompt: "Prompt override para este step"  # Opcional. SOBRESCREVE o prompt do agente/script
+  steps:
+  - order: 1 # Obrigatório. Ordem do step
+    name: "nome-do-step" # Opcional. Nome do step (exibido no frontend em vez de "Unknown")
+    agent: "agent1" # Opcional. Ref para ID de agente declarado no recipe (OU script)
+    agent_name: "meu-agente" # Opcional. Busca agente por nome no banco de dados (fallback se agent não resolver)
+    agent_namespace: "dev" # Opcional. Namespace do agente para busca no banco (usado com agent_name)
+    script: "script1" # Opcional. Ref para ID de script declarado no recipe (OU agent)
+    script_name: "meu-script" # Opcional. Busca script por nome no banco de dados (fallback se script não resolver)
+    script_namespace: "utils" # Opcional. Namespace do script para busca no banco (usado com script_name)
+    prompt: "Prompt override para este step" # Opcional. SOBRESCREVE o prompt do agente/script
           type: "agent"                      # Opcional (agent|script). Inferring automático se omitido
           runtime: "cmd"                     # Opcional (cmd|node|java|py|custom). Só para script steps
           cli: "opencode"                    # Opcional. CLI override para este step

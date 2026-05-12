@@ -365,6 +365,14 @@ app-panel-toggle.collapsed {
   background: #9e9e9e;
 }
 
+.pipeline-status-dot.status-stopped {
+  background: #ffc107;
+}
+
+.pipeline-status-dot.status-interrupted {
+  background: #9c27b0;
+}
+
 .pipeline-name {
   flex: 1;
   white-space: nowrap;
@@ -599,8 +607,8 @@ app-panel-toggle.collapsed {
 
 :host ::ng-deep .pipeline-open-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 18px;
+  left: 8px;
   width: 20px;
   height: 20px;
   border-radius: 4px;
@@ -621,4 +629,70 @@ app-panel-toggle.collapsed {
   background: #3a6a9a;
   color: #ffffff;
   transform: scale(1.1);
+}
+
+:host ::ng-deep .pipeline-run-btn {
+  position: absolute;
+  top: 42px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #2a4a2a;
+  border: none;
+  color: #4caf50;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+:host ::ng-deep .pipeline-run-btn:hover {
+  background: #3a6a3a;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.tool-btn.monitoring-btn.active {
+  background-color: #e65100;
+  color: #ffffff;
+  border-radius: 16px;
+  width: auto;
+  padding: 0 10px;
+  gap: 4px;
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+  animation: monitoring-pulse 2s infinite;
+}
+
+@keyframes monitoring-pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 152, 0, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(255, 152, 0, 0.6); }
+}
+
+:host ::ng-deep .pipeline-node-running {
+  animation: pipeline-shine 2s infinite, pipeline-stroke-pulse 1.5s infinite;
+}
+
+@keyframes pipeline-shine {
+  0% { filter: drop-shadow(0 0 4px rgba(255, 152, 0, 0.3)); }
+  50% { filter: drop-shadow(0 0 16px rgba(255, 152, 0, 0.7)) drop-shadow(0 0 30px rgba(255, 152, 0, 0.3)); }
+  100% { filter: drop-shadow(0 0 4px rgba(255, 152, 0, 0.3)); }
+}
+
+@keyframes pipeline-stroke-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+:host ::ng-deep .pipeline-status-dot.status-running.monitored {
+  animation: dot-pulse 1.5s infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 152, 0, 0.5); }
+  50% { opacity: 0.5; box-shadow: 0 0 8px rgba(255, 152, 0, 0.8); }
 }

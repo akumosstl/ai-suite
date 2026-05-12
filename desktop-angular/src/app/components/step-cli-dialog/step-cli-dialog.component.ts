@@ -31,7 +31,7 @@ export interface StepCliDialogData {
     <div class="dialog-header">
       <mat-icon class="header-icon">terminal</mat-icon>
       <h2 class="dialog-title">CLI Configuration</h2>
-      <span class="step-label">Step: {{ data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
+      <span class="step-label">Step: {{ data.step.name || data.step.agent?.name || data.step.script?.name || 'Unknown' }}</span>
     </div>
     
     <mat-dialog-content class="dialog-content">

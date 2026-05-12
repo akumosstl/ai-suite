@@ -172,28 +172,53 @@ describe('ProjectComponent Pipeline Features', () => {
       expect(apiService.removePipelineStep).toHaveBeenCalledWith(1, 1);
     });
 
-    it('should reorder steps via drag and drop', () => {
-      const mockPipeline: Pipeline = { id: 1 } as Pipeline;
-      const step1: PipelineStep = { id: 1, stepOrder: 1 } as PipelineStep;
-      const step2: PipelineStep = { id: 2, stepOrder: 2 } as PipelineStep;
+  it('should reorder adjacent steps via drag and drop', () => {
+    const mockPipeline: Pipeline = { id: 1 } as Pipeline;
+    const step1: PipelineStep = { id: 1, stepOrder: 1 } as PipelineStep;
+    const step2: PipelineStep = { id: 2, stepOrder: 2 } as PipelineStep;
 
-      component.selectedPipeline = mockPipeline;
-      component.pipelineSteps = [step1, step2];
-      component.project = { id: 1 } as any;
-      component.isReorderingSteps = true;
+    component.selectedPipeline = mockPipeline;
+    component.pipelineSteps = [step1, step2];
+    component.project = { id: 1 } as any;
+    component.isReorderingSteps = true;
 
-      const mockEvent = {
-        previousIndex: 0,
-        currentIndex: 1
-      } as any;
+    const mockEvent = {
+      previousIndex: 0,
+      currentIndex: 1
+    } as any;
 
-      spyOn(apiService, 'reorderPipelineSteps').and.returnValue(of([step2, step1]));
-      spyOn(component as any, 'loadPipelineSteps').and.stub();
+    spyOn(apiService, 'reorderPipelineSteps').and.returnValue(of([step2, step1]));
+    spyOn(component as any, 'loadPipelineSteps').and.stub();
 
-      component.dropStep(mockEvent);
+    component.dropStep(mockEvent);
 
-      expect(apiService.reorderPipelineSteps).toHaveBeenCalledWith(1, [2, 1]);
-    });
+    expect(apiService.reorderPipelineSteps).toHaveBeenCalledWith(1, [2, 1]);
+  });
+
+  it('should reorder non-adjacent steps via drag and drop', () => {
+    const mockPipeline: Pipeline = { id: 1 } as Pipeline;
+    const step1: PipelineStep = { id: 1, stepOrder: 1 } as PipelineStep;
+    const step2: PipelineStep = { id: 2, stepOrder: 2 } as PipelineStep;
+    const step3: PipelineStep = { id: 3, stepOrder: 3 } as PipelineStep;
+    const step4: PipelineStep = { id: 4, stepOrder: 4 } as PipelineStep;
+
+    component.selectedPipeline = mockPipeline;
+    component.pipelineSteps = [step1, step2, step3, step4];
+    component.project = { id: 1 } as any;
+    component.isReorderingSteps = true;
+
+    const mockEvent = {
+      previousIndex: 3,
+      currentIndex: 0
+    } as any;
+
+    spyOn(apiService, 'reorderPipelineSteps').and.returnValue(of([step4, step1, step2, step3]));
+    spyOn(component as any, 'loadPipelineSteps').and.stub();
+
+    component.dropStep(mockEvent);
+
+    expect(apiService.reorderPipelineSteps).toHaveBeenCalledWith(1, [4, 1, 2, 3]);
+  });
   });
 
   describe('Pipeline Execution', () => {

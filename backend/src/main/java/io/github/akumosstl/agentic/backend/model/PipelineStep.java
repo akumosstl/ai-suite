@@ -40,6 +40,9 @@ public class PipelineStep {
     @Column(name = "step_order", nullable = false)
     private Integer stepOrder;
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "status", nullable = false)
     private String status = "pending"; // "pending", "running", "completed", "failed"
 
@@ -164,6 +167,14 @@ public class PipelineStep {
 
     public void setStepOrder(Integer stepOrder) {
         this.stepOrder = stepOrder;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getStatus() {

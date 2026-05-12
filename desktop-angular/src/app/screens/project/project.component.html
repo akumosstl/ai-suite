@@ -318,7 +318,7 @@
                                 <div class="step-agent">
                                     <mat-icon class="agent-icon" *ngIf="step.agent">smart_toy</mat-icon>
                                     <mat-icon class="agent-icon" *ngIf="step.script">code</mat-icon>
-                                    <span class="agent-name">{{ step.agent?.name || step.script?.name || 'Unknown'
+                                    <span class="agent-name">{{ step.name || step.agent?.name || step.script?.name || 'Unknown'
                                         }}</span>
                                 </div>
                                 <div class="step-info">

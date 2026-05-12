@@ -103,6 +103,11 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
   edgeStyle: 'orthogonal' | 'straight' | 'curved' = 'orthogonal';
   connectionSource: Cell | null = null;
 
+  isMonitoring = false;
+  private monitoringInterval: any = null;
+  private static readonly MONITORING_POLL_MS = 3000;
+  private previousRunningKeys = new Set<string>();
+
   private keydownHandler!: (event: KeyboardEvent) => void;
 
   constructor(
@@ -136,6 +141,7 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
     if (this.keydownHandler) {
       document.removeEventListener('keydown', this.keydownHandler);
     }
+    this.stopMonitoring();
     if (this.graph) {
       this.graph.destroy();
     }
@@ -287,20 +293,43 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
           this.router.navigate(['/project', projectId], { queryParams: { pipelineId } });
         }
       }
+      if (target.classList.contains('pipeline-run-btn')) {
+        const projectId = target.getAttribute('data-project-id');
+        const pipelineId = target.getAttribute('data-pipeline-id');
+        if (projectId && pipelineId) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.apiService.runPipeline(+projectId, +pipelineId).subscribe({
+            next: () => {
+              const url = `/runpipelines?pipelineId=${pipelineId}&projectId=${projectId}`;
+              window.open(url, '_blank');
+            },
+            error: (err: any) => {
+              console.error('Error running pipeline:', err);
+              this.ngZone.run(() => {
+                this.statusMessage = 'Error running pipeline: ' + (err.error?.error || err.message);
+                this.cdr.detectChanges();
+              });
+            },
+          });
+        }
+      }
     });
   }
 
   addPipelineNode(pipeline: PipelineSummary, x: number, y: number): void {
     if (!this.graph) return;
     const statusColor = this.getStatusColor(pipeline.pipelineStatus);
-    const label = `<div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;">
-      <b>${pipeline.pipelineName}</b>
-      <font color="#aaaaaa" size="1">${pipeline.projectName}</font>
-      <font color="${statusColor}" size="1">● ${pipeline.pipelineStatus || 'pending'}</font>
-      <button class="pipeline-open-btn" data-project-id="${pipeline.projectId}" data-pipeline-id="${pipeline.pipelineId}" title="Open in Project">↗</button>
-    </div>`;
+    const status = pipeline.pipelineStatus || 'pending';
+    const label = `<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;">
+  <b>${pipeline.pipelineName}</b>
+  <span style="color:#aaa;font-size:10px;">${pipeline.projectName}</span>
+  <span style="color:${statusColor};font-size:10px;">● ${status}</span>
+  <button class="pipeline-open-btn" data-project-id="${pipeline.projectId}" data-pipeline-id="${pipeline.pipelineId}" title="Open in Project">↗</button>
+  <button class="pipeline-run-btn" data-project-id="${pipeline.projectId}" data-pipeline-id="${pipeline.pipelineId}" title="Run Pipeline">▶</button>
+</div>`;
     const parent = this.graph.getDefaultParent();
-    const cell = this.graph.insertVertex(parent, null, label, x, y, 200, 60, {
+    const cell = this.graph.insertVertex(parent, null, label, x, y, 200, 80, {
       shape: 'rectangle',
       rounded: true,
       arcSize: 20,
@@ -327,9 +356,204 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         return '#ff9800';
       case 'failed':
         return '#f44336';
+      case 'stopped':
+        return '#ffc107';
+      case 'interrupted':
+        return '#9c27b0';
       default:
         return '#9e9e9e';
     }
+  }
+
+  toggleMonitoring(): void {
+    if (this.isMonitoring) {
+      this.stopMonitoring();
+    } else {
+      this.startMonitoring();
+    }
+  }
+
+  private startMonitoring(): void {
+    this.isMonitoring = true;
+    this.previousRunningKeys.clear();
+    this.refreshPipelineStatuses();
+    this.monitoringInterval = setInterval(() => {
+      this.refreshPipelineStatuses();
+    }, DiagramComponent.MONITORING_POLL_MS);
+  }
+
+  stopMonitoring(): void {
+    this.isMonitoring = false;
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+    this.clearRunningVisuals();
+    this.previousRunningKeys.clear();
+  }
+
+  private clearRunningVisuals(): void {
+    if (!this.graph) return;
+    const svgRoot = this.graphContainer.nativeElement.querySelector('svg');
+    if (svgRoot) {
+      const runningNodes = svgRoot.querySelectorAll('.pipeline-node-running');
+      runningNodes.forEach((node: Element) => {
+        node.classList.remove('pipeline-node-running');
+      });
+    }
+  }
+
+  private updateRunningPipelineVisuals(statusMap: Map<string, PipelineSummary>): void {
+    if (!this.graph) return;
+    const svgRoot = this.graphContainer.nativeElement.querySelector('svg');
+    if (!svgRoot) return;
+
+    const currentRunningKeys = new Set<string>();
+
+    this.graph.getDataModel().beginUpdate();
+    try {
+      const cells = this.graph.getChildCells(this.graph.getDefaultParent());
+      for (const cell of cells) {
+        if (cell.isEdge()) continue;
+        const value = cell.getValue() as string;
+        if (!value || !value.includes('data-pipeline-id')) continue;
+
+        const pipelineIdMatch = value.match(/data-pipeline-id="(\d+)"/);
+        const projectIdMatch = value.match(/data-project-id="(\d+)"/);
+        if (!pipelineIdMatch || !projectIdMatch) continue;
+
+        const key = `${projectIdMatch[1]}:${pipelineIdMatch[1]}`;
+        const latest = statusMap.get(key);
+        if (!latest) continue;
+
+        const isRunning = latest.pipelineStatus === 'running';
+        if (isRunning) {
+          currentRunningKeys.add(key);
+        }
+
+        const cellState = this.graph.getView().getState(cell);
+        if (cellState && cellState.shape && cellState.shape.node) {
+          const svgNode = cellState.shape.node as SVGElement;
+          if (isRunning) {
+            svgNode.classList.add('pipeline-node-running');
+          } else {
+            svgNode.classList.remove('pipeline-node-running');
+          }
+        }
+      }
+    } finally {
+      this.graph.getDataModel().endUpdate();
+    }
+
+    if (currentRunningKeys.size > 0 && !this.setsEqual(currentRunningKeys, this.previousRunningKeys)) {
+      if (currentRunningKeys.size > 0) {
+        const names: string[] = [];
+        currentRunningKeys.forEach((key) => {
+          const parts = key.split(':');
+          const summary = statusMap.get(key);
+          if (summary) names.push(summary.pipelineName);
+        });
+        if (names.length > 0) {
+          this.statusMessage = `Monitoring: ${names.join(', ')} running...`;
+          this.cdr.markForCheck();
+        }
+      }
+    }
+    this.previousRunningKeys = currentRunningKeys;
+  }
+
+  private setsEqual(a: Set<string>, b: Set<string>): boolean {
+    if (a.size !== b.size) return false;
+    for (const item of a) {
+      if (!b.has(item)) return false;
+    }
+    return true;
+  }
+
+  private refreshPipelineStatuses(): void {
+    if (!this.graph) return;
+    this.apiService.getAllProjectPipelines().subscribe({
+      next: (summaries) => {
+        this.ngZone.run(() => {
+          const statusMap = new Map<string, PipelineSummary>();
+          for (const s of summaries) {
+            statusMap.set(`${s.projectId}:${s.pipelineId}`, s);
+          }
+          this.updatePipelineCells(statusMap);
+          if (this.isMonitoring) {
+            this.updateRunningPipelineVisuals(statusMap);
+          }
+        });
+      },
+      error: () => {},
+    });
+  }
+
+  private updatePipelineCells(statusMap: Map<string, PipelineSummary>): void {
+    if (!this.graph) return;
+    const cells = this.graph.getChildCells(this.graph.getDefaultParent());
+    let updated = false;
+
+    this.graph.getDataModel().beginUpdate();
+    try {
+      for (const cell of cells) {
+        if (cell.isEdge()) continue;
+        const value = cell.getValue() as string;
+        if (!value || !value.includes('data-pipeline-id')) continue;
+
+        const pipelineIdMatch = value.match(/data-pipeline-id="(\d+)"/);
+        const projectIdMatch = value.match(/data-project-id="(\d+)"/);
+        if (!pipelineIdMatch || !projectIdMatch) continue;
+
+        const key = `${projectIdMatch[1]}:${pipelineIdMatch[1]}`;
+        const latest = statusMap.get(key);
+        if (!latest) continue;
+
+        const newStatus = latest.pipelineStatus || 'pending';
+        const newColor = this.getStatusColor(newStatus);
+        const pipelineName = latest.pipelineName;
+        const projectName = latest.projectName;
+
+        const newLabel = `<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;">
+  <b>${pipelineName}</b>
+  <span style="color:#aaa;font-size:10px;">${projectName}</span>
+  <span style="color:${newColor};font-size:10px;">● ${newStatus}</span>
+  <button class="pipeline-open-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Open in Project">↗</button>
+  <button class="pipeline-run-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Run Pipeline">▶</button>
+</div>`;
+
+        cell.setValue(newLabel);
+        this.graph.setCellStyles('strokeColor' as keyof CellStateStyle, newColor as any, [cell]);
+        (cell as any).pipelineId = latest.pipelineId;
+        (cell as any).projectId = latest.projectId;
+        updated = true;
+      }
+    } finally {
+      this.graph.getDataModel().endUpdate();
+    }
+
+    if (updated) {
+      this.isDirty = true;
+      this.saveDiagramSilent();
+    }
+  }
+
+  private saveDiagramSilent(): void {
+    if (!this.graph || !this.serializer) return;
+    if (!this.formDiagram.id) return;
+
+    this.formDiagram.content = this.serializer.export({ pretty: false });
+    this.apiService.updateDiagram(this.formDiagram.id, this.formDiagram).subscribe({
+      next: (updated) => {
+        this.ngZone.run(() => {
+          this.selectedDiagram = { ...updated };
+          this.formDiagram = { ...updated };
+          this.isDirty = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {},
+    });
   }
 
   setTool(tool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 'line' | 'arrow'): void {
@@ -683,6 +907,11 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
     this.loadDiagramContent(diagram.content);
     this.statusMessage = `Diagram selected: ${diagram.name}`;
     this.isDirty = false;
+    this.refreshPipelineStatuses();
+    if (this.isMonitoring) {
+      this.stopMonitoring();
+      this.startMonitoring();
+    }
   }
 
   private loadDiagramContent(xml: string): void {

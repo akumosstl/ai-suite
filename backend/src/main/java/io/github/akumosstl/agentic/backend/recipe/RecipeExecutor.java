@@ -478,6 +478,22 @@ public class RecipeExecutor {
                     }
                 }
 
+                if (agentId == null && rstep.getAgentName() != null) {
+                    String aName = resolver.resolve(rstep.getAgentName());
+                    String aNamespace = rstep.getAgentNamespace() != null ? resolver.resolve(rstep.getAgentNamespace()) : "";
+                    try {
+                        List<Agent> agents = agentService.searchAgents(aName, aNamespace, 0, 10);
+                        for (Agent a : agents) {
+                            if (aName.equals(a.getName()) && aNamespace.equals(a.getNamespace())) {
+                                agentId = a.getId();
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Agent '{}' with namespace '{}' not found in database", aName, aNamespace);
+                    }
+                }
+
                 if (rstep.getScript() != null) {
                     scriptId = resolver.getTaskResult(rstep.getScript());
                     if (scriptId == null) {
@@ -485,8 +501,27 @@ public class RecipeExecutor {
                     }
                 }
 
+                if (scriptId == null && rstep.getScriptName() != null) {
+                    String sName = resolver.resolve(rstep.getScriptName());
+                    String sNamespace = rstep.getScriptNamespace() != null ? resolver.resolve(rstep.getScriptNamespace()) : "";
+                    try {
+                        List<Script> scripts = scriptService.searchScripts(sName, sNamespace, 0, 10);
+                        for (Script s : scripts) {
+                            if (sName.equals(s.getName()) && sNamespace.equals(s.getNamespace())) {
+                                scriptId = s.getId();
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Script '{}' with namespace '{}' not found in database", sName, sNamespace);
+                    }
+                }
+
                 PipelineStep step = pipelineStepService.addStepToPipeline(pipeline.getId(), agentId, scriptId);
 
+                if (rstep.getName() != null) {
+                    step.setName(resolver.resolve(rstep.getName()));
+                }
                 if (rstep.getOrder() != null) {
                     step.setStepOrder(rstep.getOrder());
                 }

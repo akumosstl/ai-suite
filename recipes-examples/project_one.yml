@@ -1,0 +1,34 @@
+recipe:
+  name: "Creating project with target"
+  version: "1.0"
+  description: "Creates a project with a target"
+
+project_path: "C:/Users/USER/.agentic-workspace"
+
+parameters:
+  project_name: "project_one"
+
+targets:
+  - name: "dev"
+    cli: "opencode"
+
+projects:
+  - id: "project_one_id"
+    name: "{{param:project_name}}"
+    description: "Test project created by recipe"
+    path: "C:/Users/USER/.agentic-workspace/{{param:project_name}}"
+    target: "dev"
+    status: "active"
+    readme: "# Hello Project\n\nCreated by recipe."
+
+tasks:
+  - id: "t-create-target"
+    type: "create"
+    resource: "target"
+    ref: "dev"
+
+  - id: "t-create-project"
+    type: "create"
+    resource: "project"
+    ref: "project_one_id"
+    depends_on: ["t-create-target"]

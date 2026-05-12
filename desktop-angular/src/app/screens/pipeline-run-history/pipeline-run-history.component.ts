@@ -109,7 +109,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                     <mat-icon *ngIf="step.scriptName">code</mat-icon>
                   </div>
                   <div class="step-info">
-                    <span class="step-name">{{ step.agentName || step.scriptName || 'Unknown' }}</span>
+                    <span class="step-name">{{ step.name || step.agentName || step.scriptName || 'Unknown' }}</span>
                     <span class="step-namespace">{{ step.agentNamespace || step.scriptNamespace || '' }}</span>
                   </div>
                 </div>
