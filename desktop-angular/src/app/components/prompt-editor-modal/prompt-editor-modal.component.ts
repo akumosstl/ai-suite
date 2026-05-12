@@ -65,7 +65,7 @@ export interface PromptEditorResult {
           <textarea matInput 
                     [(ngModel)]="editedPrompt" 
                     rows="15" 
-                    placeholder="Enter the prompt content"
+          
                     [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"
                     (ngModelChange)="onPromptChange()"></textarea>
           <mat-icon matPrefix>code</mat-icon>

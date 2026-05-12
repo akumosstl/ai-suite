@@ -522,6 +522,30 @@ app-panel-toggle.collapsed {
   color: #ccc;
 }
 
+.font-size-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.font-size-label {
+  color: #888;
+  font-size: 0.7rem;
+  min-width: 20px;
+  text-align: center;
+}
+
+.font-size-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.font-size-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
 .status-bar {
   display: flex;
   align-items: center;
@@ -573,6 +597,25 @@ app-panel-toggle.collapsed {
     radial-gradient(circle, #222 1px, transparent 1px);
   background-size: 20px 20px;
   position: relative;
+}
+
+.graph-canvas.light-theme {
+  background: #ffffff;
+  background-image:
+    radial-gradient(circle, #d0d0d0 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.graph-canvas.light-theme ::ng-deep svg {
+  background: transparent;
+}
+
+.graph-canvas.light-theme ::ng-deep .mxCell {
+  color: #333;
+}
+
+.graph-canvas.light-theme ::ng-deep .mxText {
+  color: #333 !important;
 }
 
 .graph-canvas ::ng-deep svg {

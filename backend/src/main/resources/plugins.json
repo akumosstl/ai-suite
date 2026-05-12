@@ -6,7 +6,8 @@
       "namespace": "akumosstl.github.io",
       "documentationUrl": "https://github.com/akumosstl/agentic-ai-suite/blob/main/tools/nvidia/README.md",
       "downloadUrl": "https://github.com/akumosstl/agentic-ai-suite/tree/main/tools/nvidia",
-      "description": "NVIDIA AI Chat is a command-line tool that lets you chat with advanced AI models through NVIDIA's API. Simply type your question and get an intelligent response powered by GLM models."
+      "description": "NVIDIA AI Chat is a command-line tool that lets you chat with advanced AI models through NVIDIA's API. Simply type your question and get an intelligent response powered by GLM models.",
+      "type": "prompt"
     },
     {
       "name": "rag-local",
@@ -14,7 +15,8 @@
       "namespace": "akumosstl.github.io",
       "documentationUrl": "https://github.com/akumosstl/agentic-rag",
       "downloadUrl": "https://github.com/akumosstl/agentic-rag",
-      "description": "Simple RAG (Retrieval-Augmented Generation) system using Node.js, LanceDB, NVIDIA embeddings, and MCP for OpenCode integration."
+      "description": "Simple RAG (Retrieval-Augmented Generation) system using Node.js, LanceDB, NVIDIA embeddings, and MCP for OpenCode integration.",
+      "type": "rag"
     },
     {
       "name": "sql-runner",
@@ -22,7 +24,8 @@
       "namespace": "akumosstl.github.io",
       "documentationUrl": "https://github.com/akumosstl/agentic-sqlrunner",
       "downloadUrl": "https://github.com/akumosstl/agentic-sqlrunner",
-      "description": "MCP server that connects to SQL databases and executes queries from natural language prompts via OpenCode CLI."
+      "description": "MCP server that connects to SQL databases and executes queries from natural language prompts via OpenCode CLI.",
+      "type": "database"
     },
     {
       "name": "cerrado-flow",
@@ -30,7 +33,8 @@
       "namespace": "akumosstl.github.io",
       "documentationUrl": "https://github.com/akumosstl/cerrado-flow",
       "downloadUrl": "https://github.com/akumosstl/cerrado-flow",
-      "description": "Cerrado Flow is a workflow/setup/framework that allows you to define and execute complex workflows using main patterns found in harness engineering."
+      "description": "Cerrado Flow is a workflow/setup/framework that allows you to define and execute complex workflows using main patterns found in harness engineering.",
+      "type": "flow"
     }
   ]
 }

@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
+import { MatSelectModule } from '@angular/material/select'
 import { FormsModule } from '@angular/forms'
 import { ApiService } from '../../services/api.service'
 
@@ -18,6 +19,7 @@ interface PluginRegistry {
     documentationUrl: string
     downloadUrl?: string
     description?: string
+    type?: string
   }>
 }
 
@@ -33,6 +35,7 @@ interface PluginRegistry {
     MatPaginatorModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     FormsModule
   ],
   template: `
@@ -47,24 +50,34 @@ interface PluginRegistry {
 
       <div class="modal-content">
         <div class="left-panel">
-          <div class="panel-header">
-            <h3 class="panel-title">Available Tools</h3>
-            <div class="search-container">
-              <mat-icon class="search-icon">search</mat-icon>
-              <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Search tools..."
-                [(ngModel)]="searchTerm"
-                (ngModelChange)="onSearchChange()">
-              <mat-icon 
-                *ngIf="searchTerm" 
-                class="clear-icon" 
-                (click)="clearSearch()">
-                close
-              </mat-icon>
-            </div>
-          </div>
+<div class="panel-header">
+        <h3 class="panel-title">Available Tools</h3>
+        <div class="search-container">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search tools..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()">
+          <mat-icon
+            *ngIf="searchTerm"
+            class="clear-icon"
+            (click)="clearSearch()">
+            close
+          </mat-icon>
+        </div>
+        <div class="type-filter-container">
+          <mat-icon class="filter-icon">filter_list</mat-icon>
+          <select
+            class="type-filter-select"
+            [(ngModel)]="typeFilter"
+            (ngModelChange)="onSearchChange()">
+            <option value="">All types</option>
+            <option *ngFor="let t of availableTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
           
           <div class="plugins-list">
             <div *ngIf="loading" class="loading-state">
@@ -82,11 +95,14 @@ interface PluginRegistry {
               class="plugin-item"
               [class.selected]="selectedPlugin === plugin"
               (click)="selectPlugin(plugin)">
-              <div class="plugin-info">
-                <div class="plugin-name">{{ plugin.name }}</div>
-                <div class="plugin-version">v{{ plugin.version }}</div>
-                <div class="plugin-namespace">{{ plugin.namespace }}</div>
-              </div>
+<div class="plugin-info">
+            <div class="plugin-name">{{ plugin.name }}</div>
+            <div class="plugin-meta">
+              <span class="plugin-version">v{{ plugin.version }}</span>
+              <span *ngIf="plugin.type" class="plugin-type">{{ plugin.type }}</span>
+            </div>
+            <div class="plugin-namespace">{{ plugin.namespace }}</div>
+          </div>
               <mat-icon class="navigate-icon">navigate_next</mat-icon>
             </div>
 
@@ -113,6 +129,7 @@ interface PluginRegistry {
             <div class="plugin-detail-header">
               <h3 class="plugin-detail-name">{{ selectedPlugin.name }}</h3>
               <span class="plugin-detail-version">v{{ selectedPlugin.version }}</span>
+              <span *ngIf="selectedPlugin.type" class="plugin-detail-type">{{ selectedPlugin.type }}</span>
             </div>
             <div class="plugin-detail-namespace">{{ selectedPlugin.namespace }}</div>
             <div *ngIf="selectedPlugin.description" class="plugin-detail-description">
@@ -151,17 +168,17 @@ interface PluginRegistry {
     </div>
   `,
   styles: [`
-    .modal-container {
-      display: flex;
-      flex-direction: column;
-      background: #1e1e1e;
-      border-radius: 12px;
-      overflow: hidden;
-      width: 80vw;
-      height: 80vh;
-      max-width: 1600px;
-      max-height: 1000px;
-    }
+.modal-container {
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 80vw;
+  height: 90vh;
+  max-width: 1600px;
+  max-height: 1200px;
+}
 
     .modal-header {
       display: flex;
@@ -269,9 +286,49 @@ interface PluginRegistry {
       padding: 4px;
     }
 
-    .clear-icon:hover {
-      color: #e0e0e0;
-    }
+.clear-icon:hover {
+  color: #e0e0e0;
+  }
+
+  .type-filter-container {
+    display: flex;
+    align-items: center;
+    background: #1e1e1e;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 0 8px;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+  }
+
+  .type-filter-container:focus-within {
+    border-color: #81d4fa;
+  }
+
+  .filter-icon {
+    color: #666;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .type-filter-select {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e0e0e0;
+    font-size: 0.85rem;
+    padding: 8px 4px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .type-filter-select option {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
 
     .plugins-list {
       flex: 1;
@@ -331,18 +388,33 @@ interface PluginRegistry {
       flex: 1;
     }
 
-    .plugin-name {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #e0e0e0;
-      margin-bottom: 2px;
-    }
+.plugin-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #e0e0e0;
+  margin-bottom: 2px;
+  }
 
-    .plugin-version {
-      font-size: 0.75rem;
-      color: #81d4fa;
-      margin-bottom: 2px;
-    }
+  .plugin-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  }
+
+  .plugin-version {
+  font-size: 0.75rem;
+  color: #81d4fa;
+  }
+
+  .plugin-type {
+  font-size: 0.7rem;
+  color: #ce93d8;
+  background: rgba(206, 147, 216, 0.1);
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(206, 147, 216, 0.3);
+  }
 
     .plugin-namespace {
       font-size: 0.75rem;
@@ -415,13 +487,22 @@ interface PluginRegistry {
       color: #ffffff;
     }
 
-    .plugin-detail-version {
-      font-size: 0.9rem;
-      color: #81d4fa;
-      background: rgba(129, 212, 250, 0.1);
-      padding: 4px 12px;
-      border-radius: 20px;
-    }
+.plugin-detail-version {
+  font-size: 0.9rem;
+  color: #81d4fa;
+  background: rgba(129, 212, 250, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  }
+
+  .plugin-detail-type {
+  font-size: 0.8rem;
+  color: #ce93d8;
+  background: rgba(206, 147, 216, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(206, 147, 216, 0.3);
+  }
 
     .plugin-detail-namespace {
       font-size: 0.9rem;
@@ -521,6 +602,7 @@ export class PluginsModalComponent {
     documentationUrl: string
     downloadUrl?: string
     description?: string
+    type?: string
   }> = []
   filteredPlugins: Array<{
     name: string
@@ -529,6 +611,7 @@ export class PluginsModalComponent {
     documentationUrl: string
     downloadUrl?: string
     description?: string
+    type?: string
   }> = []
   paginatedPlugins: Array<{
     name: string
@@ -537,12 +620,15 @@ export class PluginsModalComponent {
     documentationUrl: string
     downloadUrl?: string
     description?: string
+    type?: string
   }> = []
   selectedPlugin: any = null
   loading = false
   pageSize = 10
   pageIndex = 0
   searchTerm = ''
+  typeFilter = ''
+  availableTypes: string[] = []
 
   constructor(
     private dialogRef: MatDialogRef<PluginsModalComponent>,
@@ -561,8 +647,12 @@ export class PluginsModalComponent {
     this.apiService.getPluginRegistry().subscribe({
       next: (data: PluginRegistry) => {
         this.plugins = data.plugins || []
-        this.filteredPlugins = [...this.plugins]
-        this.updatePaginatedPlugins()
+        const typeSet = new Set<string>()
+        for (const p of this.plugins) {
+          if (p.type) typeSet.add(p.type)
+        }
+        this.availableTypes = Array.from(typeSet).sort()
+        this.applyFilters()
         this.loading = false
         this.cdr.detectChanges()
       },
@@ -574,24 +664,31 @@ export class PluginsModalComponent {
     })
   }
 
-  onSearchChange(): void {
-    const term = this.searchTerm.toLowerCase().trim()
-    
-    if (term === '') {
-      this.filteredPlugins = [...this.plugins]
-    } else {
-      this.filteredPlugins = this.plugins.filter(plugin => 
-        plugin.name.toLowerCase().startsWith(term)
-      )
-    }
-    
-    this.pageIndex = 0
-    this.updatePaginatedPlugins()
+onSearchChange(): void {
+    this.applyFilters()
   }
 
   clearSearch(): void {
     this.searchTerm = ''
-    this.filteredPlugins = [...this.plugins]
+    this.typeFilter = ''
+    this.applyFilters()
+  }
+
+  private applyFilters(): void {
+    const term = this.searchTerm.toLowerCase().trim()
+    let result = [...this.plugins]
+
+    if (term !== '') {
+      result = result.filter(plugin =>
+        plugin.name.toLowerCase().includes(term)
+      )
+    }
+
+    if (this.typeFilter) {
+      result = result.filter(plugin => plugin.type === this.typeFilter)
+    }
+
+    this.filteredPlugins = result
     this.pageIndex = 0
     this.updatePaginatedPlugins()
   }

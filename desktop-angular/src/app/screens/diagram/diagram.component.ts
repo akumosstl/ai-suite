@@ -100,15 +100,20 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
   fontColor = '#ffffff';
   currentZoom = 100;
   edgeColor = '#4fc3f7';
-  edgeStyle: 'orthogonal' | 'straight' | 'curved' = 'orthogonal';
+  edgeStyle: 'orthogonal' | 'straight' | 'curved' | 'dashed' = 'orthogonal';
   connectionSource: Cell | null = null;
+  fontSize = 12;
+  private clipboard: Cell[] = [];
+  private clipboardOffset = 0;
 
   isMonitoring = false;
+  isDarkTheme = true;
   private monitoringInterval: any = null;
   private static readonly MONITORING_POLL_MS = 3000;
   private previousRunningKeys = new Set<string>();
 
   private keydownHandler!: (event: KeyboardEvent) => void;
+  private wheelHandler!: (event: WheelEvent) => void;
 
   constructor(
     private apiService: ApiService,
@@ -141,6 +146,9 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
     if (this.keydownHandler) {
       document.removeEventListener('keydown', this.keydownHandler);
     }
+    if (this.wheelHandler) {
+      this.graphContainer?.nativeElement?.removeEventListener('wheel', this.wheelHandler);
+    }
     this.stopMonitoring();
     if (this.graph) {
       this.graph.destroy();
@@ -158,11 +166,39 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
       } else if (event.ctrlKey && event.key.toLowerCase() === 'y') {
         event.preventDefault();
         this.redo();
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'c') {
+        event.preventDefault();
+        this.copySelected();
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'x') {
+        event.preventDefault();
+        this.cutSelected();
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'v') {
+        event.preventDefault();
+        this.pasteCells();
       } else if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'b') {
         event.preventDefault();
         this.toggleLeftPanel();
+      } else if (event.ctrlKey && (event.key === '+' || event.key === '=')) {
+        event.preventDefault();
+        this.zoomIn();
+      } else if (event.ctrlKey && event.key === '-') {
+        event.preventDefault();
+        this.zoomOut();
+      } else if (event.ctrlKey && event.key === '0') {
+        event.preventDefault();
+        this.zoomActual();
+      } else if (event.ctrlKey && event.shiftKey && event.key === '>') {
+        event.preventDefault();
+        this.increaseFontSize();
+      } else if (event.ctrlKey && event.shiftKey && event.key === '<') {
+        event.preventDefault();
+        this.decreaseFontSize();
       } else if (event.key === 'Delete') {
         this.deleteSelected();
+      } else if (event.key.toLowerCase() === 'v' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        this.setTool('select');
+      } else if (event.key.toLowerCase() === 'h' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        this.setTool('hand');
       }
     };
     document.addEventListener('keydown', this.keydownHandler);
@@ -246,6 +282,10 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
           this.fillColor = (style['fillColor'] as string) || '#1e3a5f';
           this.strokeColor = (style['strokeColor'] as string) || '#4fc3f7';
           this.fontColor = (style['fontColor'] as string) || '#ffffff';
+          this.fontSize = (style['fontSize'] as number) || 12;
+          if (style['dashed']) {
+            this.edgeStyle = 'dashed';
+          }
           this.cdr.markForCheck();
         }
       }
@@ -253,10 +293,12 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         const style = this.graph.getCellStyle(cell);
         if (style) {
           this.edgeColor = (style['strokeColor'] as string) || '#4fc3f7';
+          this.fontSize = (style['fontSize'] as number) || 12;
           const es = style['edgeStyle'] as string;
-          if (es === 'straightEdgeStyle') this.edgeStyle = 'straight';
-          else if (es === 'elbowEdgeStyle') this.edgeStyle = 'curved';
-          else this.edgeStyle = 'orthogonal';
+        if (es === 'straightEdgeStyle') this.edgeStyle = 'straight';
+        else if (es === 'elbowEdgeStyle') this.edgeStyle = 'curved';
+        else if (style['dashed']) this.edgeStyle = 'dashed';
+        else this.edgeStyle = 'orthogonal';
           this.cdr.markForCheck();
         }
       }
@@ -315,6 +357,17 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         }
       }
     });
+
+    this.wheelHandler = (event: WheelEvent) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      if (event.deltaY < 0) {
+        this.ngZone.run(() => this.zoomIn());
+      } else if (event.deltaY > 0) {
+        this.ngZone.run(() => this.zoomOut());
+      }
+    };
+    container.addEventListener('wheel', this.wheelHandler, { passive: false });
   }
 
   addPipelineNode(pipeline: PipelineSummary, x: number, y: number): void {
@@ -593,6 +646,8 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         return 'straightEdgeStyle';
       case 'curved':
         return 'elbowEdgeStyle';
+      case 'dashed':
+        return 'orthogonalEdgeStyle';
       default:
         return 'orthogonalEdgeStyle';
     }
@@ -607,6 +662,10 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
       fontColor: '#ffffff',
       fontSize: 11,
     };
+    if (this.edgeStyle === 'dashed') {
+      style['dashed'] = true;
+      style['dashPattern'] = '8 4';
+    }
     if (this.currentTool === 'arrow') {
       style['endArrow'] = 'block';
       style['endFill'] = 1;
@@ -631,7 +690,7 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
     }
   }
 
-  onEdgeStyleChange(style: 'orthogonal' | 'straight' | 'curved'): void {
+  onEdgeStyleChange(style: 'orthogonal' | 'straight' | 'curved' | 'dashed'): void {
     this.edgeStyle = style;
     if (!this.graph) return;
     const cells = this.graph.getSelectionCells();
@@ -643,8 +702,25 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
           this.getEdgeStyleValue() as any,
           edges,
         );
-        this.isDirty = true;
+        if (style === 'dashed') {
+          this.graph.setCellStyles('dashed' as keyof CellStateStyle, true as any, edges);
+          this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '8 4' as any, edges);
+        } else {
+          this.graph.setCellStyles('dashed' as keyof CellStateStyle, false as any, edges);
+          this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '' as any, edges);
+        }
       }
+      const vertices = cells.filter((c) => !c.isEdge());
+      if (vertices.length > 0) {
+        if (style === 'dashed') {
+          this.graph.setCellStyles('dashed' as keyof CellStateStyle, true as any, vertices);
+          this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '8 4' as any, vertices);
+        } else {
+          this.graph.setCellStyles('dashed' as keyof CellStateStyle, false as any, vertices);
+          this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '' as any, vertices);
+        }
+      }
+      this.isDirty = true;
     }
   }
 
@@ -693,7 +769,7 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
           fillColor: 'none',
           strokeColor: 'none',
           fontColor: this.fontColor,
-          fontSize: 14,
+          fontSize: this.fontSize,
           align: 'center',
           verticalAlign: 'middle',
         });
@@ -717,6 +793,25 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
   onFontColorChange(color: string): void {
     this.fontColor = color;
     this.applyStyleToSelected('fontColor', color);
+  }
+
+  increaseFontSize(): void {
+    this.fontSize = Math.min(this.fontSize + 2, 72);
+    this.applyFontSize();
+  }
+
+  decreaseFontSize(): void {
+    this.fontSize = Math.max(this.fontSize - 2, 6);
+    this.applyFontSize();
+  }
+
+  private applyFontSize(): void {
+    if (!this.graph) return;
+    const cells = this.graph.getSelectionCells();
+    if (cells && cells.length > 0) {
+      this.graph.setCellStyles('fontSize' as keyof CellStateStyle, this.fontSize as any, cells);
+      this.isDirty = true;
+    }
   }
 
   private applyStyleToSelected(styleKey: keyof CellStateStyle, value: string): void {
@@ -745,6 +840,57 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
       this.graph.removeCells(cells);
       this.isDirty = true;
     }
+  }
+
+  copySelected(): void {
+    if (!this.graph) return;
+    const cells = this.graph.getSelectionCells();
+    if (!cells || cells.length === 0) return;
+    const clones = this.graph.cloneCells(cells);
+    this.clipboard = clones;
+    this.clipboardOffset = 0;
+    this.statusMessage = `${clones.length} item(s) copied`;
+    this.cdr.markForCheck();
+  }
+
+  cutSelected(): void {
+    if (!this.graph) return;
+    const cells = this.graph.getSelectionCells();
+    if (!cells || cells.length === 0) return;
+    this.clipboard = this.graph.cloneCells(cells);
+    this.clipboardOffset = 0;
+    this.graph.removeCells(cells);
+    this.isDirty = true;
+    this.statusMessage = `${this.clipboard.length} item(s) cut`;
+    this.cdr.markForCheck();
+  }
+
+  pasteCells(): void {
+    if (!this.graph || this.clipboard.length === 0) return;
+    this.clipboardOffset += 20;
+    const offset = this.clipboardOffset;
+    const clones = this.graph.cloneCells(this.clipboard);
+    this.graph.getDataModel().beginUpdate();
+    try {
+      for (const cell of clones) {
+        if (!cell.isEdge()) {
+          const geo = cell.getGeometry();
+          if (geo) {
+            cell.setGeometry(geo.clone());
+            cell.getGeometry()!.x += offset;
+            cell.getGeometry()!.y += offset;
+          }
+        }
+      }
+      const parent = this.graph.getDefaultParent();
+      this.graph.addCells(clones, parent);
+    } finally {
+      this.graph.getDataModel().endUpdate();
+    }
+    this.graph.setSelectionCells(clones);
+    this.isDirty = true;
+    this.statusMessage = `${clones.length} item(s) pasted`;
+    this.cdr.markForCheck();
   }
 
   zoomIn(): void {

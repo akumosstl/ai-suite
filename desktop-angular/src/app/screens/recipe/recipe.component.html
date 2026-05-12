@@ -405,16 +405,24 @@
                         <input matInput [(ngModel)]="project.name" placeholder="{{'{{param:project_name}}'}}">
                       </mat-form-field>
                     </div>
-                    <div class="form-row">
-                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-                        <mat-label>Path</mat-label>
-                        <input matInput [(ngModel)]="project.path" placeholder="/path/to/project">
-                      </mat-form-field>
-                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-                        <mat-label>Target</mat-label>
-                        <input matInput [(ngModel)]="project.target" placeholder="meu-target">
-                      </mat-form-field>
-                    </div>
+              <div class="form-row">
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Path</mat-label>
+                  <input matInput [(ngModel)]="project.path" placeholder="/path/to/project">
+                </mat-form-field>
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Target (YML ref)</mat-label>
+                  <input matInput [(ngModel)]="project.target" placeholder="meu-target">
+                  <mat-icon matPrefix>link</mat-icon>
+                </mat-form-field>
+              </div>
+              <div class="form-row">
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Target Name (DB ref)</mat-label>
+                  <input matInput [(ngModel)]="project.target_name" placeholder="my-target-name">
+                  <mat-icon matPrefix>storage</mat-icon>
+                </mat-form-field>
+              </div>
                     <mat-form-field class="full-width" appearance="outline" floatLabel="always">
                       <mat-label>Description</mat-label>
                       <input matInput [(ngModel)]="project.description" placeholder="Project description">
@@ -445,28 +453,74 @@
                         </div>
                       </div>
                     </div>
-                    <!-- Nested: Scripts refs -->
-                    <div class="nested-section">
-                      <div class="nested-header">
-                        <mat-icon>terminal</mat-icon>
-                        <span>Script Refs</span>
-                        <span class="badge small" *ngIf="project.scripts.length > 0">{{ project.scripts.length }}</span>
-                        <button class="icon-btn add-btn small" (click)="addProjectScript(i)" title="Add script ref">
-                          <mat-icon>add</mat-icon>
-                        </button>
-                      </div>
-                      <div class="nested-list">
-                        <div class="nested-row" *ngFor="let sc of project.scripts; let j = index">
-                          <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
-                            <mat-label>Script ID</mat-label>
-                            <input matInput [(ngModel)]="project.scripts[j]" placeholder="script1">
-                          </mat-form-field>
-                          <button class="icon-btn remove-btn small" (click)="removeProjectScript(i, j)" title="Remove">
-                            <mat-icon>close</mat-icon>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+              <!-- Nested: Scripts refs -->
+              <div class="nested-section">
+                <div class="nested-header">
+                  <mat-icon>terminal</mat-icon>
+                  <span>Script Refs</span>
+                  <span class="badge small" *ngIf="project.scripts.length > 0">{{ project.scripts.length }}</span>
+                  <button class="icon-btn add-btn small" (click)="addProjectScript(i)" title="Add script ref">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                <div class="nested-list">
+                  <div class="nested-row" *ngFor="let sc of project.scripts; let j = index">
+                    <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                      <mat-label>Script ID</mat-label>
+                      <input matInput [(ngModel)]="project.scripts[j]" placeholder="script1">
+                    </mat-form-field>
+                    <button class="icon-btn remove-btn small" (click)="removeProjectScript(i, j)" title="Remove">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Nested: Agent Names (DB ref) -->
+              <div class="nested-section">
+                <div class="nested-header">
+                  <mat-icon>smart_toy</mat-icon>
+                  <span>Agent Names (DB ref)</span>
+                  <mat-icon class="ref-hint" matTooltip="Lookup by name in database">storage</mat-icon>
+                  <span class="badge small" *ngIf="project.agent_names.length > 0">{{ project.agent_names.length }}</span>
+                  <button class="icon-btn add-btn small" (click)="addProjectAgentName(i)" title="Add agent name">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                <div class="nested-list">
+                  <div class="nested-row" *ngFor="let ag of project.agent_names; let j = index">
+                    <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                      <mat-label>Agent Name</mat-label>
+                      <input matInput [(ngModel)]="project.agent_names[j]" placeholder="my-agent-name">
+                    </mat-form-field>
+                    <button class="icon-btn remove-btn small" (click)="removeProjectAgentName(i, j)" title="Remove">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Nested: Script Names (DB ref) -->
+              <div class="nested-section">
+                <div class="nested-header">
+                  <mat-icon>terminal</mat-icon>
+                  <span>Script Names (DB ref)</span>
+                  <mat-icon class="ref-hint" matTooltip="Lookup by name in database">storage</mat-icon>
+                  <span class="badge small" *ngIf="project.script_names.length > 0">{{ project.script_names.length }}</span>
+                  <button class="icon-btn add-btn small" (click)="addProjectScriptName(i)" title="Add script name">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                <div class="nested-list">
+                  <div class="nested-row" *ngFor="let sc of project.script_names; let j = index">
+                    <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
+                      <mat-label>Script Name</mat-label>
+                      <input matInput [(ngModel)]="project.script_names[j]" placeholder="my-script-name">
+                    </mat-form-field>
+                    <button class="icon-btn remove-btn small" (click)="removeProjectScriptName(i, j)" title="Remove">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
                   </div>
                 </div>
                 <div *ngIf="projects.length === 0" class="empty-hint">No projects defined. Click + to add.</div>
@@ -560,18 +614,26 @@
                         <input matInput [(ngModel)]="pipeline.name" placeholder="pipeline-review">
                       </mat-form-field>
                     </div>
-                    <div class="form-row">
-                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-                        <mat-label>Project</mat-label>
-                        <input matInput [(ngModel)]="pipeline.project" placeholder="proj1">
-                      </mat-form-field>
-                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
-                        <mat-label>Type</mat-label>
-                        <mat-select [(ngModel)]="pipeline.type">
-                          <mat-option *ngFor="let opt of pipelineTypeOptions" [value]="opt">{{ opt }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
+              <div class="form-row">
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Project (YML ref)</mat-label>
+                  <input matInput [(ngModel)]="pipeline.project" placeholder="proj1">
+                  <mat-icon matPrefix>link</mat-icon>
+                </mat-form-field>
+                <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                  <mat-label>Project Name (DB ref)</mat-label>
+                  <input matInput [(ngModel)]="pipeline.project_name" placeholder="my-project-name">
+                  <mat-icon matPrefix>storage</mat-icon>
+            </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="pipeline.type">
+                  <mat-option *ngFor="let opt of pipelineTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
                     <div class="form-row">
                       <mat-form-field class="full-width" appearance="outline" floatLabel="always">
                         <mat-label>Description</mat-label>
@@ -599,33 +661,61 @@
                           <div class="step-header">
                             <span class="step-order">#{{ step.order }}</span>
                             <span class="step-type">{{ step.type || (step.agent ? 'agent' : step.script ? 'script' : '-') }}</span>
-                            <span class="step-ref">{{ step.agent || step.script || '-' }}</span>
+                            <span class="step-ref">{{ step.agent_name || step.agent || step.script_name || step.script || '-' }}</span>
                             <button class="icon-btn remove-btn small" (click)="removeStep(i, j)" title="Remove step">
                               <mat-icon>close</mat-icon>
                             </button>
                           </div>
                           <div class="step-body">
-                            <div class="form-row compact">
-                              <mat-form-field class="form-field-xs" appearance="outline" floatLabel="always">
-                                <mat-label>Order</mat-label>
-                                <input matInput type="number" [(ngModel)]="step.order" placeholder="1">
-                              </mat-form-field>
-                              <mat-form-field class="form-field-select compact" appearance="outline" floatLabel="always">
-                                <mat-label>Type</mat-label>
-                                <mat-select [(ngModel)]="step.type">
-                                  <mat-option value="">Auto</mat-option>
-                                  <mat-option *ngFor="let opt of stepTypeOptions" [value]="opt">{{ opt }}</mat-option>
-                                </mat-select>
-                              </mat-form-field>
-                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
-                                <mat-label>Agent</mat-label>
-                                <input matInput [(ngModel)]="step.agent" placeholder="agent1">
-                              </mat-form-field>
-                              <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
-                                <mat-label>Script</mat-label>
-                                <input matInput [(ngModel)]="step.script" placeholder="script1">
-                              </mat-form-field>
-                            </div>
+                <div class="form-row compact">
+                  <mat-form-field class="form-field-xs" appearance="outline" floatLabel="always">
+                    <mat-label>Order</mat-label>
+                    <input matInput type="number" [(ngModel)]="step.order" placeholder="1">
+                  </mat-form-field>
+                  <mat-form-field class="form-field-select compact" appearance="outline" floatLabel="always">
+                    <mat-label>Type</mat-label>
+                    <mat-select [(ngModel)]="step.type">
+                      <mat-option value="">Auto</mat-option>
+                      <mat-option *ngFor="let opt of stepTypeOptions" [value]="opt">{{ opt }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="form-row compact">
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Agent (YML ref)</mat-label>
+                    <input matInput [(ngModel)]="step.agent" placeholder="agent1">
+                    <mat-icon matPrefix>link</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Agent Name (DB ref)</mat-label>
+                    <input matInput [(ngModel)]="step.agent_name" placeholder="my-agent">
+                    <mat-icon matPrefix>storage</mat-icon>
+                  </mat-form-field>
+                </div>
+                <div class="form-row compact">
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Agent Namespace</mat-label>
+                    <input matInput [(ngModel)]="step.agent_namespace" placeholder="default">
+                  </mat-form-field>
+                </div>
+                <div class="form-row compact">
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Script (YML ref)</mat-label>
+                    <input matInput [(ngModel)]="step.script" placeholder="script1">
+                    <mat-icon matPrefix>link</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Script Name (DB ref)</mat-label>
+                    <input matInput [(ngModel)]="step.script_name" placeholder="my-script">
+                    <mat-icon matPrefix>storage</mat-icon>
+                  </mat-form-field>
+                </div>
+                <div class="form-row compact">
+                  <mat-form-field class="form-field compact" appearance="outline" floatLabel="always">
+                    <mat-label>Script Namespace</mat-label>
+                    <input matInput [(ngModel)]="step.script_namespace" placeholder="default">
+                  </mat-form-field>
+                </div>
                             <mat-form-field class="full-width compact" appearance="outline" floatLabel="always">
                               <mat-label>Prompt Override</mat-label>
                               <textarea matInput [(ngModel)]="step.prompt" rows="2" placeholder="Prompt override for this step"></textarea>
@@ -728,19 +818,45 @@
                       </mat-form-field>
                     </div>
 
-                    <!-- Create-specific fields -->
-                    <div *ngIf="task.type === 'create'" class="form-row">
-                      <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
-                        <mat-label>Resource *</mat-label>
-                        <mat-select [(ngModel)]="task.resource">
-                          <mat-option *ngFor="let opt of resourceTypeOptions" [value]="opt">{{ opt }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-                        <mat-label>Ref</mat-label>
-                        <input matInput [(ngModel)]="task.ref" placeholder="proj1">
-                      </mat-form-field>
-                    </div>
+          <!-- Create-specific fields -->
+          <div *ngIf="task.type === 'create'" class="form-row">
+            <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+              <mat-label>Resource *</mat-label>
+              <mat-select [(ngModel)]="task.resource">
+                <mat-option *ngFor="let opt of resourceTypeOptions" [value]="opt">{{ opt }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Ref (YML ref)</mat-label>
+              <input matInput [(ngModel)]="task.ref" placeholder="proj1">
+              <mat-icon matPrefix>link</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Target Name (DB ref) for resource=target -->
+          <div *ngIf="task.type === 'create' && task.resource === 'target'" class="form-row">
+            <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Target Name (DB ref)</mat-label>
+              <input matInput [(ngModel)]="task.target_name" placeholder="my-target-name">
+              <mat-icon matPrefix>storage</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Template Name/Type (DB ref) for resource=template -->
+          <div *ngIf="task.type === 'create' && task.resource === 'template'" class="form-row">
+            <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+              <mat-label>Template Name (DB ref)</mat-label>
+              <input matInput [(ngModel)]="task.template_name" placeholder="my-template-name">
+              <mat-icon matPrefix>storage</mat-icon>
+            </mat-form-field>
+            <mat-form-field class="form-field-select" appearance="outline" floatLabel="always">
+              <mat-label>Template Type</mat-label>
+              <mat-select [(ngModel)]="task.template_type">
+                <mat-option value="">Any</mat-option>
+                <mat-option *ngFor="let opt of templateTypeOptions" [value]="opt">{{ opt }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
 
                     <!-- Run/Stop/Call-specific fields -->
                     <div *ngIf="task.type === 'run' || task.type === 'stop'" class="form-row">
@@ -880,47 +996,68 @@
 
         </div>
 
-        <!-- RAW MODE -->
-        <div *ngIf="viewMode === 'raw'" class="raw-editor">
-          <div class="raw-toolbar">
-            <span class="raw-label">YAML</span>
-            <button class="icon-btn copy-btn" (click)="copyToClipboard(rawYaml)" title="Copy YAML to clipboard" [disabled]="!rawYaml">
-              <mat-icon>content_copy</mat-icon>
-            </button>
-            <button class="icon-btn copy-btn" (click)="copyYamlAsJson()" title="Copy as JSON (for API)" [disabled]="!rawYaml">
-              <mat-icon>code</mat-icon>
-            </button>
-          </div>
-          <textarea
-            class="yaml-editor"
-            [(ngModel)]="rawYaml"
-            spellcheck="false"
-            placeholder="# Paste or write your recipe YAML here...
+<!-- RAW MODE -->
+<div *ngIf="viewMode === 'raw'" class="raw-editor">
+<div class="raw-toolbar">
+<span class="raw-label">YAML</span>
+<span class="raw-recipe-name" *ngIf="selectedRecipeFile">{{ selectedRecipeFile.name }}</span>
+<div class="raw-toolbar-actions">
+<button class="icon-btn copy-btn" (click)="copyToClipboard(rawYaml)" title="Copy YAML to clipboard" [disabled]="!rawYaml">
+<mat-icon>content_copy</mat-icon>
+</button>
+<button class="icon-btn copy-btn" (click)="copyYamlAsJson()" title="Copy as JSON (for API)" [disabled]="!rawYaml">
+<mat-icon>code</mat-icon>
+</button>
+</div>
+</div>
+<textarea
+class="yaml-editor"
+[(ngModel)]="rawYaml"
+spellcheck="false"
+placeholder="# Paste or write your recipe YAML here...
 recipe:
-  name: &quot;my-recipe&quot;
-  version: &quot;1.0&quot;
-  description: &quot;Description&quot;
+name: &quot;my-recipe&quot;
+version: &quot;1.0&quot;
+description: &quot;Description&quot;
 
 parameters:
-  project_name: &quot;meu-projeto&quot;">
-          </textarea>
-        </div>
+project_name: &quot;meu-projeto&quot;">
+</textarea>
+<div class="raw-editor-footer">
+<div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+<mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+{{ statusMessage }}
+</div>
+<div class="button-row">
+<button class="btn btn-primary" (click)="saveRecipeFile()" [disabled]="!rawYaml.trim()">
+<mat-icon>save</mat-icon>
+{{ formRecipeFile.id ? 'Update Recipe' : 'Save Recipe' }}
+</button>
+<button class="btn btn-secondary" (click)="clearForm()">
+<mat-icon>refresh</mat-icon>
+Clear Form
+</button>
+</div>
+</div>
+</div>
 
-        <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
-          <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
-          {{ statusMessage }}
-        </div>
+<div *ngIf="viewMode === 'visual'">
+<div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
+<mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>
+{{ statusMessage }}
+</div>
 
-        <div class="button-row">
-          <button class="btn btn-primary" (click)="saveRecipeFile()" [disabled]="viewMode === 'visual' ? !recipeName : !rawYaml.trim()">
-            <mat-icon>save</mat-icon>
-            {{ formRecipeFile.id ? 'Update Recipe' : 'Save Recipe' }}
-          </button>
-          <button class="btn btn-secondary" (click)="clearForm()">
-            <mat-icon>refresh</mat-icon>
-            Clear Form
-          </button>
-        </div>
+<div class="button-row">
+<button class="btn btn-primary" (click)="saveRecipeFile()" [disabled]="!recipeName">
+<mat-icon>save</mat-icon>
+{{ formRecipeFile.id ? 'Update Recipe' : 'Save Recipe' }}
+</button>
+<button class="btn btn-secondary" (click)="clearForm()">
+<mat-icon>refresh</mat-icon>
+Clear Form
+</button>
+</div>
+</div>
       </div>
     </div>
   </div>

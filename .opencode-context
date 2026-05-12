@@ -545,3 +545,91 @@ Added line/arrow connection tools to the diagram editor for connecting shapes.
 5. In select mode, drag from shape connection points also creates edges (maxGraph native behavior)
 
 **Build status:** Frontend compiles successfully (0 errors)
+
+### Diagram Copy/Cut/Paste Feature (Session: 2026-05-12)
+
+Added Ctrl+C / Ctrl+X / Ctrl+V copy/cut/paste functionality to the diagram editor.
+
+**Frontend files modified:**
+- `screens/diagram/diagram.component.ts`:
+  - Added `clipboard: Cell[]` and `clipboardOffset` private properties
+  - Added `copySelected()`: clones selected cells to clipboard, resets offset
+  - Added `cutSelected()`: copies + removes selected cells
+  - Added `pasteCells()`: clones clipboard cells, offsets position by +20px each paste, adds to graph, selects pasted cells
+  - Added `Ctrl+C`, `Ctrl+X`, `Ctrl+V` keyboard shortcuts in `setupKeyboardShortcuts()`
+- `screens/diagram/diagram.component.html`:
+  - Added Copy (content_copy), Cut (content_cut), Paste (content_paste) toolbar buttons in toolbar-left after Undo/Redo group
+
+**Behavior:**
+- Ctrl+C: Copies selected shapes/text/labels/edges to internal clipboard
+- Ctrl+X: Cuts (copies + deletes) selected items
+- Ctrl+V: Pastes clipboard items offset by 20px each time (repeated pastes cascade offset)
+- Toolbar buttons also available for click-based copy/cut/paste
+
+**Build status:** Frontend compiles successfully (0 errors)
+
+### Recipe DB Reference Fields - Full Implementation (Session: 2026-05-12)
+
+Extended the DB ref pattern to all recipe entities. Each YML-ref field now has a corresponding `_name` (DB ref) field for looking up resources already saved in the database.
+
+**Pattern:** `field` (YML internal ref, `link` icon) + `field_name` (DB lookup by name, `storage` icon)
+
+**Backend files modified:**
+- `recipe/RecipeProject.java` - Added `target_name` (`@JsonProperty("target_name")`), `agent_names` (`@JsonProperty("agent_names")`), `script_names` (`@JsonProperty("script_names")`) with getters/setters
+- `recipe/RecipeTask.java` - Added `target_name` (`@JsonProperty("target_name")`), `template_name` (`@JsonProperty("template_name")`), `template_type` (`@JsonProperty("template_type")`) with getters/setters
+- `recipe/RecipeExecutor.java`:
+  - `createProject()`: Uses `targetName` for DB target lookup (in addition to existing `target` fallback); uses `agentNames` list for DB agent lookup by name; uses `scriptNames` list for DB script lookup by name
+  - `executeCreateTask()`: When `resource=target` and `targetName` is set, looks up target in DB first (falls back to YML ref); when `resource=template` and `templateName` is set, looks up template in DB first using `searchTemplatesByType`
+
+**Frontend files modified:**
+- `screens/recipe/recipe.component.ts`:
+  - `RecipeProject` interface: added `target_name`, `agent_names: string[]`, `script_names: string[]`
+  - `RecipeTask` interface: added `target_name`, `template_name`, `template_type`
+  - `yamlContentToForm()`: parses `target_name`, `agent_names`, `script_names` for projects; parses `target_name`, `template_name`, `template_type` for tasks
+  - `formToYaml()`: outputs `target_name`, `agent_names`, `script_names` for projects; outputs `target_name`, `template_name`, `template_type` for tasks
+  - `addProject()`: includes `target_name: ''`, `agent_names: []`, `script_names: []`
+  - `addTask()`: includes `target_name: ''`, `template_name: ''`, `template_type: ''`
+  - Added helper methods: `addProjectAgentName()`, `removeProjectAgentName()`, `addProjectScriptName()`, `removeProjectScriptName()`
+- `screens/recipe/recipe.component.html`:
+  - Projects section: "Target" field split into "Target (YML ref)" with `link` icon + "Target Name (DB ref)" with `storage` icon
+  - Projects section: Added "Agent Names (DB ref)" nested list with `storage` icon hint
+  - Projects section: Added "Script Names (DB ref)" nested list with `storage` icon hint
+  - Tasks section: "Ref" field relabeled to "Ref (YML ref)" with `link` icon
+  - Tasks section: When `resource=target`, shows "Target Name (DB ref)" input with `storage` icon
+  - Tasks section: When `resource=template`, shows "Template Name (DB ref)" with `storage` icon + "Template Type" select
+
+**Complete DB ref field inventory:**
+| Entity | YML ref field | DB ref field | Notes |
+|--------|--------------|-------------|-------|
+| RecipePipeline | `project` | `project_name` | Already existed |
+| RecipeStep | `agent` | `agent_name` + `agent_namespace` | Already existed |
+| RecipeStep | `script` | `script_name` + `script_namespace` | Already existed |
+| RecipeProject | `target` | `target_name` | NEW |
+| RecipeProject | `agents[]` | `agent_names[]` | NEW |
+| RecipeProject | `scripts[]` | `script_names[]` | NEW |
+| RecipeTask | `ref` | `target_name` | NEW (when resource=target) |
+| RecipeTask | `ref` | `template_name` + `template_type` | NEW (when resource=template) |
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)
+
+### Recipe DB Reference Fields (Session: 2026-05-12)
+
+Added `project_name` (DB ref) field to the recipe visual form UI, alongside existing `project` (YML ref) field.
+Also added `agent_name`, `agent_namespace`, `script_name`, `script_namespace` (DB ref) fields to pipeline step form.
+
+**Frontend files modified:**
+- `screens/recipe/recipe.component.ts`:
+  - `RecipePipeline` interface: added `project_name` field
+  - `RecipeStep` interface: added `agent_name`, `agent_namespace`, `script_name`, `script_namespace` fields
+  - `yamlContentToForm()`: parses new fields from YAML
+  - `formToYaml()`: outputs new fields to YAML
+  - `addPipeline()`: includes `project_name: ''`
+  - `addStep()`: includes new DB ref fields
+- `screens/recipe/recipe.component.html`:
+  - Pipeline form: `project` label changed to "Project (YML ref)", added "Project Name (DB ref)" input with `storage` icon
+  - Step form: `agent` label changed to "Agent (YML ref)", added "Agent Name (DB ref)" + "Agent Namespace" inputs
+  - Step form: `script` label changed to "Script (YML ref)", added "Script Name (DB ref)" + "Script Namespace" inputs
+  - Step header: shows `agent_name` or `script_name` when available
+  - Type select field moved inside its own `form-row` div (HTML structure fix)
+
+**Build status:** Frontend compiles successfully (0 errors)

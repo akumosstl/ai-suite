@@ -36,10 +36,13 @@ export interface RecipeProject {
   description: string
   path: string
   target: string
+  target_name: string
   status: string
   readme: string
   agents: string[]
+  agent_names: string[]
   scripts: string[]
+  script_names: string[]
 }
 
 export interface RecipeAgent {
@@ -79,7 +82,11 @@ export interface RecipeStepIO {
 export interface RecipeStep {
   order: number
   agent: string
+  agent_name: string
+  agent_namespace: string
   script: string
+  script_name: string
+  script_namespace: string
   prompt: string
   type: string
   runtime: string
@@ -93,6 +100,7 @@ export interface RecipeStep {
 export interface RecipePipeline {
   id: string
   project: string
+  project_name: string
   name: string
   description: string
   type: string
@@ -122,6 +130,9 @@ export interface RecipeTask {
   pipeline_id: string
   pipeline_name: string
   project: string
+  target_name: string
+  template_name: string
+  template_type: string
   repeat: string
   retry: RecipeRetry
   loop: RecipeLoop
@@ -322,7 +333,6 @@ export class RecipeComponent implements OnInit, OnDestroy {
     if (recipeFile.version) this.recipeVersion = recipeFile.version
     if (recipeFile.description) this.recipeDescription = recipeFile.description ?? ''
     this.viewMode = 'visual'
-    this.statusMessage = `Recipe selected: ${recipeFile.name}`
   }
 
   yamlContentToForm(yaml: string): void {
@@ -357,10 +367,13 @@ export class RecipeComponent implements OnInit, OnDestroy {
         description: this.extractStr(p['description'], ''),
         path: this.extractStr(p['path'], ''),
         target: this.extractStr(p['target'], ''),
+        target_name: this.extractStr(p['target_name'], ''),
         status: this.extractStr(p['status'], 'active'),
         readme: this.extractStr(p['readme'], ''),
         agents: this.extractStrArray(p['agents']),
-        scripts: this.extractStrArray(p['scripts'])
+        agent_names: this.extractStrArray(p['agent_names']),
+        scripts: this.extractStrArray(p['scripts']),
+        script_names: this.extractStrArray(p['script_names'])
       }))
 
       this.agents = this.parseArraySection(recipe['agents'], (a: ParsedSection) => ({
@@ -392,18 +405,23 @@ export class RecipeComponent implements OnInit, OnDestroy {
         template: this.extractStr(t['template'], '')
       }))
 
-      this.pipelines = this.parseArraySection(recipe['pipelines'], (p: ParsedSection) => ({
-        id: this.extractStr(p['id'], ''),
-        project: this.extractStr(p['project'], ''),
-        name: this.extractStr(p['name'], ''),
+    this.pipelines = this.parseArraySection(recipe['pipelines'], (p: ParsedSection) => ({
+      id: this.extractStr(p['id'], ''),
+      project: this.extractStr(p['project'], ''),
+      project_name: this.extractStr(p['project_name'], ''),
+      name: this.extractStr(p['name'], ''),
         description: this.extractStr(p['description'], ''),
         type: this.extractStr(p['type'], 'sequential'),
         output_extension: this.extractStr(p['output_extension'], ''),
-        steps: this.parseArraySection(p['steps'], (s: ParsedSection) => ({
-          order: this.extractNum(s['order'], 0),
-          agent: this.extractStr(s['agent'], ''),
-          script: this.extractStr(s['script'], ''),
-          prompt: this.extractStr(s['prompt'], ''),
+    steps: this.parseArraySection(p['steps'], (s: ParsedSection) => ({
+      order: this.extractNum(s['order'], 0),
+      agent: this.extractStr(s['agent'], ''),
+      agent_name: this.extractStr(s['agent_name'], ''),
+      agent_namespace: this.extractStr(s['agent_namespace'], ''),
+      script: this.extractStr(s['script'], ''),
+      script_name: this.extractStr(s['script_name'], ''),
+      script_namespace: this.extractStr(s['script_namespace'], ''),
+      prompt: this.extractStr(s['prompt'], ''),
           type: this.extractStr(s['type'], ''),
           runtime: this.extractStr(s['runtime'], ''),
           cli: this.extractStr(s['cli'], ''),
@@ -430,6 +448,9 @@ export class RecipeComponent implements OnInit, OnDestroy {
         pipeline_id: this.extractStr(t['pipeline_id'], ''),
         pipeline_name: this.extractStr(t['pipeline_name'], ''),
         project: this.extractStr(t['project'], ''),
+        target_name: this.extractStr(t['target_name'], ''),
+        template_name: this.extractStr(t['template_name'], ''),
+        template_type: this.extractStr(t['template_type'], ''),
         repeat: this.extractStr(t['repeat'], ''),
         retry: {
           max_attempts: this.extractStr(t['retry']?.['max_attempts'] ?? '', '0'),
@@ -666,13 +687,26 @@ export class RecipeComponent implements OnInit, OnDestroy {
         if (p.name) yaml += `    name: "${p.name}"\n`
         if (p.description) yaml += `    description: "${p.description}"\n`
         if (p.path) yaml += `    path: "${p.path}"\n`
-        if (p.target) yaml += `    target: "${p.target}"\n`
-        if (p.status) yaml += `    status: "${p.status}"\n`
+      if (p.target) yaml += ` target: "${p.target}"\n`
+      if (p.target_name) yaml += ` target_name: "${p.target_name}"\n`
+      if (p.status) yaml += ` status: "${p.status}"\n`
         if (p.readme) yaml += `    readme: "${p.readme}"\n`
-        if (p.agents.length > 0) {
-          yaml += '    agents:\n'
-          for (const a of p.agents) yaml += `      - "${a}"\n`
-        }
+          if (p.agents.length > 0) {
+            yaml += ' agents:\n'
+            for (const a of p.agents) yaml += ` - "${a}"\n`
+          }
+          if (p.agent_names.length > 0) {
+            yaml += ' agent_names:\n'
+            for (const a of p.agent_names) yaml += ` - "${a}"\n`
+          }
+          if (p.scripts.length > 0) {
+            yaml += ' scripts:\n'
+            for (const s of p.scripts) yaml += ` - "${s}"\n`
+          }
+          if (p.script_names.length > 0) {
+            yaml += ' script_names:\n'
+            for (const s of p.script_names) yaml += ` - "${s}"\n`
+          }
         if (p.scripts.length > 0) {
           yaml += '    scripts:\n'
           for (const s of p.scripts) yaml += `      - "${s}"\n`
@@ -696,19 +730,24 @@ export class RecipeComponent implements OnInit, OnDestroy {
       yaml += '\npipelines:\n'
       for (const p of this.pipelines) {
         if (!p.id.trim()) continue
-        yaml += `  - id: "${p.id}"\n`
-        if (p.project) yaml += `    project: "${p.project}"\n`
-        if (p.name) yaml += `    name: "${p.name}"\n`
+      yaml += ` - id: "${p.id}"\n`
+      if (p.project) yaml += ` project: "${p.project}"\n`
+      if (p.project_name) yaml += ` project_name: "${p.project_name}"\n`
+      if (p.name) yaml += ` name: "${p.name}"\n`
         if (p.description) yaml += `    description: "${p.description}"\n`
         if (p.type) yaml += `    type: "${p.type}"\n`
         if (p.output_extension) yaml += `    output_extension: "${p.output_extension}"\n`
         if (p.steps.length > 0) {
           yaml += '    steps:\n'
           for (const s of p.steps) {
-            yaml += `      - order: ${s.order}\n`
-            if (s.agent) yaml += `        agent: "${s.agent}"\n`
-            if (s.script) yaml += `        script: "${s.script}"\n`
-            if (s.prompt) yaml += `        prompt: "${s.prompt}"\n`
+          yaml += ` - order: ${s.order}\n`
+          if (s.agent) yaml += ` agent: "${s.agent}"\n`
+          if (s.agent_name) yaml += ` agent_name: "${s.agent_name}"\n`
+          if (s.agent_namespace) yaml += ` agent_namespace: "${s.agent_namespace}"\n`
+          if (s.script) yaml += ` script: "${s.script}"\n`
+          if (s.script_name) yaml += ` script_name: "${s.script_name}"\n`
+          if (s.script_namespace) yaml += ` script_namespace: "${s.script_namespace}"\n`
+          if (s.prompt) yaml += ` prompt: "${s.prompt}"\n`
             if (s.type) yaml += `        type: "${s.type}"\n`
             if (s.runtime) yaml += `        runtime: "${s.runtime}"\n`
             if (s.cli) yaml += `        cli: "${s.cli}"\n`
@@ -744,8 +783,11 @@ export class RecipeComponent implements OnInit, OnDestroy {
         if (t.pipeline_ref) yaml += `    pipeline_ref: "${t.pipeline_ref}"\n`
         if (t.pipeline_id) yaml += `    pipeline_id: "${t.pipeline_id}"\n`
         if (t.pipeline_name) yaml += `    pipeline_name: "${t.pipeline_name}"\n`
-        if (t.project) yaml += `    project: "${t.project}"\n`
-        if (t.repeat) yaml += `    repeat: ${this.yamlValue(t.repeat)}\n`
+      if (t.project) yaml += ` project: "${t.project}"\n`
+      if (t.target_name) yaml += ` target_name: "${t.target_name}"\n`
+      if (t.template_name) yaml += ` template_name: "${t.template_name}"\n`
+      if (t.template_type) yaml += ` template_type: "${t.template_type}"\n`
+      if (t.repeat) yaml += ` repeat: ${this.yamlValue(t.repeat)}\n`
         if (t.retry && (t.retry.max_attempts !== '0' || t.retry.delay_seconds !== '5' || t.retry.on_status.length > 0)) {
           yaml += '    retry:\n'
           yaml += `      max_attempts: ${this.yamlValue(t.retry.max_attempts)}\n`
@@ -816,8 +858,8 @@ export class RecipeComponent implements OnInit, OnDestroy {
 
   addProject(): void {
     this.projects.push({
-      id: '', name: '', description: '', path: '', target: '',
-      status: 'active', readme: '', agents: [], scripts: []
+      id: '', name: '', description: '', path: '', target: '', target_name: '',
+      status: 'active', readme: '', agents: [], agent_names: [], scripts: [], script_names: []
     })
   }
 
@@ -839,6 +881,22 @@ export class RecipeComponent implements OnInit, OnDestroy {
 
   removeProjectScript(projIndex: number, scriptIndex: number): void {
     this.projects[projIndex].scripts.splice(scriptIndex, 1)
+  }
+
+  addProjectAgentName(projIndex: number): void {
+    this.projects[projIndex].agent_names.push('')
+  }
+
+  removeProjectAgentName(projIndex: number, agentIndex: number): void {
+    this.projects[projIndex].agent_names.splice(agentIndex, 1)
+  }
+
+  addProjectScriptName(projIndex: number): void {
+    this.projects[projIndex].script_names.push('')
+  }
+
+  removeProjectScriptName(projIndex: number, scriptIndex: number): void {
+    this.projects[projIndex].script_names.splice(scriptIndex, 1)
   }
 
   addAgent(): void {
@@ -867,7 +925,7 @@ export class RecipeComponent implements OnInit, OnDestroy {
 
   addPipeline(): void {
     this.pipelines.push({
-      id: '', project: '', name: '', description: '', type: 'sequential',
+      id: '', project: '', project_name: '', name: '', description: '', type: 'sequential',
       output_extension: '', steps: []
     })
   }
@@ -881,7 +939,9 @@ export class RecipeComponent implements OnInit, OnDestroy {
     const steps = this.pipelines[pipelineIndex].steps
     const nextOrder = steps.length > 0 ? Math.max(...steps.map(s => s.order)) + 1 : 1
     steps.push({
-      order: nextOrder, agent: '', script: '', prompt: '', type: '',
+      order: nextOrder, agent: '', agent_name: '', agent_namespace: '',
+      script: '', script_name: '', script_namespace: '',
+      prompt: '', type: '',
       runtime: '', cli: '', parameters: '', arguments: '',
       input: { content: '', type: 'text' },
       output: { content: '', type: 'text' }
@@ -897,7 +957,8 @@ export class RecipeComponent implements OnInit, OnDestroy {
     this.tasks.push({
       id: '', type: 'create', resource: '', ref: '',
       depends_on: [], pipeline_ref: '', pipeline_id: '', pipeline_name: '',
-      project: '', repeat: '',
+      project: '', target_name: '', template_name: '', template_type: '',
+      repeat: '',
       retry: { max_attempts: '0', delay_seconds: '5', on_status: [] },
       loop: { condition: '', max_iterations: '', delay_seconds: '' },
       wait: false, stop_on_failure: true

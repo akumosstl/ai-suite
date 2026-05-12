@@ -537,8 +537,8 @@ ngOnDestroy(): void {
     this.dialog.open(PluginsModalComponent, {
       width: '80vw',
       maxWidth: '1600px',
-      height: '80vh',
-      maxHeight: '1000px',
+      height: '90vh',
+      maxHeight: '1200px',
       panelClass: 'plugins-modal'
     })
   }

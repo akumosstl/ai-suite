@@ -293,9 +293,42 @@ public class RecipeExecutor {
     }
 
     private Long executeCreateTask(RecipeYaml recipeYaml, RecipeTask task,
-                                   RecipeParameterResolver resolver) {
+            RecipeParameterResolver resolver) {
         String resource = task.getResource();
         String ref = task.getRef();
+
+        if (task.getTargetName() != null && !task.getTargetName().isEmpty() && "target".equals(resource)) {
+            String targetName = resolver.resolve(task.getTargetName());
+            try {
+                Target target = targetService.getTargetByName(targetName);
+                if (target != null) return target.getId();
+            } catch (Exception e) {
+                logger.warn("Target '{}' not found in database, falling back to recipe ref", targetName);
+            }
+        }
+
+        if (task.getTemplateName() != null && !task.getTemplateName().isEmpty() && "template".equals(resource)) {
+            String templateName = resolver.resolve(task.getTemplateName());
+            String templateType = task.getTemplateType() != null && !task.getTemplateType().isEmpty()
+                ? resolver.resolve(task.getTemplateType()) : null;
+            try {
+                List<Template> candidates;
+                if (templateType != null && !templateType.isEmpty()) {
+                    candidates = templateService.searchTemplatesByType(templateType, templateName);
+                } else {
+                    candidates = templateService.getRecentTemplates(0, 100);
+                }
+                for (Template t : candidates) {
+                    if (templateName.equals(t.getName())) {
+                        if (templateType == null || templateType.isEmpty() || templateType.equals(t.getType())) {
+                            return t.getId();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Template '{}' not found in database, falling back to recipe ref", templateName);
+            }
+        }
 
         switch (resource) {
             case "project": return createProject(recipeYaml, ref, resolver);
@@ -357,6 +390,15 @@ public class RecipeExecutor {
             }
         }
 
+        if (rp.getTargetName() != null && !rp.getTargetName().isEmpty()) {
+            try {
+                Target target = targetService.getTargetByName(resolver.resolve(rp.getTargetName()));
+                project.setTargetId(target.getId());
+            } catch (Exception e) {
+                logger.warn("Target name '{}' not found in database for project '{}'", rp.getTargetName(), rp.getName());
+            }
+        }
+
         project = projectService.createProject(project);
 
         if (rp.getAgents() != null) {
@@ -375,6 +417,27 @@ public class RecipeExecutor {
             }
         }
 
+        if (rp.getAgentNames() != null) {
+            List<Long> agentIds = new ArrayList<>();
+            for (String agentName : rp.getAgentNames()) {
+                String resolvedName = resolver.resolve(agentName);
+                try {
+                    List<Agent> agents = agentService.searchAgents(resolvedName, "", 0, 10);
+                    for (Agent a : agents) {
+                        if (resolvedName.equals(a.getName())) {
+                            agentIds.add(a.getId());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Agent '{}' not found in database by name for project", resolvedName);
+                }
+            }
+            if (!agentIds.isEmpty()) {
+                projectService.addAgentsToProject(project.getId(), agentIds, true);
+            }
+        }
+
         if (rp.getScripts() != null) {
             List<Long> scriptIds = new ArrayList<>();
             for (String scriptRef : rp.getScripts()) {
@@ -384,6 +447,27 @@ public class RecipeExecutor {
                 }
                 if (scriptId != null) {
                     scriptIds.add(scriptId);
+                }
+            }
+            if (!scriptIds.isEmpty()) {
+                projectService.addScriptsToProject(project.getId(), scriptIds, true);
+            }
+        }
+
+        if (rp.getScriptNames() != null) {
+            List<Long> scriptIds = new ArrayList<>();
+            for (String scriptName : rp.getScriptNames()) {
+                String resolvedName = resolver.resolve(scriptName);
+                try {
+                    List<Script> scripts = scriptService.searchScripts(resolvedName, "", 0, 10);
+                    for (Script s : scripts) {
+                        if (resolvedName.equals(s.getName())) {
+                            scriptIds.add(s.getId());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Script '{}' not found in database by name for project", resolvedName);
                 }
             }
             if (!scriptIds.isEmpty()) {

@@ -19,6 +19,12 @@ public class RecipeTask {
     @JsonProperty("pipeline_name")
     private String pipelineName;
     private String project;
+    @JsonProperty("target_name")
+    private String targetName;
+    @JsonProperty("template_name")
+    private String templateName;
+    @JsonProperty("template_type")
+    private String templateType;
     private Integer repeat;
     private RecipeRetry retry;
     private RecipeLoop loop;
@@ -52,6 +58,15 @@ public class RecipeTask {
 
     public String getProject() { return project; }
     public void setProject(String project) { this.project = project; }
+
+    public String getTargetName() { return targetName; }
+    public void setTargetName(String targetName) { this.targetName = targetName; }
+
+    public String getTemplateName() { return templateName; }
+    public void setTemplateName(String templateName) { this.templateName = templateName; }
+
+    public String getTemplateType() { return templateType; }
+    public void setTemplateType(String templateType) { this.templateType = templateType; }
 
     public Integer getRepeat() { return repeat; }
     public void setRepeat(Integer repeat) { this.repeat = repeat; }

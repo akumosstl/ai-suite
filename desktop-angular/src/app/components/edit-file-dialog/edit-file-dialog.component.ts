@@ -57,7 +57,7 @@ type FileType = 'json' | 'markdown' | 'xml' | 'yaml' | 'javascript' | 'python' |
                     [(ngModel)]="editedContent" 
                     rows="20" 
                     (keydown.tab)="onTabKey($event)"
-                    placeholder="Enter the file content"></textarea>
+                    ></textarea>
           <mat-icon matPrefix>code</mat-icon>
         </mat-form-field>
       </div>

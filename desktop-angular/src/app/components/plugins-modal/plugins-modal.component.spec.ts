@@ -34,7 +34,7 @@ describe('PluginsModalComponent', () => {
   it('should load plugins on init', () => {
     const mockPlugins = {
       plugins: [
-        { name: 'test-plugin', version: '1.0.0', namespace: 'com.test', documentationUrl: 'http://test.com', download: '' }
+        { name: 'test-plugin', version: '1.0.0', namespace: 'com.test', documentationUrl: 'http://test.com', download: '', type: 'flow' }
       ]
     };
 
@@ -45,15 +45,13 @@ describe('PluginsModalComponent', () => {
     expect(apiServiceSpy.getPluginRegistry).toHaveBeenCalled();
     expect(component.plugins.length).toBe(1);
     expect(component.plugins[0].name).toBe('test-plugin');
+    expect(component.plugins[0].type).toBe('flow');
+    expect(component.availableTypes).toEqual(['flow']);
   });
 
-  it('should handle pagination correctly', () => {
+it('should handle pagination correctly', () => {
     component.plugins = Array(25).fill(null).map((_, i) => ({
-      name: `plugin-${i}`,
-      version: '1.0.0',
-      namespace: 'com.test',
-      documentationUrl: 'http://test.com',
-      download: ''
+      name: `plugin-${i}`, version: '1.0.0', namespace: 'com.test', documentationUrl: 'http://test.com', download: '', type: 'flow'
     }));
 
     component.pageIndex = 0;
@@ -69,13 +67,9 @@ describe('PluginsModalComponent', () => {
     expect(component.paginatedPlugins.length).toBe(5);
   });
 
-  it('should select plugin on selectPlugin', () => {
+it('should select plugin on selectPlugin', () => {
     const plugin = {
-      name: 'test-plugin',
-      version: '1.0.0',
-      namespace: 'com.test',
-      documentationUrl: 'http://test.com',
-      download: ''
+      name: 'test-plugin', version: '1.0.0', namespace: 'com.test', documentationUrl: 'http://test.com', download: '', type: 'flow'
     };
 
     component.selectPlugin(plugin);

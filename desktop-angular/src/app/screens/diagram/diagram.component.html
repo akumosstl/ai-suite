@@ -124,14 +124,24 @@
             <mat-icon>redo</mat-icon>
           </button>
           <div class="toolbar-separator"></div>
-          <button class="tool-btn" (click)="zoomIn()" matTooltip="Zoom In" matTooltipPosition="below">
-            <mat-icon>zoom_in</mat-icon>
-          </button>
-          <span class="zoom-label">{{ currentZoom }}%</span>
-          <button class="tool-btn" (click)="zoomOut()" matTooltip="Zoom Out" matTooltipPosition="below">
-            <mat-icon>zoom_out</mat-icon>
-          </button>
-          <button class="tool-btn" (click)="zoomActual()" matTooltip="Actual Size" matTooltipPosition="below">
+        <button class="tool-btn" (click)="copySelected()" matTooltip="Copy (Ctrl+C)" matTooltipPosition="below">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+        <button class="tool-btn" (click)="cutSelected()" matTooltip="Cut (Ctrl+X)" matTooltipPosition="below">
+          <mat-icon>content_cut</mat-icon>
+        </button>
+        <button class="tool-btn" (click)="pasteCells()" matTooltip="Paste (Ctrl+V)" matTooltipPosition="below">
+          <mat-icon>content_paste</mat-icon>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="tool-btn" (click)="zoomIn()" matTooltip="Zoom In (Ctrl++)" matTooltipPosition="below">
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+        <span class="zoom-label">{{ currentZoom }}%</span>
+        <button class="tool-btn" (click)="zoomOut()" matTooltip="Zoom Out (Ctrl+-)" matTooltipPosition="below">
+          <mat-icon>zoom_out</mat-icon>
+        </button>
+        <button class="tool-btn" (click)="zoomActual()" matTooltip="Actual Size (Ctrl+0)" matTooltipPosition="below">
             <mat-icon>fullscreen</mat-icon>
           </button>
           <button class="tool-btn" (click)="fitToWindow()" matTooltip="Fit to Window" matTooltipPosition="below">
@@ -139,10 +149,10 @@
           </button>
         </div>
         <div class="toolbar-center">
-            <button class="tool-btn" [class.active]="currentTool === 'select'" (click)="setTool('select')" matTooltip="Select / Connect" matTooltipPosition="below">
+            <button class="tool-btn" [class.active]="currentTool === 'select'" (click)="setTool('select')" matTooltip="Select / Connect (V)" matTooltipPosition="below">
               <mat-icon>near_me</mat-icon>
             </button>
-            <button class="tool-btn" [class.active]="currentTool === 'hand'" (click)="setTool('hand')" matTooltip="Pan / Hand" matTooltipPosition="below">
+            <button class="tool-btn" [class.active]="currentTool === 'hand'" (click)="setTool('hand')" matTooltip="Pan / Hand (H)" matTooltipPosition="below">
               <mat-icon>pan_tool</mat-icon>
             </button>
           <button class="tool-btn" [class.active]="currentTool === 'rectangle'" (click)="setTool('rectangle')" matTooltip="Rectangle" matTooltipPosition="below">
@@ -170,16 +180,21 @@
           </button>
         </div>
         <div class="toolbar-right">
+        <button class="tool-btn" [class.active]="isDarkTheme" (click)="isDarkTheme = !isDarkTheme" [matTooltip]="isDarkTheme ? 'Light Theme' : 'Dark Theme'" matTooltipPosition="below">
+          <mat-icon>{{ isDarkTheme ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        </button>
+        <div class="toolbar-separator"></div>
         <div class="color-picker-group">
           <label class="color-label">Edge</label>
           <input type="color" [value]="edgeColor" (input)="onEdgeColorChange($any($event.target).value)" class="color-input" title="Edge Color">
         </div>
         <div class="edge-style-group">
-          <label class="color-label">Style</label>
-          <select [ngModel]="edgeStyle" (ngModelChange)="onEdgeStyleChange($event)" class="edge-style-select" title="Edge Style">
+              <label class="color-label">Style</label>
+              <select [ngModel]="edgeStyle" (ngModelChange)="onEdgeStyleChange($event)" class="edge-style-select" title="Line/Border Style">
             <option value="orthogonal">Orthogonal</option>
             <option value="straight">Straight</option>
             <option value="curved">Curved</option>
+            <option value="dashed">Dashed</option>
           </select>
         </div>
         <div class="toolbar-separator"></div>
@@ -191,10 +206,19 @@
             <label class="color-label">Stroke</label>
             <input type="color" [value]="strokeColor" (input)="onStrokeColorChange($any($event.target).value)" class="color-input" title="Stroke Color">
           </div>
-          <div class="color-picker-group">
-            <label class="color-label">Font</label>
-            <input type="color" [value]="fontColor" (input)="onFontColorChange($any($event.target).value)" class="color-input" title="Font Color">
-          </div>
+              <div class="color-picker-group">
+                <label class="color-label">Font</label>
+                <input type="color" [value]="fontColor" (input)="onFontColorChange($any($event.target).value)" class="color-input" title="Font Color">
+              </div>
+              <div class="font-size-group">
+                <button class="tool-btn font-size-btn" (click)="decreaseFontSize()" matTooltip="Decrease Font Size" matTooltipPosition="below">
+                  <mat-icon>text_decrease</mat-icon>
+                </button>
+                <span class="font-size-label">{{ fontSize }}</span>
+                <button class="tool-btn font-size-btn" (click)="increaseFontSize()" matTooltip="Increase Font Size" matTooltipPosition="below">
+                  <mat-icon>text_increase</mat-icon>
+                </button>
+              </div>
           <div class="toolbar-separator"></div>
     <button class="tool-btn" (click)="exportSvg()" matTooltip="Export SVG" matTooltipPosition="below">
       <mat-icon>code</mat-icon>
@@ -213,7 +237,7 @@
         </button>
       </div>
 
-      <div #graphContainer class="graph-canvas" (click)="onCanvasClick($event)">
+      <div #graphContainer class="graph-canvas" [class.light-theme]="!isDarkTheme" (click)="onCanvasClick($event)">
       </div>
     </div>
   </div>
