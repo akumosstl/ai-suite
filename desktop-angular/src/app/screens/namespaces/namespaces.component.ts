@@ -11,7 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
-import { ApiService, Agent, Skill, Command, Script, Pipeline, Project } from '../../services/api.service';
+import { ApiService, Agent, Skill, Command, Script, Pipeline } from '../../services/api.service';
 
 /**
  * Interface que representa os itens de um namespace.
@@ -143,12 +143,16 @@ interface ClearResult {
               <mat-icon>dashboard</mat-icon>
               <span>Namespace Dashboard</span>
             </div>
-            <div class="header-actions" *ngIf="selectedNamespace">
-              <button class="icon-btn clear-btn" (click)="clearNamespace()" title="Clear namespace items">
-                <mat-icon>delete_sweep</mat-icon>
-                <span>Clear</span>
-              </button>
-            </div>
+      <div class="header-actions" *ngIf="selectedNamespace">
+        <button class="icon-btn export-btn" (click)="exportNamespace()" title="Export namespace as SQL">
+          <mat-icon>file_download</mat-icon>
+          <span>Export</span>
+        </button>
+        <button class="icon-btn clear-btn" (click)="clearNamespace()" title="Clear namespace items">
+          <mat-icon>delete_sweep</mat-icon>
+          <span>Clear</span>
+        </button>
+      </div>
           </div>
           
           <div class="dashboard-content" *ngIf="selectedNamespace">
@@ -212,24 +216,7 @@ interface ClearResult {
               </div>
             </div>
             
-            <div class="dashboard-section">
-              <div class="section-header">
-                <mat-icon>folder</mat-icon>
-                <span>Projects using this namespace</span>
-                <span class="badge">{{ projects.length }}</span>
-              </div>
-              
-              <div class="reference-list" *ngIf="projects.length > 0">
-                <div class="reference-item" *ngFor="let project of projects">
-                  <mat-icon>folder</mat-icon>
-                  <span>{{ project.name }}</span>
-                </div>
-              </div>
-              
-              <div *ngIf="projects.length === 0" class="empty-section">
-                <span>No projects using this namespace</span>
-              </div>
-            </div>
+
           </div>
           
           <div class="no-selection" *ngIf="!selectedNamespace">
@@ -342,11 +329,17 @@ interface ClearResult {
       height: 18px;
     }
     
-    .icon-btn.clear-btn:hover {
-      background: #c62828;
-      border-color: #f44336;
-      color: #ffffff;
-    }
+.icon-btn.clear-btn:hover {
+  background: #c62828;
+  border-color: #f44336;
+  color: #ffffff;
+}
+
+.icon-btn.export-btn:hover {
+  background: #1b5e20;
+  border-color: #4caf50;
+  color: #ffffff;
+}
     
     .type-selector {
       display: flex;
@@ -731,7 +724,6 @@ export class NamespacesComponent implements OnInit, OnDestroy {
   
   namespaceItems: NamespaceItems | null = null;
   pipelines: Pipeline[] = [];
-  projects: Project[] = [];
   
   displayedColumns: string[] = ['name', 'description', 'scope'];
   
@@ -779,7 +771,6 @@ export class NamespacesComponent implements OnInit, OnDestroy {
     this.selectedNamespace = null;
     this.namespaceItems = null;
     this.pipelines = [];
-    this.projects = [];
     this.loadNamespaces();
 }
 
@@ -815,7 +806,39 @@ ngOnInit(): void {
       }
     });
   }
-  
+
+  exportNamespace(): void {
+    if (!this.selectedNamespace) return;
+
+    this.apiService.exportNamespace(this.selectedType, this.selectedNamespace).subscribe({
+      next: (blob: Blob) => {
+        this.ngZone.run(() => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          const fileName = this.selectedNamespace!.replace(/[^a-zA-Z0-9\-_]/g, '_') + '_' + this.selectedType + '.sql';
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.dialog.open(PipelineResultDialogComponent, {
+            data: {
+              success: false,
+              message: 'Error exporting namespace: ' + (err.message || 'Unknown error')
+            }
+          });
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
   /**
    * Filtra os namespaces pelo termo de busca.
    */
@@ -902,21 +925,6 @@ ngOnInit(): void {
         });
       }
     });
-    
-    this.apiService.getProjectsUsingNamespace(this.selectedType, this.selectedNamespace).subscribe({
-      next: (projects) => {
-        this.ngZone.run(() => {
-          this.projects = projects || [];
-          this.cdr.detectChanges();
-        });
-      },
-      error: (err) => {
-        this.ngZone.run(() => {
-          this.projects = [];
-          this.cdr.detectChanges();
-        });
-      }
-    });
   }
   
   /**
@@ -955,8 +963,7 @@ ngOnInit(): void {
                   this.loadNamespaces();
                   this.selectedNamespace = null;
                   this.namespaceItems = null;
-                  this.pipelines = [];
-                  this.projects = [];
+                this.pipelines = [];
                 });
               } else {
                 this.dialog.open(PipelineResultDialogComponent, {

@@ -1062,9 +1062,17 @@ export class ScriptsComponent implements OnInit, OnDestroy {
 
     if (this.formScript.id) {
       this.apiService.updateScript(this.formScript.id, scriptData).subscribe({
-        next: (updated) => {
+        next: (response: any) => {
           this.ngZone.run(() => {
+            const updated = response.script || response;
+            const impact = response.impact;
             this.statusMessage = `Script '${updated.name}' updated successfully`;
+            if (impact && (impact.totalPipelines > 0 || impact.totalProjects > 0)) {
+              const parts: string[] = [];
+              if (impact.totalPipelines > 0) parts.push(`${impact.totalPipelines} pipeline(s)`);
+              if (impact.totalProjects > 0) parts.push(`${impact.totalProjects} project(s)`);
+              this.statusMessage += ` — Changes propagated to ${parts.join(' and ')}`;
+            }
             this.selectedScript = { ...updated };
             this.formScript = { ...updated };
             this.loadScripts();

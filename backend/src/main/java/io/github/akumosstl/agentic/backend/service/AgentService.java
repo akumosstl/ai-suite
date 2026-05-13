@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Serviço para gerenciamento de Agentes.
@@ -134,33 +133,106 @@ public class AgentService {
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
         checkDuplicateNameNamespace(agentDetails, id);
+
+        boolean promptChanged = !java.util.Objects.equals(agent.getPrompt(), agentDetails.getPrompt());
+        boolean nameChanged = !java.util.Objects.equals(agent.getName(), agentDetails.getName());
+
         agent.setName(agentDetails.getName());
         agent.setNamespace(agentDetails.getNamespace());
         agent.setDescription(agentDetails.getDescription());
         agent.setPrompt(agentDetails.getPrompt());
         agent.setPath(agentDetails.getPath());
-        return agentRepository.save(agent);
+        Agent saved = agentRepository.save(agent);
+
+        if (promptChanged || nameChanged) {
+            propagateAgentToProjects(saved);
+        }
+
+        return saved;
+    }
+
+    private void propagateAgentToProjects(Agent agent) {
+        List<Project> allProjects = projectRepository.findAll();
+        for (Project project : allProjects) {
+            if (project.getAgents().contains(agent) && project.getPath() != null && !project.getPath().isEmpty()) {
+                updateAgentFileOnDisk(project, agent);
+            }
+        }
+    }
+
+    private void updateAgentFileOnDisk(Project project, Agent agent) {
+        try {
+            String targetAgentsPath = "agents";
+            Target target = null;
+
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            if (target != null && target.getAgentsPath() != null && !target.getAgentsPath().isEmpty()) {
+                targetAgentsPath = target.getAgentsPath();
+            }
+
+            String fullPath = project.getPath() + File.separator + targetAgentsPath;
+            if (agent.getPath() != null && !agent.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + agent.getPath();
+            }
+
+            Path agentPathObj = Paths.get(fullPath);
+            if (!Files.exists(agentPathObj)) {
+                return;
+            }
+
+            String fileName = agent.getName();
+            Path filePath = agentPathObj.resolve(fileName);
+
+            StringBuilder content = new StringBuilder();
+            content.append("# ").append(agent.getName()).append("\n\n");
+            if (agent.getDescription() != null && !agent.getDescription().isEmpty()) {
+                content.append(agent.getDescription()).append("\n\n");
+            }
+            if (agent.getPrompt() != null && !agent.getPrompt().isEmpty()) {
+                content.append("## System Prompt\n\n").append(agent.getPrompt()).append("\n");
+            }
+
+            Files.write(filePath, content.toString().getBytes());
+        } catch (IOException e) {
+            System.err.println("WARNING: Failed to update agent file on disk for project " + project.getName() + ": " + e.getMessage());
+        }
     }
 
     @Transactional
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
 
-        // Check if agent has project relations
+        java.util.List<String> pipelineNames = new java.util.ArrayList<>();
+        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByAgent_Id(id);
+        java.util.Set<Long> seenPipelineIds = new java.util.HashSet<>();
+        for (PipelineStep step : pipelineSteps) {
+            if (step.getPipeline() != null && !seenPipelineIds.contains(step.getPipeline().getId())) {
+                seenPipelineIds.add(step.getPipeline().getId());
+                pipelineNames.add(step.getPipeline().getName());
+            }
+        }
+        if (!pipelineNames.isEmpty()) {
+            throw new RuntimeException("Cannot delete agent because it is used in pipeline(s): " + String.join(", ", pipelineNames));
+        }
+
+        java.util.List<String> projectNames = new java.util.ArrayList<>();
         List<Project> projectsWithAgent = projectRepository.findAll();
         for (Project project : projectsWithAgent) {
             if (project.getAgents().contains(agent)) {
-                String projectName = project.getName();
-                throw new RuntimeException("Cannot delete agent because it is associated with project: " + projectName);
+                projectNames.add(project.getName());
             }
         }
-
-// Check if agent has pipeline relations
-        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByAgent_Id(id);
-        if (!pipelineSteps.isEmpty()) {
-            PipelineStep step = pipelineSteps.get(0);
-            String pipelineName = step.getPipeline() != null ? step.getPipeline().getName() : "Unknown";
-            throw new RuntimeException("Cannot delete agent because it is associated with pipeline: " + pipelineName);
+        if (!projectNames.isEmpty()) {
+            throw new RuntimeException("Cannot delete agent because it is associated with project(s): " + String.join(", ", projectNames));
         }
 
         agentRepository.deleteById(id);
@@ -228,5 +300,51 @@ public class AgentService {
         agent.setPrompt(prompt != null ? prompt : "");
         agent.setPath(path != null ? path : "");
         return agentRepository.save(agent);
+    }
+
+    public java.util.Map<String, Object> getImpactReport(Long agentId) {
+        Agent agent = getAgentById(agentId);
+        java.util.Map<String, Object> report = new java.util.HashMap<>();
+
+        java.util.List<java.util.Map<String, Object>> affectedPipelines = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> affectedProjects = new java.util.ArrayList<>();
+
+        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByAgent_Id(agentId);
+        java.util.Set<Long> pipelineIds = new java.util.HashSet<>();
+        for (PipelineStep step : pipelineSteps) {
+            if (step.getPipeline() != null && !pipelineIds.contains(step.getPipeline().getId())) {
+                pipelineIds.add(step.getPipeline().getId());
+                java.util.Map<String, Object> pipelineInfo = new java.util.HashMap<>();
+                pipelineInfo.put("pipelineId", step.getPipeline().getId());
+                pipelineInfo.put("pipelineName", step.getPipeline().getName());
+                if (step.getPipeline().getProject() != null) {
+                    pipelineInfo.put("projectId", step.getPipeline().getProject().getId());
+                    pipelineInfo.put("projectName", step.getPipeline().getProject().getName());
+                }
+                pipelineInfo.put("stepCount", pipelineSteps.stream()
+                        .filter(s -> s.getPipeline() != null && s.getPipeline().getId().equals(step.getPipeline().getId()))
+                        .count());
+                affectedPipelines.add(pipelineInfo);
+            }
+        }
+
+        List<Project> allProjects = projectRepository.findAll();
+        for (Project project : allProjects) {
+            if (project.getAgents().contains(agent)) {
+                java.util.Map<String, Object> projectInfo = new java.util.HashMap<>();
+                projectInfo.put("projectId", project.getId());
+                projectInfo.put("projectName", project.getName());
+                affectedProjects.add(projectInfo);
+            }
+        }
+
+        report.put("agentId", agentId);
+        report.put("agentName", agent.getName());
+        report.put("affectedPipelines", affectedPipelines);
+        report.put("affectedProjects", affectedProjects);
+        report.put("totalPipelines", affectedPipelines.size());
+        report.put("totalProjects", affectedProjects.size());
+
+        return report;
     }
 }

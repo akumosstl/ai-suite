@@ -74,17 +74,28 @@ public class PipelineRunService {
         List<PipelineStep> steps = pipelineStepService.getStepsByPipeline(pipelineId);
         if (steps != null) {
             for (PipelineStep step : steps) {
-            PipelineRunStep runStep = new PipelineRunStep(step.getStepOrder());
-            runStep.setStatus("ready");
-            runStep.setName(step.getName());
-            runStep.setAgentName(step.getAgent() != null ? step.getAgent().getName() : null);
+                PipelineRunStep runStep = new PipelineRunStep(step.getStepOrder());
+                runStep.setStatus("ready");
+                runStep.setName(step.getName());
+                runStep.setType(step.getType());
+                runStep.setRuntime(step.getRuntime());
+                runStep.setAgent(step.getAgent());
+                runStep.setScript(step.getScript());
+                runStep.setAgentName(step.getAgent() != null ? step.getAgent().getName() : null);
                 runStep.setAgentNamespace(step.getAgent() != null ? step.getAgent().getNamespace() : null);
+                runStep.setAgentPrompt(step.getAgent() != null ? step.getAgent().getPrompt() : null);
                 runStep.setScriptName(step.getScript() != null ? step.getScript().getName() : null);
                 runStep.setScriptNamespace(step.getScript() != null ? step.getScript().getNamespace() : null);
+                runStep.setScriptContent(step.getScript() != null ? step.getScript().getContent() : null);
                 runStep.setInputContent(step.getInputContent());
                 runStep.setInputType(step.getInputType());
                 runStep.setOutputContent("");
                 runStep.setOutputType(step.getOutputType());
+                runStep.setStepOutput(step.getStepOutput());
+                runStep.setStepOutputType(step.getStepOutputType());
+                runStep.setCli(step.getCli());
+                runStep.setParameters(step.getParameters());
+                runStep.setArguments(step.getArguments());
                 run.addStep(runStep);
             }
         }

@@ -3,9 +3,11 @@ package io.github.akumosstl.agentic.backend.service;
 import io.github.akumosstl.agentic.backend.model.PipelineStep;
 import io.github.akumosstl.agentic.backend.model.Project;
 import io.github.akumosstl.agentic.backend.model.Script;
+import io.github.akumosstl.agentic.backend.model.Target;
 import io.github.akumosstl.agentic.backend.repository.PipelineStepRepository;
 import io.github.akumosstl.agentic.backend.repository.ProjectRepository;
 import io.github.akumosstl.agentic.backend.repository.ScriptRepository;
+import io.github.akumosstl.agentic.backend.repository.TargetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,8 +15,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 @Service
 public class ScriptService {
@@ -27,6 +33,9 @@ public class ScriptService {
 
     @Autowired
     private PipelineStepRepository pipelineStepRepository;
+
+    @Autowired
+    private TargetRepository targetRepository;
 
     public List<Script> getRecentScripts(int page, int size) {
         return scriptRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending())).getContent();
@@ -48,32 +57,100 @@ public class ScriptService {
     public Script updateScript(Long id, Script scriptDetails) {
         Script script = getScriptById(id);
         checkDuplicateNameNamespace(scriptDetails, id);
+
+        boolean contentChanged = !java.util.Objects.equals(script.getContent(), scriptDetails.getContent());
+        boolean nameChanged = !java.util.Objects.equals(script.getName(), scriptDetails.getName());
+
         script.setName(scriptDetails.getName());
         script.setNamespace(scriptDetails.getNamespace());
         script.setPath(scriptDetails.getPath());
         script.setDescription(scriptDetails.getDescription());
         script.setContent(scriptDetails.getContent());
         script.setScope(scriptDetails.getScope());
-        return scriptRepository.save(script);
+        Script saved = scriptRepository.save(script);
+
+        if (contentChanged || nameChanged) {
+            propagateScriptToProjects(saved);
+        }
+
+        return saved;
+    }
+
+    private void propagateScriptToProjects(Script script) {
+        List<Project> allProjects = projectRepository.findAll();
+        for (Project project : allProjects) {
+            if (project.getScripts().contains(script) && project.getPath() != null && !project.getPath().isEmpty()) {
+                updateScriptFileOnDisk(project, script);
+            }
+        }
+    }
+
+    private void updateScriptFileOnDisk(Project project, Script script) {
+        try {
+            String targetScriptsPath = "scripts";
+            Target target = null;
+
+            if (project.getTargetId() != null) {
+                target = targetRepository.findById(project.getTargetId()).orElse(null);
+            } else if (project.getTarget() != null && !project.getTarget().isEmpty()) {
+                List<Target> targets = targetRepository.findAll();
+                target = targets.stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(project.getTarget()))
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            if (target != null && target.getScriptsPath() != null && !target.getScriptsPath().isEmpty()) {
+                targetScriptsPath = target.getScriptsPath();
+            }
+
+            String fullPath = project.getPath() + File.separator + targetScriptsPath;
+            if (script.getPath() != null && !script.getPath().isEmpty()) {
+                fullPath = fullPath + File.separator + script.getPath();
+            }
+
+            Path scriptPathObj = Paths.get(fullPath);
+            if (!Files.exists(scriptPathObj)) {
+                return;
+            }
+
+            String scriptName = script.getName();
+            if (!scriptName.toLowerCase().endsWith(".sh") && !scriptName.toLowerCase().endsWith(".ps1")) {
+                scriptName = scriptName + ".sh";
+            }
+            Path filePath = scriptPathObj.resolve(scriptName);
+            String content = script.getContent() != null ? script.getContent() : "";
+            Files.write(filePath, content.getBytes());
+        } catch (IOException e) {
+            System.err.println("WARNING: Failed to update script file on disk for project " + project.getName() + ": " + e.getMessage());
+        }
     }
 
     public void deleteScript(Long id) {
         Script script = getScriptById(id);
 
-        // Check if script has project relations
-        List<Project> projectsWithScript = projectRepository.findAll();
-        for (Project project : projectsWithScript) {
-            if (project.getScripts().contains(script)) {
-                throw new RuntimeException("Cannot delete script because it is associated with project: " + project.getName());
+        java.util.List<String> pipelineNames = new java.util.ArrayList<>();
+        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByScript_Id(id);
+        java.util.Set<Long> seenPipelineIds = new java.util.HashSet<>();
+        for (PipelineStep step : pipelineSteps) {
+            if (step.getPipeline() != null && !seenPipelineIds.contains(step.getPipeline().getId())) {
+                seenPipelineIds.add(step.getPipeline().getId());
+                pipelineNames.add(step.getPipeline().getName());
             }
         }
+        if (!pipelineNames.isEmpty()) {
+            throw new RuntimeException("Cannot delete script because it is used in pipeline(s): " + String.join(", ", pipelineNames));
+        }
 
-        // Check if script has pipeline relations
-        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByScript_Id(id);
-        if (!pipelineSteps.isEmpty()) {
-            PipelineStep step = pipelineSteps.get(0);
-            String pipelineName = step.getPipeline() != null ? step.getPipeline().getName() : "Unknown";
-            throw new RuntimeException("Cannot delete script because it is associated with pipeline: " + pipelineName);
+        java.util.List<String> projectNames = new java.util.ArrayList<>();
+        List<Project> allProjects = projectRepository.findAll();
+        for (Project project : allProjects) {
+            if (project.getScripts().contains(script)) {
+                projectNames.add(project.getName());
+            }
+        }
+        if (!projectNames.isEmpty()) {
+            throw new RuntimeException("Cannot delete script because it is associated with project(s): " + String.join(", ", projectNames));
         }
 
         scriptRepository.deleteById(id);
@@ -128,5 +205,51 @@ public class ScriptService {
         script.setScope(scope != null ? scope : "global");
         script.setPath(path != null ? path : "");
         return scriptRepository.save(script);
+    }
+
+    public java.util.Map<String, Object> getImpactReport(Long scriptId) {
+        Script script = getScriptById(scriptId);
+        java.util.Map<String, Object> report = new java.util.HashMap<>();
+
+        java.util.List<java.util.Map<String, Object>> affectedPipelines = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> affectedProjects = new java.util.ArrayList<>();
+
+        List<PipelineStep> pipelineSteps = pipelineStepRepository.findByScript_Id(scriptId);
+        java.util.Set<Long> pipelineIds = new java.util.HashSet<>();
+        for (PipelineStep step : pipelineSteps) {
+            if (step.getPipeline() != null && !pipelineIds.contains(step.getPipeline().getId())) {
+                pipelineIds.add(step.getPipeline().getId());
+                java.util.Map<String, Object> pipelineInfo = new java.util.HashMap<>();
+                pipelineInfo.put("pipelineId", step.getPipeline().getId());
+                pipelineInfo.put("pipelineName", step.getPipeline().getName());
+                if (step.getPipeline().getProject() != null) {
+                    pipelineInfo.put("projectId", step.getPipeline().getProject().getId());
+                    pipelineInfo.put("projectName", step.getPipeline().getProject().getName());
+                }
+                pipelineInfo.put("stepCount", pipelineSteps.stream()
+                        .filter(s -> s.getPipeline() != null && s.getPipeline().getId().equals(step.getPipeline().getId()))
+                        .count());
+                affectedPipelines.add(pipelineInfo);
+            }
+        }
+
+        List<Project> allProjects = projectRepository.findAll();
+        for (Project project : allProjects) {
+            if (project.getScripts().contains(script)) {
+                java.util.Map<String, Object> projectInfo = new java.util.HashMap<>();
+                projectInfo.put("projectId", project.getId());
+                projectInfo.put("projectName", project.getName());
+                affectedProjects.add(projectInfo);
+            }
+        }
+
+        report.put("scriptId", scriptId);
+        report.put("scriptName", script.getName());
+        report.put("affectedPipelines", affectedPipelines);
+        report.put("affectedProjects", affectedProjects);
+        report.put("totalPipelines", affectedPipelines.size());
+        report.put("totalProjects", affectedProjects.size());
+
+        return report;
     }
 }

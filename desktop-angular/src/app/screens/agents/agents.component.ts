@@ -292,9 +292,17 @@ toggleLeftPanel(): void {
 
     if (this.formAgent.id) {
       this.apiService.updateAgent(this.formAgent.id, agentData).subscribe({
-        next: (updated) => {
+        next: (response: any) => {
           this.ngZone.run(() => {
+            const updated = response.agent || response;
+            const impact = response.impact;
             this.statusMessage = `Agent '${updated.name}' updated successfully`;
+            if (impact && (impact.totalPipelines > 0 || impact.totalProjects > 0)) {
+              const parts: string[] = [];
+              if (impact.totalPipelines > 0) parts.push(`${impact.totalPipelines} pipeline(s)`);
+              if (impact.totalProjects > 0) parts.push(`${impact.totalProjects} project(s)`);
+              this.statusMessage += ` — Changes propagated to ${parts.join(' and ')}`;
+            }
             this.selectedAgent = { ...updated };
             this.formAgent = { ...updated };
             this.cdr.detectChanges();

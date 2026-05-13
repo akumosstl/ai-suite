@@ -16,11 +16,12 @@ import { UpdateService } from '../../services/update.service'
 import { UpdateDialogComponent } from '../update-dialog/update-dialog.component'
 import { PluginsModalComponent } from '../plugins-modal/plugins-modal.component'
 import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.component'
+import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/import-namespace-dialog.component'
 
 @Component({
   selector: 'app-menu-bar',
   standalone: true,
-  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent],
+  imports: [CommonModule, MatMenuModule, MatButtonModule, MatDialogModule, MatIconModule, MatSnackBarModule, RouterModule, UpdateDialogComponent, PluginsModalComponent, ShortcutsDialogComponent, ImportNamespaceDialogComponent],
   template: `
     <div class="menu-bar">
       <div class="logo">
@@ -118,10 +119,14 @@ import { ShortcutsDialogComponent } from '../shortcuts-dialog/shortcuts-dialog.c
           <mat-icon>description</mat-icon>
           <span>Templates</span>
         </button>
-        <button mat-menu-item routerLink="/namespaces" class="menu-item">
-          <mat-icon>dns</mat-icon>
-          <span>Namespace</span>
-        </button>
+          <button mat-menu-item routerLink="/namespaces" class="menu-item">
+            <mat-icon>dns</mat-icon>
+            <span>Namespace</span>
+          </button>
+          <button mat-menu-item (click)="openImportDialog()" class="menu-item">
+            <mat-icon>file_upload</mat-icon>
+            <span>Import</span>
+          </button>
         <div class="menu-separator"></div>
           <button mat-menu-item (click)="checkUpdate()" class="menu-item">
             <mat-icon>system_update</mat-icon>
@@ -545,5 +550,11 @@ ngOnDestroy(): void {
 
   openShortcuts(): void {
     this.dialog.open(ShortcutsDialogComponent);
+  }
+
+  openImportDialog(): void {
+    this.dialog.open(ImportNamespaceDialogComponent, {
+      width: '600px'
+    });
   }
 }

@@ -516,6 +516,41 @@ A visual pipeline flow diagram editor using maxGraph (TypeScript fork of mxGraph
 
 **Build status:** Frontend + Backend both compile successfully (0 errors)
 
+### Namespace Export/Import Feature (Session: 2026-05-12)
+
+**Changes:**
+
+1. **Removed "Projects using this namespace" section** from `/namespaces` screen - no longer loads or displays project count for namespaces
+
+2. **Export button** in Namespace Dashboard (when a namespace is selected):
+   - Generates a `.sql` file with INSERT statements for all agents/scripts in the namespace
+   - INSERT statements do NOT include IDs (IDs are auto-generated on import)
+   - Agent inserts: `(name, namespace, category, description, prompt, path)`
+   - Script inserts: `(name, namespace, category, path, description, content, scope)`
+   - File downloaded as `<namespace>_<type>.sql`
+
+3. **Import menu item** under Management menu:
+   - Opens `ImportNamespaceDialogComponent` modal
+   - User selects a `.sql` file from filesystem
+   - Preview of SQL content shown
+   - On Import: validates SQL (only INSERT INTO agent/script allowed)
+   - Duplicate check by unique key (name + namespace) - skips existing records
+   - Shows import report: inserted, skipped, errors
+   - Ctrl+Enter shortcut to confirm import
+
+**Backend files modified:**
+- `controller/NamespaceController.java` - Added `GET /{type}/{namespace}/export` (returns SQL file as byte[]) and `POST /namespaces/import` (validates and executes SQL inserts); added `ImportResult` and `ImportRequest` inner classes; added SQL parsing methods (`parseAgentInsert`, `parseScriptInsert`, `extractValuesPart`, `parseValues`, `sqlEscape`, `sqlUnescape`, `truncate`); Autowired `AgentRepository` and `ScriptRepository`
+
+**Frontend files modified:**
+- `screens/namespaces/namespaces.component.ts` - Removed projects section, `projects` property, and `getProjectsUsingNamespace` API call; added Export button with `exportNamespace()` method; added export button styles
+- `components/menu-bar/menu-bar.component.ts` - Added "Import" menu item under Management menu; added `openImportDialog()` method; imported `ImportNamespaceDialogComponent`
+- `services/api.service.ts` - Added `exportNamespace()` (returns Blob) and `importNamespace()` API methods
+
+**Frontend files created:**
+- `components/import-namespace-dialog/import-namespace-dialog.component.ts` - Import dialog with file picker, SQL preview, import execution, and result report
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)
+
 ### Diagram Connection Lines Feature (Session: 2026-05-11)
 
 Added line/arrow connection tools to the diagram editor for connecting shapes.
@@ -633,3 +668,30 @@ Also added `agent_name`, `agent_namespace`, `script_name`, `script_namespace` (D
   - Type select field moved inside its own `form-row` div (HTML structure fix)
 
 **Build status:** Frontend compiles successfully (0 errors)
+---
+
+### Agent/Script Propagation System (Session: 2026-05-12)
+
+A complete propagation system ensuring Agent/Script changes flow to dependent Pipelines, Projects, and Diagram nodes, with audit trail via snapshots.
+
+**Strategy: "Sempre ao vivo"** -- PipelineSteps always use latest agent/script version at execution time; PipelineRunSteps keep denormalized snapshot for audit.
+
+**Backend changes:**
+
+- `PipelineStepService.java` -- Fixed `executeAgentStep()` to always use `agent.getPrompt()`; added orphan step error messages
+- `AgentService.java` -- Added `propagateAgentToProjects()` + `updateAgentFileOnDisk()`; added `getImpactReport(Long id)`; improved delete error messages
+- `ScriptService.java` -- Added `propagateScriptToProjects()` + `updateScriptFileOnDisk()`; added `getImpactReport(Long id)`; improved delete error messages
+- `PipelineRunStep.java` -- Full rewrite: FK fields (agent, script), snapshot fields (agentPrompt, scriptContent, type, runtime, cli, parameters, arguments, stepOutput, stepOutputType)
+- `PipelineRunService.java` -- Updated `createRun()` to populate all new fields
+- `AgentController.java` -- Added `GET /api/agents/{id}/impact`; changed PUT to return `{agent, impact}`
+- `ScriptController.java` -- Added `GET /api/scripts/{id}/impact`; changed PUT to return `{script, impact}`
+- `PipelineRunController.java` -- Updated `getRunStepOutput()` with all new fields
+
+**Frontend changes:**
+
+- `api.service.ts` -- Added ImpactReport/ImpactPipelineInfo/ImpactProjectInfo interfaces; added getAgentImpact/getScriptImpact; expanded PipelineRunStep; fixed catchError
+- `agents.component.ts` -- Shows propagation notification on save
+- `scripts.component.ts` -- Shows propagation notification on save
+- `diagram.component.ts` -- Stale pipeline node detection: deleted pipelines shown with red dashed border, strikethrough name, deleted status; auto-recover if pipeline restored
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)

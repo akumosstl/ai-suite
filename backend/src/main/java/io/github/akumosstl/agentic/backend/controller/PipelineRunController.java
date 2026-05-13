@@ -117,28 +117,40 @@ public class PipelineRunController {
         Map<String, Object> response = new HashMap<>();
 
         if (run != null && run.getSteps() != null) {
-            for (PipelineRunStep step : run.getSteps()) {
-                if (step.getStepOrder() != null && step.getStepOrder().equals(stepOrder)) {
-                    response.put("runId", run.getId());
-                    response.put("runStatus", run.getStatus());
-                    response.put("startedAt", run.getStartedAt());
-                    response.put("completedAt", run.getCompletedAt());
-                    response.put("stepOrder", step.getStepOrder());
-                    response.put("agentName", step.getAgentName());
-                    response.put("agentCategory", step.getAgentCategory());
-                    response.put("scriptName", step.getScriptName());
-                    response.put("scriptCategory", step.getScriptCategory());
-                    response.put("scriptNamespace", step.getScriptNamespace());
-                    response.put("status", step.getStatus());
-                    response.put("inputContent", step.getInputContent());
-                    response.put("inputType", step.getInputType());
-                    response.put("outputContent", step.getOutputContent());
-                    response.put("outputType", step.getOutputType());
-                    response.put("createdAt", step.getCreatedAt());
-                    response.put("updatedAt", step.getUpdatedAt());
-                    break;
-                }
-            }
+        for (PipelineRunStep step : run.getSteps()) {
+          if (step.getStepOrder() != null && step.getStepOrder().equals(stepOrder)) {
+            response.put("runId", run.getId());
+            response.put("runStatus", run.getStatus());
+            response.put("startedAt", run.getStartedAt());
+            response.put("completedAt", run.getCompletedAt());
+            response.put("stepOrder", step.getStepOrder());
+            response.put("agentId", step.getAgentId());
+            response.put("scriptId", step.getScriptId());
+            response.put("agentName", step.getAgentName());
+            response.put("agentCategory", step.getAgentCategory());
+            response.put("agentNamespace", step.getAgentNamespace());
+            response.put("agentPrompt", step.getAgentPrompt());
+            response.put("scriptName", step.getScriptName());
+            response.put("scriptCategory", step.getScriptCategory());
+            response.put("scriptNamespace", step.getScriptNamespace());
+            response.put("scriptContent", step.getScriptContent());
+            response.put("type", step.getType());
+            response.put("runtime", step.getRuntime());
+            response.put("cli", step.getCli());
+            response.put("parameters", step.getParameters());
+            response.put("arguments", step.getArguments());
+            response.put("status", step.getStatus());
+            response.put("inputContent", step.getInputContent());
+            response.put("inputType", step.getInputType());
+            response.put("outputContent", step.getOutputContent());
+            response.put("outputType", step.getOutputType());
+            response.put("stepOutput", step.getStepOutput());
+            response.put("stepOutputType", step.getStepOutputType());
+            response.put("createdAt", step.getCreatedAt());
+            response.put("updatedAt", step.getUpdatedAt());
+            break;
+          }
+        }
         }
 
         return response;

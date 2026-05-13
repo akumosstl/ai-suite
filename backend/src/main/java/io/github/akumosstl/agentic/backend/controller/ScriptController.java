@@ -63,7 +63,11 @@ public class ScriptController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateScript(@PathVariable Long id, @RequestBody Script scriptDetails) {
         try {
-            return ResponseEntity.ok(scriptService.updateScript(id, scriptDetails));
+            Script updated = scriptService.updateScript(id, scriptDetails);
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("script", updated);
+            response.put("impact", scriptService.getImpactReport(id));
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             Map<String, String> response = new HashMap<>();
             response.put("error", e.getMessage());
@@ -110,5 +114,10 @@ public class ScriptController {
     @GetMapping("/namespaces")
     public List<String> getDistinctNamespaces() {
         return scriptService.getDistinctNamespaces();
+    }
+
+    @GetMapping("/{id}/impact")
+    public ResponseEntity<Map<String, Object>> getScriptImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(scriptService.getImpactReport(id));
     }
 }

@@ -106,9 +106,9 @@ export interface ProjectAgentsDialogData {
           </ng-template>
           <div class="tab-content">
             <div class="search-section">
-              <mat-form-field class="search-field" appearance="outline">
-                <mat-label>Search agents...</mat-label>
-                <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
+    <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+      <mat-label>Search agents...</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
                 <mat-icon matPrefix>search</mat-icon>
               </mat-form-field>
               <button mat-stroked-button (click)="search()" class="search-btn">

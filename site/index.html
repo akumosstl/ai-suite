@@ -746,7 +746,85 @@ justify-content: center;
             border-top: 1px solid var(--border);
         }
 
-        @media (max-width: 768px) {
+        .testimonials {
+  padding: 100px 0;
+  background: var(--bg-primary);
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.testimonial-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.testimonial-card:hover {
+  border-color: var(--brand-purple);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(139, 92, 246, 0.1);
+}
+
+.testimonial-quote {
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--brand-purple);
+  opacity: 0.4;
+  font-family: Georgia, serif;
+  margin-bottom: 8px;
+}
+
+.testimonial-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin-bottom: 28px;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-pink) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.testimonial-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.testimonial-info span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
@@ -763,7 +841,7 @@ justify-content: center;
                 font-size: 1.15rem;
             }
 
-            .features, .targets, .value-prop, .enterprise, .pricing, .cta {
+            .features, .targets, .value-prop, .enterprise, .pricing, .testimonials, .cta {
                 padding: 80px 0;
             }
 
@@ -772,10 +850,14 @@ justify-content: center;
                 text-align: center;
             }
 
-            .contact-bar {
-                flex-direction: column;
-                gap: 16px;
-            }
+  .contact-bar {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
         }
     </style>
 </head>
@@ -796,8 +878,9 @@ justify-content: center;
                     <li><a href="#value" data-i18n="nav.value">Valor</a></li>
 <li><a href="#features" data-i18n="nav.features">Recursos</a></li>
 <li><a href="#targets" data-i18n="nav.targets">Integrações</a></li>
-<li><a href="#tutorials" data-i18n="nav.tutorials">Tutoriais</a></li>
-                    <li><a href="#enterprise" data-i18n="nav.enterprise">Empresas</a></li>
+          <li><a href="#tutorials" data-i18n="nav.tutorials">Tutoriais</a></li>
+          <li><a href="#testimonials" data-i18n="nav.testimonials">Comunidade</a></li>
+          <li><a href="#enterprise" data-i18n="nav.enterprise">Empresas</a></li>
                     <li><a href="#pricing" data-i18n="nav.pricing">Planos</a></li>
                 </ul>
                 <div class="lang-switch">
@@ -810,7 +893,7 @@ justify-content: center;
 
     <section class="hero">
         <div class="container">
-            <div class="hero-badge" data-i18n="hero.badge">v1.0 - Enterprise Edition</div>
+            <div class="hero-badge" data-i18n="hero.badge">v4.9.1 - Enterprise Edition</div>
             <h1><span class="highlight" data-i18n="hero.highlight1">Code Smarter, Ship Faster</span></h1>
             <p class="hero-tagline" data-i18n="hero.tagline">Transforme seu desenvolvimento de IA com Harness Engineering e guardrails inteligentes.</p>
             <p class="hero-description" data-i18n="hero.description">
@@ -892,11 +975,21 @@ justify-content: center;
                     <h3 data-i18n="features.6.title">Integracao REST API</h3>
                     <p data-i18n="features.6.desc">API REST completa com documentacao Swagger. Integre com CI/CD, monitoramento e sistemas enterprise.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏢</div>
-                    <h3 data-i18n="features.7.title">Colaboracao em Equipe</h3>
-                    <p data-i18n="features.7.desc">Pipelines compartilhados, acesso baseado em funcoes e trilhas de auditoria. Enable multiplas equipes para trabalhar com IA com seguranca.</p>
-                </div>
+          <div class="feature-card">
+            <div class="feature-icon">🏢</div>
+            <h3 data-i18n="features.7.title">Colaboracao em Equipe</h3>
+            <p data-i18n="features.7.desc">Pipelines compartilhados, acesso baseado em funcoes e trilhas de auditoria. Enable multiplas equipes para trabalhar com IA com seguranca.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🧩</div>
+            <h3 data-i18n="features.8.title">Recipes</h3>
+            <p data-i18n="features.8.desc">Templates YAML reutilizáveis para provisionamento de pipelines. Defina uma vez, deploy em qualquer projeto — como infrastructure-as-code para workflows de IA.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📐</div>
+            <h3 data-i18n="features.9.title">Diagrams</h3>
+            <p data-i18n="features.9.desc">Visualize a arquitetura dos seus pipelines e fluxos de agentes com diagramas interativos. Entenda dependências, identifique gargalos e documente automaticamente.</p>
+          </div>
             </div>
         </div>
     </section>
@@ -967,7 +1060,29 @@ justify-content: center;
         </div>
     </section>
 
-    <section class="pricing" id="pricing">
+    <section class="testimonials" id="testimonials">
+  <div class="container">
+    <div class="section-header">
+      <h2 data-i18n="testimonials.title">O Que a Comunidade Diz</h2>
+      <p data-i18n="testimonials.subtitle">Developers, CTOs e líderes de engenharia compartilham suas experiências com Agentic.</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-quote">&ldquo;</div>
+        <p class="testimonial-text" data-i18n="testimonials.1.text">Nice work on Agentic v4.0.0! The YAML-based pipeline provisioning approach is smart - reminds me of how infrastructure-as-code transformed DevOps. What caught my attention is the project-scoped resolution feature. We've been seeing teams struggle with namespace conflicts when scaling AI agent workflows across different environments. The ability to organize everything by project with proper isolation is crucial. The MCP Server integration is particularly interesting - connecting AI tools through Model Context Protocol could solve a lot of the fragmentation issues teams face when orchestrating multiple AI services. Been working on similar challenges with Latenode, especially around maintaining context across different workflow steps.</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">DG</div>
+          <div class="testimonial-info">
+            <h4>Dmitrii Glushakov</h4>
+            <span>Head of Growth @ Latenode</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
         <div class="container">
             <div class="section-header">
                 <h2 data-i18n="pricing.title">Preços Simples e Transparentes</h2>
@@ -1084,9 +1199,10 @@ justify-content: center;
                 'nav.features': 'Recursos',
 'nav.targets': 'Integrações',
 'nav.tutorials': 'Tutoriais',
-'nav.enterprise': 'Empresas',
-                'nav.pricing': 'Planos',
-                'hero.badge': 'v1.0 - Enterprise Edition',
+    'nav.enterprise': 'Empresas',
+    'nav.pricing': 'Planos',
+    'nav.testimonials': 'Comunidade',
+                'hero.badge': 'v4.9.1 - Enterprise Edition',
                 'hero.highlight1': 'Codifique de Forma Inteligente, Entregue Mais Rápido',
                 'hero.highlight2': 'Harness Engineer',
                 'hero.to': 'para',
@@ -1117,9 +1233,13 @@ justify-content: center;
                 'features.5.desc': 'Acompanhe performance de pipelines, taxas de sucesso e métricas de custo. Tome decisões baseadas em dados sobre investimento em IA.',
                 'features.6.title': 'Integração REST API',
                 'features.6.desc': 'API REST completa com documentação Swagger. Integre com CI/CD, monitoramento e sistemas enterprise.',
-'features.7.title': 'Colaboração em Equipe',
-'features.7.desc': 'Pipelines compartilhados, acesso baseado em funções e trilhas de auditoria. Enable múltiplas equipes para trabalhar com IA com segurança.',
-'tutorials.title': 'Aprenda Agentic',
+    'features.7.title': 'Colaboração em Equipe',
+    'features.7.desc': 'Pipelines compartilhados, acesso baseado em funções e trilhas de auditoria. Enable múltiplas equipes para trabalhar com IA com segurança.',
+    'features.8.title': 'Recipes',
+    'features.8.desc': 'Templates YAML reutilizáveis para provisionamento de pipelines. Defina uma vez, deploy em qualquer projeto — como infrastructure-as-code para workflows de IA.',
+    'features.9.title': 'Diagrams',
+    'features.9.desc': 'Visualize a arquitetura dos seus pipelines e fluxos de agentes com diagramas interativos. Entenda dependências, identifique gargalos e documente automaticamente.',
+    'tutorials.title': 'Aprenda Agentic',
 'tutorials.subtitle': 'Tutoriais em vídeo e conteúdo educacional para dominar a plataforma.',
 'tutorials.playlist.title': 'Playlist de Tutoriais',
 'tutorials.playlist.desc': 'Assista à série completa de tutoriais no YouTube',
@@ -1147,8 +1267,11 @@ justify-content: center;
                 'enterprise.5.title': 'Investimento em Infraestrutura',
                 'enterprise.5.desc': 'Sua camada de infraestrutura de IA. Build once, deploy everywhere. Pipelines reutilizáveis entre projetos.',
                 'enterprise.6.title': 'Independência de Fornecedor',
-                'enterprise.6.desc': 'Sem lock-in. Use qualquer modelo ou agente de IA. Seus workflows, seus dados, seu controle.',
-                'pricing.title': 'Preços Simples e Transparentes',
+    'enterprise.6.desc': 'Sem lock-in. Use qualquer modelo ou agente de IA. Seus workflows, seus dados, seu controle.',
+    'testimonials.title': 'O Que a Comunidade Diz',
+    'testimonials.subtitle': 'Developers, CTOs e líderes de engenharia compartilham suas experiências com Agentic.',
+    'testimonials.1.text': 'Nice work on Agentic v4.0.0! A abordagem de provisionamento de pipelines baseada em YAML é inteligente - me lembra como infrastructure-as-code transformou o DevOps. O que chamou minha atenção é o recurso de resolução com escopo de projeto. Vimos equipes lutando com conflitos de namespace ao escalar workflows de agentes de IA em diferentes ambientes. A capacidade de organizar tudo por projeto com isolamento adequado é crucial. A integração do MCP Server é particularmente interessante - conectar ferramentas de IA através do Model Context Protocol pode resolver muitos dos problemas de fragmentação que as equipes enfrentam ao orquestrar múltiplos serviços de IA. Tenho trabalhado em desafios semelhantes com Latenode, especialmente em manter o contexto entre diferentes etapas do workflow.',
+    'pricing.title': 'Preços Simples e Transparentes',
                 'pricing.subtitle': 'Escolha o plano que se adequa à sua organização.',
                 'pricing.starter.title': 'Starter',
                 'pricing.starter.price': 'Gratuito',
@@ -1188,9 +1311,10 @@ justify-content: center;
                 'nav.features': 'Features',
 'nav.targets': 'Integrations',
 'nav.tutorials': 'Tutorials',
-'nav.enterprise': 'Enterprise',
-                'nav.pricing': 'Pricing',
-                'hero.badge': 'v1.0 - Enterprise Edition',
+  'nav.enterprise': 'Enterprise',
+  'nav.pricing': 'Pricing',
+  'nav.testimonials': 'Community',
+                'hero.badge': 'v4.9.1 - Enterprise Edition',
                 'hero.highlight1': 'Code Smarter, Ship Faster',
                 'hero.to': 'to',
                 'hero.highlight2': 'Harness Engineer',
@@ -1221,9 +1345,13 @@ justify-content: center;
                 'features.5.desc': 'Track pipeline performance, success rates, and cost metrics. Make data-driven decisions about AI investment.',
                 'features.6.title': 'REST API Integration',
                 'features.6.desc': 'Full REST API with Swagger documentation. Integrate with CI/CD, monitoring, and enterprise systems.',
-'features.7.title': 'Team Collaboration',
-'features.7.desc': 'Shared pipelines, role-based access, and audit trails. Enable multiple teams to work with AI safely.',
-'tutorials.title': 'Learn Agentic',
+  'features.7.title': 'Team Collaboration',
+  'features.7.desc': 'Shared pipelines, role-based access, and audit trails. Enable multiple teams to work with AI safely.',
+  'features.8.title': 'Recipes',
+  'features.8.desc': 'Reusable YAML templates for pipeline provisioning. Define once, deploy across any project — like infrastructure-as-code for AI workflows.',
+  'features.9.title': 'Diagrams',
+  'features.9.desc': 'Visualize your pipeline architecture and agent flows with interactive diagrams. Understand dependencies, identify bottlenecks, and auto-document your workflows.',
+  'tutorials.title': 'Learn Agentic',
 'tutorials.subtitle': 'Video tutorials and educational content to master the platform.',
 'tutorials.playlist.title': 'Tutorial Playlist',
 'tutorials.playlist.desc': 'Watch the complete tutorial series on YouTube',
@@ -1251,8 +1379,11 @@ justify-content: center;
                 'enterprise.5.title': 'Infrastructure Investment',
                 'enterprise.5.desc': 'Your AI infrastructure layer. Build once, deploy everywhere. Reusable pipelines across projects.',
                 'enterprise.6.title': 'Vendor Independence',
-                'enterprise.6.desc': 'No lock-in. Use any AI model or agent. Your workflows, your data, your control.',
-                'pricing.title': 'Simple, Transparent Pricing',
+  'enterprise.6.desc': 'No lock-in. Use any AI model or agent. Your workflows, your data, your control.',
+  'testimonials.title': 'What the Community Says',
+  'testimonials.subtitle': 'Developers, CTOs, and engineering leaders share their experiences with Agentic.',
+  'testimonials.1.text': 'Nice work on Agentic v4.0.0! The YAML-based pipeline provisioning approach is smart - reminds me of how infrastructure-as-code transformed DevOps. What caught my attention is the project-scoped resolution feature. We\'ve been seeing teams struggle with namespace conflicts when scaling AI agent workflows across different environments. The ability to organize everything by project with proper isolation is crucial. The MCP Server integration is particularly interesting - connecting AI tools through Model Context Protocol could solve a lot of the fragmentation issues teams face when orchestrating multiple AI services. Been working on similar challenges with Latenode, especially around maintaining context across different workflow steps.',
+  'pricing.title': 'Simple, Transparent Pricing',
                 'pricing.subtitle': 'Choose the plan that fits your organization.',
                 'pricing.starter.title': 'Starter',
                 'pricing.starter.price': 'Free',

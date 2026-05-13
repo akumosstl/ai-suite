@@ -25,6 +25,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService, Diagram, PipelineSummary } from '../../services/api.service';
 import { PipelineResultDialogComponent } from '../../components/pipeline-result-dialog.component';
 import { SimpleInputDialogComponent } from '../../components/simple-input-dialog/simple-input-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 import { MenuBarComponent } from '../../components/menu-bar/menu-bar.component';
 import { PanelToggleComponent } from '../../components/panel-toggle/panel-toggle.component';
 import {
@@ -63,9 +64,10 @@ interface PipelineGroup {
     MatTooltipModule,
     MatSnackBarModule,
     MenuBarComponent,
-    PipelineResultDialogComponent,
-    SimpleInputDialogComponent,
-    PanelToggleComponent,
+  PipelineResultDialogComponent,
+  SimpleInputDialogComponent,
+  ConfirmDialogComponent,
+  PanelToggleComponent,
   ],
   templateUrl: './diagram.component.html',
   styleUrls: ['./diagram.component.css'],
@@ -418,6 +420,16 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
     }
   }
 
+  private extractPipelineName(cellValue: string): string {
+    const match = cellValue.match(/<b[^>]*>(.*?)<\/b>/);
+    return match ? match[1] : 'Unknown Pipeline';
+  }
+
+  private extractProjectName(cellValue: string): string {
+    const match = cellValue.match(/color:#aaa;font-size:10px;">(.*?)<\/span>/);
+    return match ? match[1] : 'Unknown Project';
+  }
+
   toggleMonitoring(): void {
     if (this.isMonitoring) {
       this.stopMonitoring();
@@ -560,7 +572,23 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
 
         const key = `${projectIdMatch[1]}:${pipelineIdMatch[1]}`;
         const latest = statusMap.get(key);
-        if (!latest) continue;
+
+        if (!latest) {
+          if (!value.includes('● deleted')) {
+            const staleColor = '#f44336';
+            const staleLabel = `<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;opacity:0.55;" data-pipeline-id="${pipelineIdMatch[1]}" data-project-id="${projectIdMatch[1]}">
+              <b style="text-decoration:line-through;">${this.extractPipelineName(value)}</b>
+              <span style="color:#aaa;font-size:10px;text-decoration:line-through;">${this.extractProjectName(value)}</span>
+              <span style="color:${staleColor};font-size:10px;">● deleted</span>
+            </div>`;
+            cell.setValue(staleLabel);
+            this.graph.setCellStyles('strokeColor' as keyof CellStateStyle, staleColor as any, [cell]);
+            this.graph.setCellStyles('dashed' as keyof CellStateStyle, true as any, [cell]);
+            this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '8 4' as any, [cell]);
+            updated = true;
+          }
+          continue;
+        }
 
         const newStatus = latest.pipelineStatus || 'pending';
         const newColor = this.getStatusColor(newStatus);
@@ -568,15 +596,17 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         const projectName = latest.projectName;
 
         const newLabel = `<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;">
-  <b>${pipelineName}</b>
-  <span style="color:#aaa;font-size:10px;">${projectName}</span>
-  <span style="color:${newColor};font-size:10px;">● ${newStatus}</span>
-  <button class="pipeline-open-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Open in Project">↗</button>
-  <button class="pipeline-run-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Run Pipeline">▶</button>
-</div>`;
+          <b>${pipelineName}</b>
+          <span style="color:#aaa;font-size:10px;">${projectName}</span>
+          <span style="color:${newColor};font-size:10px;">● ${newStatus}</span>
+          <button class="pipeline-open-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Open in Project">↗</button>
+          <button class="pipeline-run-btn" data-project-id="${latest.projectId}" data-pipeline-id="${latest.pipelineId}" title="Run Pipeline">▶</button>
+        </div>`;
 
         cell.setValue(newLabel);
         this.graph.setCellStyles('strokeColor' as keyof CellStateStyle, newColor as any, [cell]);
+        this.graph.setCellStyles('dashed' as keyof CellStateStyle, false as any, [cell]);
+        this.graph.setCellStyles('dashPattern' as keyof CellStateStyle, '' as any, [cell]);
         (cell as any).pipelineId = latest.pipelineId;
         (cell as any).projectId = latest.projectId;
         updated = true;
@@ -1046,8 +1076,20 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
 
   selectDiagram(diagram: Diagram): void {
     if (this.isDirty && this.formDiagram.id) {
-      if (!confirm('You have unsaved changes. Discard them?')) return;
+      const dialogData: ConfirmDialogData = {
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Discard them?',
+      };
+      this.dialog.open(ConfirmDialogComponent, { data: dialogData }).afterClosed().subscribe((confirmed: boolean) => {
+        if (!confirmed) return;
+        this.performSelectDiagram(diagram);
+      });
+      return;
     }
+    this.performSelectDiagram(diagram);
+  }
+
+  private performSelectDiagram(diagram: Diagram): void {
     this.selectedDiagram = { ...diagram };
     this.formDiagram = { ...diagram };
     this.loadDiagramContent(diagram.content);
@@ -1074,8 +1116,20 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
 
   newDiagram(): void {
     if (this.isDirty) {
-      if (!confirm('You have unsaved changes. Discard them?')) return;
+      const dialogData: ConfirmDialogData = {
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Discard them?',
+      };
+      this.dialog.open(ConfirmDialogComponent, { data: dialogData }).afterClosed().subscribe((confirmed: boolean) => {
+        if (!confirmed) return;
+        this.performNewDiagram();
+      });
+      return;
     }
+    this.performNewDiagram();
+  }
+
+  private performNewDiagram(): void {
     this.selectedDiagram = null;
     this.formDiagram = this.getEmptyDiagram();
     this.loadDiagramContent(this.formDiagram.content);

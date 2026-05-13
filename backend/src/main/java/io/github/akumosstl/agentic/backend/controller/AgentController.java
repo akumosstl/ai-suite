@@ -96,7 +96,11 @@ public class AgentController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAgent(@PathVariable Long id, @RequestBody Agent agentDetails) {
         try {
-            return ResponseEntity.ok(agentService.updateAgent(id, agentDetails));
+            Agent updated = agentService.updateAgent(id, agentDetails);
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("agent", updated);
+            response.put("impact", agentService.getImpactReport(id));
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             Map<String, String> response = new HashMap<>();
             response.put("error", e.getMessage());
@@ -174,5 +178,10 @@ public class AgentController {
     @GetMapping("/namespaces")
     public List<String> getDistinctCategories() {
         return agentService.getDistinctCategories();
+    }
+
+    @GetMapping("/{id}/impact")
+    public ResponseEntity<Map<String, Object>> getAgentImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(agentService.getImpactReport(id));
     }
 }

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, firstValueFrom, throwError } from 'rxjs';
+import { Observable, firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 /**
@@ -109,15 +109,26 @@ export interface PipelineRunStep {
   id?: number;
   name?: string;
   stepOrder?: number;
+  agentId?: number;
+  scriptId?: number;
   agentName?: string;
   agentNamespace?: string;
+  agentPrompt?: string;
   scriptName?: string;
   scriptNamespace?: string;
+  scriptContent?: string;
+  type?: string;
+  runtime?: string;
   status?: string;
   inputContent?: string;
   inputType?: string;
   outputContent?: string;
   outputType?: string;
+  stepOutput?: string;
+  stepOutputType?: string;
+  cli?: string;
+  parameters?: string;
+  arguments?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -152,6 +163,30 @@ export interface Script {
   content?: string;
   scope: string;
   path?: string;
+}
+
+export interface ImpactPipelineInfo {
+  pipelineId: number;
+  pipelineName: string;
+  projectId?: number;
+  projectName?: string;
+  stepCount: number;
+}
+
+export interface ImpactProjectInfo {
+  projectId: number;
+  projectName: string;
+}
+
+export interface ImpactReport {
+  agentId?: number;
+  agentName?: string;
+  scriptId?: number;
+  scriptName?: string;
+  affectedPipelines: ImpactPipelineInfo[];
+  affectedProjects: ImpactProjectInfo[];
+  totalPipelines: number;
+  totalProjects: number;
 }
 
 /**
@@ -865,9 +900,15 @@ export class ApiService {
     );
   }
 
-  updateAgent(id: number, agent: Agent): Observable<Agent> {
-    return this.http.put<Agent>(`${this.baseUrl}/agents/${id}`, agent).pipe(
+  updateAgent(id: number, agent: Agent): Observable<any> {
+    return this.http.put(`${this.baseUrl}/agents/${id}`, agent).pipe(
       catchError(this.handleError('updateAgent', agent))
+    );
+  }
+
+  getAgentImpact(id: number): Observable<ImpactReport> {
+    return this.http.get<ImpactReport>(`${this.baseUrl}/agents/${id}/impact`).pipe(
+      catchError(() => of({ affectedPipelines: [], affectedProjects: [], totalPipelines: 0, totalProjects: 0 } as ImpactReport))
     );
   }
 
@@ -892,9 +933,15 @@ export class ApiService {
     );
   }
 
-  updateScript(id: number, script: Script): Observable<Script> {
-    return this.http.put<Script>(`${this.baseUrl}/scripts/${id}`, script).pipe(
+  updateScript(id: number, script: Script): Observable<any> {
+    return this.http.put(`${this.baseUrl}/scripts/${id}`, script).pipe(
       catchError(this.handleError('updateScript', script))
+    );
+  }
+
+  getScriptImpact(id: number): Observable<ImpactReport> {
+    return this.http.get<ImpactReport>(`${this.baseUrl}/scripts/${id}/impact`).pipe(
+      catchError(() => of({ affectedPipelines: [], affectedProjects: [], totalPipelines: 0, totalProjects: 0 } as ImpactReport))
     );
   }
 
@@ -1459,6 +1506,20 @@ getNamespacesByType(type: string): Observable<string[]> {
   clearNamespace(type: string, namespace: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/namespaces/${type}/${namespace}`).pipe(
       catchError(this.handleError('clearNamespace', { success: false, deletedCount: 0, message: 'Error' }))
+    );
+  }
+
+  exportNamespace(type: string, namespace: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/namespaces/${type}/${namespace}/export`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(this.handleError('exportNamespace', new Blob()))
+    );
+  }
+
+  importNamespace(sqlContent: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/namespaces/import`, { sqlContent }).pipe(
+      catchError(this.handleError('importNamespace', { success: false, message: 'Error', errors: [], imported: [], skipped: [] }))
     );
   }
 

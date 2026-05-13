@@ -589,27 +589,31 @@ public class PipelineStepService {
             System.out.println("DEBUG: Step status set to running, calling executeAgentStep");
             String output = "";
 
-            String stepType = step.getType();
-            System.out.println("DEBUG: Step type: '" + stepType + "' (length=" + (stepType != null ? stepType.length() : 0) + ")");
-            System.out.println("DEBUG: stepType == null: " + (stepType == null));
-            System.out.println("DEBUG: stepType.equals('script'): " + (stepType != null && stepType.equals("script")));
-            System.out.println("DEBUG: Step agent: " + (step.getAgent() != null ? step.getAgent().getName() : "null"));
-            System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
+        String stepType = step.getType();
+        System.out.println("DEBUG: Step type: '" + stepType + "' (length=" + (stepType != null ? stepType.length() : 0) + ")");
+        System.out.println("DEBUG: stepType == null: " + (stepType == null));
+        System.out.println("DEBUG: stepType.equals('script'): " + (stepType != null && stepType.equals("script")));
+        System.out.println("DEBUG: Step agent: " + (step.getAgent() != null ? step.getAgent().getName() : "null"));
+        System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
 
-            if ("script".equals(stepType)) {
-                System.out.println("DEBUG: BRANCH: executing script");
-                output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
-                System.out.println("DEBUG: Script execution completed");
-            } else if (step.getAgent() != null) {
-                System.out.println("DEBUG: BRANCH: executing agent");
-                output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
-            } else if (step.getScript() != null) {
-                System.out.println("DEBUG: BRANCH: fallback script execution (type not set)");
-                output = "Script execution not implemented yet";
-            } else {
-                System.out.println("DEBUG: WARNING - No agent or script found for step!");
-                output = "Error: No agent or script configured for this step";
+        if ("script".equals(stepType)) {
+            if (step.getScript() == null) {
+                String errorMsg = "Error: Step references a script that no longer exists (orphaned step). Please reconfigure this step.";
+                throw new RuntimeException(errorMsg);
             }
+            System.out.println("DEBUG: BRANCH: executing script");
+            output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+            System.out.println("DEBUG: Script execution completed");
+        } else if (step.getAgent() != null) {
+            System.out.println("DEBUG: BRANCH: executing agent");
+            output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+        } else if (step.getScript() != null) {
+            System.out.println("DEBUG: BRANCH: fallback script execution (type not set)");
+            output = "Script execution not implemented yet";
+        } else {
+            System.out.println("DEBUG: WARNING - No agent or script found for step!");
+            output = "Error: No agent or script configured for this step. The referenced agent/script may have been deleted.";
+        }
 
             if (isPipelineStopped(pipelineId)) {
                 String stopOutput = "Pipeline was stopped by user";
@@ -697,16 +701,14 @@ public class PipelineStepService {
             System.out.println("DEBUG: agent prompt: " + agent.getPrompt());
         }
 
-        String prompt = step.getInputContent() != null && !step.getInputContent().isEmpty()
-                ? step.getInputContent()
-                : (agent != null ? agent.getPrompt() : null);
+        String prompt = agent != null ? agent.getPrompt() : null;
 
         if (prompt == null || prompt.isEmpty()) {
             prompt = "Hello, please respond.";
             sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(), "Warning: Agent has no prompt, using default.\n", "running");
         }
 
-        System.out.println("DEBUG: Step " + step.getStepOrder() + " - Agent prompt before replacement: " + prompt);
+        System.out.println("DEBUG: Step " + step.getStepOrder() + " - Agent prompt (live from agent) before replacement: " + prompt);
         System.out.println("DEBUG: Step " + step.getStepOrder() + " - Previous output file: " + previousOutputFile);
 
         String placeholder = "{{previous-output-file}}";

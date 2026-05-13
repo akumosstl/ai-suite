@@ -73,23 +73,23 @@ export interface SelectedStep {
           </ng-template>
           <div class="tab-content">
             <div class="search-section">
-              <mat-form-field class="search-field" appearance="outline">
-                <mat-label>Search agents...</mat-label>
-                <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
-                <mat-icon matPrefix>search</mat-icon>
-              </mat-form-field>
-              <button mat-stroked-button (click)="search()" class="search-btn">
-                <mat-icon>search</mat-icon>
-                Search
-              </button>
-              <button mat-icon-button (click)="clearSearch()" aria-label="Clear search" class="clear-btn" *ngIf="searchTerm">
-                <mat-icon>close</mat-icon>
-              </button>
-            </div>
-            <div class="table-container">
-              <div *ngIf="loading" class="loading-overlay">
-                <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
-                <span>Loading agents...</span>
+        <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+          <mat-label>Search agents...</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <button mat-stroked-button (click)="search()" class="search-btn">
+          <mat-icon>search</mat-icon>
+          Search
+        </button>
+        <button mat-icon-button (click)="clearSearch()" aria-label="Clear search" class="clear-btn" *ngIf="searchTerm">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="table-container">
+        <div *ngIf="loading" class="loading-overlay">
+          <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+          <span>Loading agents...</span>
               </div>
               <div *ngIf="!loading && agents.length === 0" class="empty-state">
                 <mat-icon class="empty-icon">smart_toy</mat-icon>
@@ -147,9 +147,9 @@ export interface SelectedStep {
           </ng-template>
           <div class="tab-content">
             <div class="search-section">
-              <mat-form-field class="search-field" appearance="outline">
-                <mat-label>Search scripts...</mat-label>
-                <input matInput [(ngModel)]="scriptSearchTerm" (keyup.enter)="searchScripts()" placeholder="Type to search...">
+        <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+          <mat-label>Search scripts...</mat-label>
+          <input matInput [(ngModel)]="scriptSearchTerm" (keyup.enter)="searchScripts()">
                 <mat-icon matPrefix>search</mat-icon>
               </mat-form-field>
               <button mat-stroked-button (click)="searchScripts()" class="search-btn">
@@ -210,9 +210,9 @@ export interface SelectedStep {
       </mat-tab-group>
       <div *ngIf="data.mode === 'project'">
         <div class="search-section">
-          <mat-form-field class="search-field" appearance="outline">
-            <mat-label>Search agents...</mat-label>
-            <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
+    <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+      <mat-label>Search agents...</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
             <mat-icon matPrefix>search</mat-icon>
           </mat-form-field>
           <button mat-stroked-button (click)="search()" class="search-btn">
