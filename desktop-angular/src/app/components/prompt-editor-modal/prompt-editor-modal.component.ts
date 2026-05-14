@@ -44,7 +44,7 @@ export interface PromptEditorResult {
       
       <div class="dialog-content">
         <div class="template-section">
-          <mat-form-field class="template-select" appearance="outline">
+          <mat-form-field class="template-select" appearance="outline" floatLabel="always">
             <mat-label>Template</mat-label>
             <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="onTemplateSelect()">
               <mat-option [value]="null">-- Select a template --</mat-option>
@@ -60,7 +60,7 @@ export interface PromptEditorResult {
           </div>
         </div>
         
-        <mat-form-field class="full-width prompt-field" appearance="outline">
+        <mat-form-field class="full-width prompt-field" appearance="outline" floatLabel="always">
           <mat-label>Prompt</mat-label>
           <textarea matInput 
                     [(ngModel)]="editedPrompt" 

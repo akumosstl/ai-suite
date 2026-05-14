@@ -47,7 +47,7 @@ type FileType = 'json' | 'markdown' | 'xml' | 'yaml' | 'javascript' | 'python' |
           <span class="file-path">{{ data.path }}/{{ data.fileName }}</span>
         </div>
         
-        <mat-form-field class="full-width content-field" appearance="outline">
+        <mat-form-field class="full-width content-field" appearance="outline" floatLabel="always">
           <mat-label>File Content</mat-label>
           <textarea matInput 
                     #contentTextarea

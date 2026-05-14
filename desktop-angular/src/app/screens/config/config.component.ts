@@ -139,13 +139,13 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
           </div>
 
           <div class="target-form">
-            <mat-form-field class="full-width" appearance="outline">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Name</mat-label>
               <input matInput [(ngModel)]="targetForm.name" placeholder="Enter target name">
               <mat-icon matPrefix>badge</mat-icon>
             </mat-form-field>
 
-            <mat-form-field class="full-width" appearance="outline">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
               <mat-label>Agents Path</mat-label>
               <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
               <mat-icon matPrefix>folder</mat-icon>
@@ -189,7 +189,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <div class="default-provider-row">
                   <mat-icon class="row-icon">tune</mat-icon>
                   <span class="default-provider-label">Default Provider</span>
-                <mat-form-field appearance="outline" class="provider-select-field">
+                <mat-form-field appearance="outline" class="provider-select-field" floatLabel="always">
                   <mat-select [value]="defaultProvider" (selectionChange)="onDefaultProviderChange($event.value)">
                     <mat-option value="openai">OpenAI</mat-option>
                     <mat-option value="google">Google Gemini</mat-option>

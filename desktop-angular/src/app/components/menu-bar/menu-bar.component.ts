@@ -38,7 +38,7 @@ import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/impor
             <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="12">&lt;/&gt;</text>
           </svg>
         </div>
-        <span class="logo-text">Agentic</span>
+        <span class="logo-text">Mangaba</span>
       </div>
       
       <div class="menu-items">

@@ -31,7 +31,7 @@ export interface DuplicatePipelineData {
 
     <mat-dialog-content class="dialog-content">
       <div class="form-section">
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Pipeline Name</mat-label>
           <input matInput [(ngModel)]="pipelineName" required maxlength="64" autocomplete="off" placeholder="Enter pipeline name">
           <mat-icon matPrefix>alt_route</mat-icon>

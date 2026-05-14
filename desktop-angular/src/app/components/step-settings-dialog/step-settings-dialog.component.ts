@@ -45,7 +45,7 @@ export interface StepSettingsDialogData {
             <span>Input</span>
           </ng-template>
           <div class="tab-content">
-            <mat-form-field class="type-field" appearance="outline">
+            <mat-form-field class="type-field" appearance="outline" floatLabel="always">
               <mat-label>File Type</mat-label>
               <mat-select [(ngModel)]="inputType" (selectionChange)="onInputTypeChange()">
                 <mat-option value="yml">YML</mat-option>
@@ -81,7 +81,7 @@ export interface StepSettingsDialogData {
             <span>Output</span>
           </ng-template>
           <div class="tab-content">
-            <mat-form-field class="type-field" appearance="outline">
+            <mat-form-field class="type-field" appearance="outline" floatLabel="always">
               <mat-label>File Type</mat-label>
               <mat-select [(ngModel)]="outputType" (selectionChange)="onOutputTypeChange()">
                 <mat-option value="yml">YML</mat-option>
@@ -117,7 +117,7 @@ export interface StepSettingsDialogData {
             <span>CLI</span>
           </ng-template>
           <div class="tab-content cli-tab">
-            <mat-form-field appearance="outline" class="full-width" *ngIf="isScriptStep">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="isScriptStep" floatLabel="always">
               <mat-label>Runtime</mat-label>
               <mat-select [(ngModel)]="selectedRuntime" (selectionChange)="onCliChange()">
                 <mat-option value="cmd">cmd</mat-option>
@@ -128,7 +128,7 @@ export interface StepSettingsDialogData {
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width" *ngIf="!isScriptStep">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="!isScriptStep" floatLabel="always">
               <mat-label>CLI</mat-label>
               <mat-select [(ngModel)]="selectedCli" (selectionChange)="onCliChange()">
                 <mat-option *ngFor="let target of targets" [value]="target.name">{{ target.name }}</mat-option>
@@ -136,17 +136,17 @@ export interface StepSettingsDialogData {
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width" *ngIf="showCustomCliInput">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="showCustomCliInput" floatLabel="always">
               <mat-label>Custom CLI</mat-label>
               <input matInput [(ngModel)]="customCli" placeholder="Enter custom CLI name">
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width">
+            <mat-form-field appearance="outline" class="full-width" floatLabel="always">
               <mat-label>Parameters</mat-label>
               <input matInput [(ngModel)]="parameters" placeholder="Enter parameters">
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width">
+            <mat-form-field appearance="outline" class="full-width" floatLabel="always">
               <mat-label>Arguments</mat-label>
               <input matInput [(ngModel)]="arguments_" placeholder="Enter arguments">
             </mat-form-field>
@@ -267,13 +267,13 @@ export interface StepSettingsDialogData {
       border-radius: 12px;
     }
     
-    .dialog-content {
-      padding: 0 !important;
-      min-width: 750px;
-      max-width: 900px;
-      max-height: 70vh;
-      background: #1e1e1e !important;
-    }
+ .dialog-content {
+  padding: 0 !important;
+  width: 100%;
+  height: auto;
+  overflow-y: auto;
+  background: #1e1e1e !important;
+}
 
     ::ng-deep .mat-mdc-tab-labels {
       background: #252525;
@@ -302,9 +302,9 @@ export interface StepSettingsDialogData {
       height: 20px;
     }
 
-    ::ng-deep .mat-mdc-tab-body-wrapper {
-      background: #1e1e1e;
-    }
+ ::ng-deep .mat-mdc-tab-body-wrapper {
+  background: #1e1e1e;
+}
 
     .tab-content {
       padding: 20px;

@@ -34,18 +34,18 @@ export interface EditPipelineData {
     
     <mat-dialog-content class="dialog-content">
       <div class="form-section">
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Pipeline Name</mat-label>
           <input matInput [(ngModel)]="pipeline.name" required maxlength="64" autocomplete="off" placeholder="Enter pipeline name">
           <mat-icon matPrefix>alt_route</mat-icon>
         </mat-form-field>
 
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
           <textarea matInput [(ngModel)]="pipeline.description" rows="3" maxlength="256" placeholder="Describe your pipeline (optional)"></textarea>
           <mat-icon matPrefix>description</mat-icon>
         </mat-form-field>
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Output Extension</mat-label>
           <input matInput [(ngModel)]="pipeline.outputExtension" placeholder="e.g., json" autocomplete="off">
           <mat-icon matPrefix>description</mat-icon>

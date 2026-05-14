@@ -36,7 +36,7 @@ export interface StepCliDialogData {
     
     <mat-dialog-content class="dialog-content">
       <div class="form-field-container">
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width" floatLabel="always">
           <mat-label>CLI</mat-label>
           <mat-select [(ngModel)]="selectedCli" (selectionChange)="onCliChange()">
             <mat-option value="opencode">opencode</mat-option>
@@ -45,7 +45,7 @@ export interface StepCliDialogData {
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width" *ngIf="selectedCli === 'custom'">
+        <mat-form-field appearance="outline" class="full-width" *ngIf="selectedCli === 'custom'" floatLabel="always">
           <mat-label>Custom CLI</mat-label>
           <input matInput [(ngModel)]="customCli" placeholder="Enter custom CLI name">
         </mat-form-field>

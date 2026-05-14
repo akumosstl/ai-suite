@@ -1115,36 +1115,38 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this.apiService.getPipelineSteps(pipelineId).subscribe({
       next: (steps) => {
         const updatedStep = steps.find(s => s.id === step.id) || step;
-        this.dialog.open(StepSettingsDialogComponent, {
-          data: {
-            step: updatedStep,
-            pipelineId: pipelineId,
-            projectTarget: this.project?.target
-          },
-          width: '650px',
-          maxHeight: '80vh',
-          panelClass: 'custom-dialog'
-        }).afterClosed().subscribe((savedStep) => {
-          if (savedStep) {
-            const index = this.pipelineSteps.findIndex(s => s.id === step.id);
-            if (index >= 0) {
-              this.pipelineSteps[index] = savedStep;
-              this.cdr.detectChanges();
-            }
+ this.dialog.open(StepSettingsDialogComponent, {
+        data: {
+          step: updatedStep,
+          pipelineId: pipelineId,
+          projectTarget: this.project?.target
+        },
+        width: 'auto',
+        minWidth: '800px',
+        maxHeight: '90vh',
+        panelClass: 'custom-dialog'
+      }).afterClosed().subscribe((savedStep) => {
+        if (savedStep) {
+          const index = this.pipelineSteps.findIndex(s => s.id === step.id);
+          if (index >= 0) {
+            this.pipelineSteps[index] = savedStep;
+            this.cdr.detectChanges();
           }
-        });
-      },
-      error: (err) => {
-        console.error('Error loading step:', err);
-        this.dialog.open(StepSettingsDialogComponent, {
-          data: {
-            step: step,
-            pipelineId: pipelineId,
-            projectTarget: this.project?.target
-          },
-          width: '650px',
-          maxHeight: '80vh',
-          panelClass: 'custom-dialog'
+        }
+      });
+    },
+    error: (err) => {
+      console.error('Error loading step:', err);
+      this.dialog.open(StepSettingsDialogComponent, {
+        data: {
+          step: step,
+          pipelineId: pipelineId,
+          projectTarget: this.project?.target
+        },
+        width: 'auto',
+        minWidth: '800px',
+        maxHeight: '90vh',
+        panelClass: 'custom-dialog'
         }).afterClosed().subscribe((savedStep) => {
           if (savedStep) {
             const index = this.pipelineSteps.findIndex(s => s.id === step.id);

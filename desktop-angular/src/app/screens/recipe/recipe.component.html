@@ -4,13 +4,16 @@
   <div class="content" [class.left-collapsed]="leftPanelCollapsed">
     <div class="left-panel" [class.collapsed]="leftPanelCollapsed">
       <div class="panel-header">
-        <div class="panel-title">
-          <mat-icon>restaurant</mat-icon>
-          <span>Recipes</span>
-        </div>
+      <div class="panel-title">
+        <mat-icon>restaurant</mat-icon>
+        <span>Recipes</span>
+        <span class="count-badge">{{ totalElements }}</span>
+      </div>
+      <div class="header-actions">
         <button class="icon-btn add-btn" (click)="clearForm()" title="Add new recipe">
           <mat-icon>add</mat-icon>
         </button>
+      </div>
       </div>
 
       <div class="search-section">
@@ -73,33 +76,34 @@
 
     <div class="right-panel">
       <div class="panel-header">
-        <div class="panel-title">
-          <mat-icon>settings</mat-icon>
-          <span>Recipe Editor</span>
-        </div>
-        <div class="header-actions">
-          <button class="view-toggle-btn"
-            [class.active]="viewMode === 'visual'"
-            (click)="switchToVisual()"
-            title="Visual editor">
-            <mat-icon>visibility</mat-icon>
-            <span>Visual</span>
-          </button>
-          <button class="view-toggle-btn"
-            [class.active]="viewMode === 'raw'"
-            (click)="switchToRaw()"
-            title="Raw YAML editor">
-            <mat-icon>code</mat-icon>
-            <span>Raw</span>
-          </button>
-          <button class="icon-btn clear-btn" (click)="clearForm()" title="Clear form" *ngIf="selectedRecipeFile">
-            <mat-icon>refresh</mat-icon>
-          </button>
-          <button class="icon-btn delete-btn" (click)="deleteRecipeFileInline(selectedRecipeFile!, $event)"
-            title="Delete recipe" *ngIf="selectedRecipeFile">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
+    <div class="panel-title">
+      <mat-icon>settings</mat-icon>
+      <span>Recipe Editor</span>
+      <span class="count-badge" *ngIf="selectedRecipeFile">{{ selectedRecipeFile.name }}</span>
+    </div>
+    <div class="header-actions">
+      <button class="view-toggle-btn"
+        [class.active]="viewMode === 'visual'"
+        (click)="switchToVisual()"
+        title="Visual editor">
+        <mat-icon>visibility</mat-icon>
+        <span>Visual</span>
+      </button>
+      <button class="view-toggle-btn"
+        [class.active]="viewMode === 'raw'"
+        (click)="switchToRaw()"
+        title="Raw YAML editor">
+        <mat-icon>code</mat-icon>
+        <span>Raw</span>
+      </button>
+      <button class="icon-btn" (click)="clearForm()" title="Clear form" *ngIf="selectedRecipeFile">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button class="icon-btn danger-btn" (click)="deleteRecipeFileInline(selectedRecipeFile!, $event)"
+        title="Delete recipe" *ngIf="selectedRecipeFile">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
       </div>
 
       <div class="form-container">

@@ -52,7 +52,7 @@ export interface OpenProjectDialogData {
     
     <mat-dialog-content class="dialog-content">
       <div class="search-section">
-        <mat-form-field class="search-field" appearance="outline">
+        <mat-form-field class="search-field" appearance="outline" floatLabel="always">
           <mat-label>Search projects...</mat-label>
           <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()" placeholder="Type to search...">
           <mat-icon matPrefix>search</mat-icon>

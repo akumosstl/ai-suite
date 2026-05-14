@@ -7,10 +7,13 @@
                 <div class="panel-title">
                     <mat-icon>smart_toy</mat-icon>
                     <span>Agents</span>
+                    <span class="count-badge">{{ totalElements }}</span>
                 </div>
-                <button class="icon-btn add-btn" (click)="clearForm()" title="Add new agent">
-                    <mat-icon>person_add</mat-icon>
-                </button>
+                <div class="header-actions">
+                    <button class="icon-btn" (click)="clearForm()" title="Add new agent">
+                        <mat-icon>person_add</mat-icon>
+                    </button>
+                </div>
             </div>
 
             <div class="search-section">
@@ -75,12 +78,13 @@
                 <div class="panel-title">
                     <mat-icon>settings</mat-icon>
                     <span>Agent Details</span>
+                    <span class="count-badge" *ngIf="selectedAgent">{{ selectedAgent.name }}</span>
                 </div>
                 <div class="header-actions" *ngIf="selectedAgent">
-                    <button class="icon-btn clear-btn" (click)="clearForm()" title="Clear form">
+                    <button class="icon-btn" (click)="clearForm()" title="Clear form">
                         <mat-icon>refresh</mat-icon>
                     </button>
-                    <button class="icon-btn delete-btn" (click)="deleteAgent()" title="Delete agent">
+                    <button class="icon-btn danger-btn" (click)="deleteAgent()" title="Delete agent">
                         <mat-icon>delete</mat-icon>
                     </button>
                 </div>

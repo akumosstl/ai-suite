@@ -34,7 +34,7 @@ export interface ProjectReadmeDialogData {
     </div>
     
     <mat-dialog-content class="dialog-content">
-      <mat-form-field class="full-width" appearance="outline">
+      <mat-form-field class="full-width" appearance="outline" floatLabel="always">
         <mat-label>README Content (Markdown)</mat-label>
         <textarea matInput [(ngModel)]="readmeContent" rows="20" placeholder="Write your project README in Markdown format..."></textarea>
         <mat-icon matPrefix>edit</mat-icon>

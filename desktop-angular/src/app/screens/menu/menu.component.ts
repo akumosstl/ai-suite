@@ -42,7 +42,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
             <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="14">&lt;/&gt;</text>
           </svg>
         </div>
-        <h1>Agentic</h1>
+        <h1>Mangaba</h1>
       </div>
       <p class="subtitle">Build and manage AI agents for code flow</p>
       

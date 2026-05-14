@@ -24,6 +24,7 @@
             <div class="list-header">
                 <span class="list-count clickable" *ngIf="pipelines.length > 0" (click)="togglePipelines()">{{
                     pipelines.length }} pipeline(s)</span>
+                <span class="list-count" *ngIf="pipelines.length === 0">No pipelines</span>
                 <button class="toggle-btn" (click)="togglePipelines()">
                     <mat-icon [class.expanded]="pipelinesExpanded">expand_more</mat-icon>
                 </button>

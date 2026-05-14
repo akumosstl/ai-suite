@@ -34,7 +34,7 @@ export interface SimpleInputDialogData {
     </div>
     
     <mat-dialog-content class="dialog-content">
-      <mat-form-field class="full-width" appearance="outline">
+      <mat-form-field class="full-width" appearance="outline" floatLabel="always">
         <mat-label>{{ data.label }}</mat-label>
         <input matInput [(ngModel)]="inputValue" autocomplete="off" [placeholder]="data.placeholder || ''">
       </mat-form-field>

@@ -36,7 +36,7 @@ export interface StepIODialogData {
     </div>
     
     <mat-dialog-content class="dialog-content">
-      <mat-form-field class="type-field" appearance="outline">
+      <mat-form-field class="type-field" appearance="outline" floatLabel="always">
         <mat-label>File Type</mat-label>
         <mat-select [(ngModel)]="selectedType" (selectionChange)="onTypeChange()">
           <mat-option value="yml">YML</mat-option>
