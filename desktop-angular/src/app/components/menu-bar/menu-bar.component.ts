@@ -25,20 +25,8 @@ import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/impor
   template: `
     <div class="menu-bar">
       <div class="logo">
-        <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGradMenu" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#3b82f6"/>
-                <stop offset="50%" stop-color="#06b6d4"/>
-                <stop offset="100%" stop-color="#22d3ee"/>
-              </linearGradient>
-            </defs>
-            <rect width="36" height="36" rx="6" fill="url(#logoGradMenu)"/>
-            <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="12">&lt;/&gt;</text>
-          </svg>
-        </div>
-        <span class="logo-text">Mangaba</span>
+    <img src="mangabaLogo32_32.png" alt="Mangaba" class="logo-icon" width="24" height="24" />
+    <span class="logo-text">Mangaba</span>
       </div>
       
       <div class="menu-items">
@@ -191,15 +179,11 @@ import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/impor
       letter-spacing: 0.5px;
     }
     
-    .logo-icon {
-      display: flex;
-      align-items: center;
-      filter: drop-shadow(0 2px 6px rgba(34, 211, 238, 0.3));
-    }
-    
-    .logo-icon svg {
-      display: block;
-    }
+.logo-icon {
+  display: flex;
+  align-items: center;
+  filter: drop-shadow(0 2px 6px rgba(245, 166, 35, 0.4));
+}
     
     .menu-items {
       display: flex;

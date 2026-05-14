@@ -29,20 +29,8 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
   template: `
     <div class="menu-container">
       <div class="logo-section">
-        <div class="logo-icon">
-          <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#3b82f6"/>
-                <stop offset="50%" stop-color="#06b6d4"/>
-                <stop offset="100%" stop-color="#22d3ee"/>
-              </linearGradient>
-            </defs>
-            <rect width="36" height="36" rx="8" fill="url(#logoGrad)"/>
-            <text x="18" y="24" text-anchor="middle" fill="#080809" font-family="monospace" font-weight="900" font-size="14">&lt;/&gt;</text>
-          </svg>
-        </div>
-        <h1>Mangaba</h1>
+      <img src="mangabaLogo32_32.png" alt="Mangaba" class="logo-icon"  />
+      <h1>Mangaba</h1>
       </div>
       <p class="subtitle">Build and manage AI agents for code flow</p>
       
@@ -79,7 +67,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       <div class="footer">
         <p class="version">Version 4.9.1</p>
         <div class="footer-links">
-          <span class="link">Documentation</span>
+          <span class="link" (click)="openDocumentation()">Documentation</span>
           <span class="separator">·</span>
           <span class="link">Help</span>
         </div>
@@ -106,7 +94,7 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       left: 0;
       right: 0;
       bottom: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(79, 195, 247, 0.05) 0%, transparent 50%);
+      background: radial-gradient(circle at 50% 50%, rgba(245, 166, 35, 0.05) 0%, transparent 50%);
       pointer-events: none;
     }
     
@@ -121,10 +109,10 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 4px 12px rgba(34, 211, 238, 0.3));
-    }
-    
-    h1 {
+  filter: drop-shadow(0 4px 12px rgba(245, 166, 35, 0.4));
+}
+
+h1 {
       font-size: 2.8rem;
       font-weight: 600;
       margin: 0;
@@ -183,21 +171,21 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
     
     .menu-button:hover {
       background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
-      border-color: #4fc3f7;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(79, 195, 247, 0.15);
-    }
-    
-    .action-button {
-      background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
-      color: #ffffff;
-    }
-    
-    .action-button:hover {
-      background: linear-gradient(135deg, #1976d2 0%, #1e88e5 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(25, 118, 210, 0.3);
-    }
+  border-color: #F5A623;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.2);
+}
+
+.action-button {
+  background: linear-gradient(135deg, #E8651A 0%, #F5A623 100%);
+  color: #ffffff;
+}
+
+.action-button:hover {
+  background: linear-gradient(135deg, #F5A623 0%, #FFB84D 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+}
     
     .exit-button {
       background: #2a2a2a;
@@ -245,8 +233,8 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       padding: 14px 20px !important;
     }
     
-    ::ng-deep .custom-menu .mat-mdc-menu-item mat-icon {
-      color: #4fc3f7;
+::ng-deep .custom-menu .mat-mdc-menu-item mat-icon {
+  color: #F5A623;
       font-size: 20px;
       width: 20px;
       height: 20px;
@@ -280,9 +268,9 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
       transition: color 0.2s ease;
     }
     
-    .link:hover {
-      color: #4fc3f7;
-    }
+.link:hover {
+  color: #F5A623;
+}
     
     .separator {
       color: #444;
@@ -290,22 +278,22 @@ import { OpenProjectDialogComponent } from '../../components/open-project-dialog
   `]
 })
 export class MenuComponent implements OnInit {
-    fromHome = true;
-    goToAgents(): void {
-      this.router.navigate(['/agents'], { state: { fromHome: true } });
-    }
+  fromHome = true;
+  goToAgents(): void {
+    this.router.navigate(['/agents'], { state: { fromHome: true } });
+  }
 
-    goToConfig(): void {
-      this.router.navigate(['/config']);
-    }
+  goToConfig(): void {
+    this.router.navigate(['/config']);
+  }
   constructor(
     private router: Router,
     private dialog: MatDialog,
     private apiService: ApiService,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   newProject(): void {
     const dialogRef = this.dialog.open(NewProjectDialogComponent, {
@@ -341,17 +329,21 @@ export class MenuComponent implements OnInit {
     });
   }
 
-   exit(): void {
-     this.apiService.exitApplication().subscribe({
-       next: () => {
-         // Close the browser window after API call
-         window.close();
-       },
-       error: (err) => {
-         console.error('Exit error:', err);
-         // Still try to close window even if API call fails
-         window.close();
-       }
-     });
-   }
+  openDocumentation(): void {
+    window.open('https://github.com/akumosstl/agentic-ai-suite/blob/main/README.md', '_blank');
+  }
+
+  exit(): void {
+    this.apiService.exitApplication().subscribe({
+      next: () => {
+        // Close the browser window after API call
+        window.close();
+      },
+      error: (err) => {
+        console.error('Exit error:', err);
+        // Still try to close window even if API call fails
+        window.close();
+      }
+    });
+  }
 }

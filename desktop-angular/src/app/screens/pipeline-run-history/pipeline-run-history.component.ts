@@ -29,25 +29,28 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
   template: `
     <div class="history-screen">
       <div class="top-menu">
-        <button class="back-btn" (click)="goBack()" title="Back to project">
-          <mat-icon>arrow_back</mat-icon>
-          <span>Back</span>
-        </button>
-      <div class="page-title">
-        <mat-icon>history</mat-icon>
-        <span>Pipeline Run History</span>
+        <div class="panel-title">
+          <mat-icon>history</mat-icon>
+          <span>Pipeline Run History</span>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" (click)="goBack()" title="Back to project">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <button class="icon-btn" (click)="refresh()" title="Refresh" [disabled]="loading">
+            <mat-icon [class.spinning]="loading">refresh</mat-icon>
+          </button>
+        </div>
       </div>
-      <button class="refresh-btn" (click)="refresh()" title="Refresh" [disabled]="loading">
-        <mat-icon [class.spinning]="loading">refresh</mat-icon>
-        <span>Refresh</span>
-      </button>
-      </div>
-      
+
       <div class="main-content">
         <div class="left-panel">
           <div class="panel-header">
-            <mat-icon>list</mat-icon>
-            <h3>Run History</h3>
+            <div class="panel-title">
+              <mat-icon>list</mat-icon>
+              <span>Run History</span>
+              <span class="count-badge">{{ totalElements }}</span>
+            </div>
           </div>
           
         <div class="runs-list">
@@ -73,14 +76,16 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <span class="run-name">Run #{{ runs.length - i }}</span>
                 <span class="run-date">{{ formatDate(run.createdAt) }}</span>
               </div>
-              <div class="run-status-badge" [class]="run.status || 'pending'">
-                {{ run.status || 'pending' }}
-              </div>
+            <div class="run-status-badge" [class]="run.status || 'pending'">
+              {{ run.status || 'pending' }}
+            </div>
+            <mat-icon class="chevron">chevron_right</mat-icon>
             </div>
             
-          <div class="empty-list" *ngIf="runs.length === 0">
-            <mat-icon>info</mat-icon>
+          <div class="empty-state" *ngIf="runs.length === 0">
+            <mat-icon>history</mat-icon>
             <span>No runs yet</span>
+            <small>Run a pipeline to see history</small>
           </div>
         </ng-container>
         </div>
@@ -154,12 +159,14 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
           
           <div class="no-run-selected" *ngIf="!selectedRun">
             <mat-icon>touch_app</mat-icon>
-            <span>Select a run from the left panel to view details</span>
+            <span>Select a run from the left panel</span>
+            <small>Click to view details</small>
           </div>
-          
+
           <div class="no-step-selected" *ngIf="selectedRun && !selectedStep && selectedRun.steps?.length">
             <mat-icon>touch_app</mat-icon>
             <span>Click on a step to view details</span>
+            <small>Select a step above</small>
           </div>
         </div>
       </div>
@@ -167,175 +174,186 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
   `,
   styles: [`
     .history-screen {
-      height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #121212;
-      color: #e0e0e0;
+      height: 100vh;
+      background: #0d0d0d;
+      color: #fff;
     }
-    
+
     .top-menu {
       display: flex;
       align-items: center;
-      gap: 20px;
-      padding: 12px 20px;
+      justify-content: space-between;
+      padding: 16px 20px;
       background: #1e1e1e;
       border-bottom: 1px solid #2a2a2a;
     }
-    
-    .back-btn {
+
+    .panel-title {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: #2a2a2a;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      color: #e0e0e0;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      gap: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
     }
-    
-    .back-btn:hover {
-      background: #3a3a3a;
-      border-color: #4fc3f7;
-    }
-    
-    .back-btn mat-icon {
+
+    .panel-title mat-icon {
+      color: #4fc3f7;
       font-size: 20px;
       width: 20px;
       height: 20px;
     }
-    
-    .page-title {
+
+    .header-actions {
       display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #ffffff;
-      font-size: 1.1rem;
-      font-weight: 500;
+      gap: 8px;
     }
-    
-.page-title mat-icon {
-  color: #4fc3f7;
-}
 
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  border-radius: 8px;
-  color: #e0e0e0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: auto;
-}
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #888;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-.refresh-btn:hover:not(:disabled) {
-  background: #3a3a3a;
-  border-color: #4fc3f7;
-}
+    .icon-btn:hover:not(:disabled) {
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #4fc3f7;
+    }
 
-.refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+    .icon-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
-.refresh-btn mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s ease;
-}
+    .icon-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
 
-.refresh-btn mat-icon.spinning {
-  animation: spin 1s linear infinite;
-}
+    .icon-btn.danger-btn:hover:not(:disabled) {
+      border-color: #ff5252;
+      color: #ff5252;
+      background: rgba(255, 82, 82, 0.1);
+    }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .icon-btn .spinning {
+      animation: spin 1s linear infinite;
+    }
+
     .main-content {
       flex: 1;
       display: flex;
+      gap: 0;
       overflow: hidden;
     }
-    
+
     .left-panel {
-      width: 320px;
-      background: #1a1a1a;
+      width: 420px;
+      background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
       border-right: 1px solid #2a2a2a;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
-    
+
     .panel-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 16px;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #1e1e1e;
       border-bottom: 1px solid #2a2a2a;
     }
-    
-    .panel-header mat-icon {
-      color: #4fc3f7;
-    }
-    
+
     .panel-header h3 {
       margin: 0;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
+      flex: 1;
+      color: #fff;
     }
-    
+
+    .count-badge {
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      color: #888;
+    }
+
     .runs-list {
       flex: 1;
       overflow-y: auto;
       padding: 12px;
     }
-    
+
     .run-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px;
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
+      gap: 14px;
+      padding: 14px 16px;
       margin-bottom: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
     }
-    
+
     .run-item:hover {
-      background: #252525;
       border-color: #3a3a3a;
+      background: #222;
     }
-    
+
     .run-item.selected {
+      background: rgba(79, 195, 247, 0.08);
       border-color: #4fc3f7;
-      background: rgba(79, 195, 247, 0.1);
     }
-    
+
     .run-item.completed .run-indicator {
-      background: rgba(76, 175, 80, 0.2);
+      background: rgba(76, 175, 80, 0.15);
       color: #81c784;
     }
-    
+
     .run-item.failed .run-indicator {
-      background: rgba(244, 67, 54, 0.2);
+      background: rgba(244, 67, 54, 0.15);
       color: #e57373;
     }
-    
+
     .run-item.running .run-indicator {
-      background: rgba(255, 152, 0, 0.2);
+      background: rgba(255, 152, 0, 0.15);
       color: #ffb74d;
     }
-    
+
     .run-indicator {
       width: 36px;
       height: 36px;
@@ -343,17 +361,21 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: #2a2a2a;
+      color: #4fc3f7;
       flex-shrink: 0;
     }
-    
-    .run-indicator mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+
+    .run-item.selected .run-indicator {
+      background: rgba(79, 195, 247, 0.15);
     }
-    
+
+    .run-indicator mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
     .run-details {
       flex: 1;
       display: flex;
@@ -361,131 +383,198 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       gap: 4px;
       min-width: 0;
     }
-    
+
     .run-name {
-      color: #e0e0e0;
-      font-weight: 500;
-      font-size: 0.9rem;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    
+
+    .run-item.selected .run-name {
+      color: #4fc3f7;
+    }
+
     .run-date {
       font-size: 0.75rem;
       color: #888;
     }
-    
+
+    .run-item.selected .run-date {
+      color: #4fc3f7;
+      opacity: 0.7;
+    }
+
     .run-status-badge {
-      padding: 4px 10px;
-      border-radius: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
       font-size: 0.7rem;
       text-transform: capitalize;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-weight: 600;
     }
-    
+
     .run-status-badge.completed {
       background: rgba(76, 175, 80, 0.2);
       color: #81c784;
     }
-    
+
     .run-status-badge.failed {
       background: rgba(244, 67, 54, 0.2);
       color: #e57373;
     }
-    
+
     .run-status-badge.running {
       background: rgba(255, 152, 0, 0.2);
       color: #ffb74d;
     }
-    
-    .empty-list {
+
+    .run-status-badge.pending {
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+    }
+
+    .chevron {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #555;
+      transition: transform 0.15s;
+    }
+
+    .run-item:hover .chevron {
+      transform: translateX(4px);
+      color: #888;
+    }
+
+    .run-item.selected .chevron {
+      color: #4fc3f7;
+    }
+
+    .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px;
-      color: #666;
+      gap: 8px;
+      padding: 64px 32px;
+      color: #555;
     }
-    
-.empty-list mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
-}
 
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px;
-  color: #888;
-}
+    .empty-state mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #333;
+    }
 
-::ng-deep .custom-paginator {
-  background: #1a1a1a !important;
-  color: #e0e0e0 !important;
-  border-top: 1px solid #2a2a2a !important;
-}
+    .empty-state span {
+      font-size: 1rem;
+      color: #888;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-icon-button {
-  color: #b0b0b0 !important;
-}
+    .empty-state small {
+      font-size: 0.8rem;
+      color: #555;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-icon-button:hover {
-  background-color: #2a2a2a !important;
-  color: #ffffff !important;
-}
+    ::ng-deep .custom-paginator {
+      background: #1a1a1a !important;
+      color: #e0e0e0 !important;
+      border-top: 1px solid #2a2a2a !important;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-paginator-range-label {
-  color: #888 !important;
-}
+    ::ng-deep .custom-paginator .mat-mdc-icon-button {
+      color: #b0b0b0 !important;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-paginator-page-size-label {
-  color: #888 !important;
-}
+    ::ng-deep .custom-paginator .mat-mdc-icon-button:hover {
+      background-color: #2a2a2a !important;
+      color: #ffffff !important;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-select-value {
-  color: #e0e0e0 !important;
-}
+    ::ng-deep .custom-paginator .mat-mdc-paginator-range-label {
+      color: #888 !important;
+    }
 
-::ng-deep .custom-paginator .mat-mdc-select-arrow {
-  color: #888 !important;
-}
-    
+    ::ng-deep .custom-paginator .mat-mdc-paginator-page-size-label {
+      color: #888 !important;
+    }
+
+    ::ng-deep .custom-paginator .mat-mdc-select-value {
+      color: #e0e0e0 !important;
+    }
+
+    ::ng-deep .custom-paginator .mat-mdc-select-arrow {
+      color: #888 !important;
+    }
+
     .right-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 20px;
+      background: #0d0d0d;
       overflow: hidden;
+      padding: 24px;
     }
-    
-    .pipeline-visualization {
-      background: #1e1e1e;
+
+    .pipeline-directory {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .pipeline-directory mat-icon {
+      color: #ff9800;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .dir-path {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #888;
+      word-break: break-all;
+    }
+
+    .pipeline-visualization {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
       padding: 20px;
       margin-bottom: 16px;
     }
-    
+
     .pipeline-header {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 20px;
     }
-    
+
     .pipeline-header mat-icon {
       color: #4fc3f7;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
-    
+
     .pipeline-header h3 {
       margin: 0;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: #fff;
     }
-    
+
     .pipeline-steps {
       display: flex;
       align-items: center;
@@ -494,68 +583,69 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       overflow-x: auto;
       padding: 10px 0;
     }
-    
+
     .pipeline-step {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
       padding: 16px 20px;
-      background: #252525;
-      border: 2px solid #3a3a3a;
-      border-radius: 12px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
       min-width: 120px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
       position: relative;
     }
-    
+
     .pipeline-step:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      border-color: #3a3a3a;
+      background: #222;
     }
-    
+
     .pipeline-step.selected {
       border-color: #4fc3f7;
+      background: rgba(79, 195, 247, 0.08);
     }
-    
+
     .pipeline-step.completed {
       border-color: #4caf50;
-      background: rgba(76, 175, 80, 0.1);
+      background: rgba(76, 175, 80, 0.08);
     }
-    
+
     .pipeline-step.completed .step-number {
       background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
     }
-    
+
     .pipeline-step.running {
       border-color: #ff9800;
-      background: rgba(255, 152, 0, 0.1);
+      background: rgba(255, 152, 0, 0.08);
     }
-    
+
     .pipeline-step.pending {
       border-color: #555;
-      background: #252525;
+      background: #1a1a1a;
     }
-    
+
     .pipeline-step.ready {
       border-color: #9c27b0;
-      background: rgba(156, 39, 176, 0.1);
+      background: rgba(156, 39, 176, 0.08);
     }
-    
+
     .pipeline-step.ready .step-number {
       background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
     }
-    
+
     .pipeline-step.failed {
       border-color: #f44336;
-      background: rgba(244, 67, 54, 0.1);
+      background: rgba(244, 67, 54, 0.08);
     }
-    
+
     .pipeline-step.failed .step-number {
       background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
     }
-    
+
     .step-number {
       width: 28px;
       height: 28px;
@@ -572,32 +662,36 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       left: 50%;
       transform: translateX(-50%);
     }
-    
+
     .step-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: rgba(79, 195, 247, 0.2);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #2a2a2a;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    
+
+    .pipeline-step.selected .step-icon {
+      background: rgba(79, 195, 247, 0.15);
+    }
+
     .step-icon mat-icon {
       color: #4fc3f7;
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
-    
+
     .pipeline-step.completed .step-icon {
-      background: rgba(76, 175, 80, 0.2);
+      background: rgba(76, 175, 80, 0.15);
     }
-    
+
     .pipeline-step.completed .step-icon mat-icon {
       color: #81c784;
     }
-    
+
     .step-info {
       display: flex;
       flex-direction: column;
@@ -605,176 +699,177 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       gap: 4px;
       text-align: center;
     }
-    
+
     .step-info .step-name {
-      color: #e0e0e0;
-      font-weight: 500;
-      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
       max-width: 100px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
-    .step-namespace {
-      font-size: 0.7rem;
-      color: #888;
-      text-transform: capitalize;
+
+    .pipeline-step.selected .step-info .step-name {
+      color: #4fc3f7;
     }
-    
+
+    .step-namespace {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pipeline-step.selected .step-namespace {
+      color: #4fc3f7;
+      opacity: 0.7;
+    }
+
     .step-connector {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0 8px;
     }
-    
+
     .step-connector mat-icon {
       color: #555;
       font-size: 20px;
     }
-    
+
     .step-details-panel {
       flex: 1;
-      background: #1e1e1e;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 16px;
       display: flex;
       flex-direction: column;
       min-height: 200px;
     }
-    
+
     .details-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
     }
-    
+
     .details-header h3 {
       margin: 0;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: #fff;
     }
-    
+
     .step-badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 0.8rem;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
       text-transform: capitalize;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
     }
-    
+
     .step-badge.completed {
       background: rgba(76, 175, 80, 0.2);
       color: #81c784;
     }
-    
+
     .step-badge.running {
       background: rgba(255, 152, 0, 0.2);
       color: #ffb74d;
     }
-    
+
     .step-badge.pending {
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
     }
-    
+
     .step-badge.ready {
       background: rgba(156, 39, 176, 0.2);
       color: #ba68c8;
     }
-    
+
     .step-badge.failed {
       background: rgba(244, 67, 54, 0.2);
       color: #e57373;
     }
-    
+
     .details-actions {
       display: flex;
       gap: 12px;
       margin-bottom: 16px;
     }
-    
+
     .output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
-      background: #252525;
-      border: 1px solid #3a3a3a;
+      padding: 12px 20px;
+      background: rgba(79, 195, 247, 0.15);
+      border: 1px solid #4fc3f7;
       border-radius: 8px;
-      color: #e0e0e0;
+      color: #4fc3f7;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    
-    .output-btn:hover {
-      background: #3a3a3a;
-      border-color: #4fc3f7;
+
+    .output-btn:hover:not(:disabled) {
+      background: rgba(79, 195, 247, 0.25);
     }
-    
+
+    .output-btn:disabled {
+      background: #1a1a1a;
+      color: #555;
+      border-color: #2a2a2a;
+      cursor: not-allowed;
+    }
+
     .output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
       color: #4fc3f7;
     }
-    
+
     .file-output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
-      background: #252525;
-      border: 1px solid #3a3a3a;
+      padding: 12px 20px;
+      background: rgba(255, 152, 0, 0.15);
+      border: 1px solid #ff9800;
       border-radius: 8px;
-      color: #e0e0e0;
+      color: #ffb74d;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    
+
     .file-output-btn:hover:not(:disabled) {
-      background: #3a3a3a;
-      border-color: #ff9800;
+      background: rgba(255, 152, 0, 0.25);
     }
-    
+
     .file-output-btn:disabled {
-      opacity: 0.6;
+      background: #1a1a1a;
+      color: #555;
+      border-color: #2a2a2a;
       cursor: not-allowed;
     }
-    
+
     .file-output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
       color: #ff9800;
     }
-    
-    .pipeline-directory {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .pipeline-directory mat-icon {
-      color: #ff9800;
-    }
-    
-    .dir-path {
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.85rem;
-      color: #888;
-      word-break: break-all;
-    }
-    
+
     .console-output {
       flex: 1;
       display: flex;
@@ -785,7 +880,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       overflow: hidden;
       min-height: 150px;
     }
-    
+
     .console-header {
       display: flex;
       align-items: center;
@@ -794,14 +889,14 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       background: #1a1a1a;
       border-bottom: 1px solid #2a2a2a;
     }
-    
+
     .console-header mat-icon {
       color: #4caf50;
       font-size: 16px;
       width: 16px;
       height: 16px;
     }
-    
+
     .console-header span {
       font-size: 0.85rem;
       color: #888;
@@ -812,19 +907,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 36px;
+      height: 36px;
       background: transparent;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
       color: #888;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .copy-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e0e0e0;
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #4fc3f7;
     }
 
     .copy-btn mat-icon {
@@ -838,33 +934,45 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       padding: 12px;
       overflow: auto;
     }
-    
+
     .console-content pre {
       margin: 0;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.85rem;
-      color: #b0b0b0;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #e0e0e0;
       white-space: pre-wrap;
       word-break: break-all;
     }
-    
+
     .no-run-selected, .no-step-selected {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #1e1e1e;
+      gap: 8px;
+      padding: 64px 32px;
+      color: #555;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      color: #666;
+      border-radius: 10px;
     }
-    
+
     .no-run-selected mat-icon, .no-step-selected mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .no-run-selected span, .no-step-selected span {
+      font-size: 1rem;
+      color: #888;
+    }
+
+    .no-run-selected small, .no-step-selected small {
+      font-size: 0.8rem;
+      color: #555;
     }
   `]
 })

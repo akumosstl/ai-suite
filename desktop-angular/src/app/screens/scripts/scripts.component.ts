@@ -723,7 +723,9 @@ color: #4fc3f7 !important;
 
   ::ng-deep input[matInput],
   ::ng-deep textarea[matInput] {
-  color: #ffffff !important;
+  color: #e0e0e0 !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
   }
 
   ::ng-deep input[matInput]::placeholder,

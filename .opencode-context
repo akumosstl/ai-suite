@@ -775,3 +775,26 @@ Added an "Observability" dashboard under Management > Logs for monitoring LLM AP
 - `DELETE /api/llm-metrics` - Clears all metrics
 
 **Build status:** Frontend + Backend both compile successfully (0 errors)
+
+### Templates-Style CSS Migration for Pipeline Pages (Session: 2026-05-14)
+
+Applied the templates page visual design (`#0d0d0d` background, `420px` left panel with gradient, `.panel-title` + `.header-actions` pattern, `.count-badge`, `.icon-btn`, `.chevron`, `.empty-state`, `.btn-primary`/`.btn-secondary`) to the pipeline pages.
+
+**Pages updated:**
+- `/pipelines` (PipelinesComponent) - Full CSS + HTML inline template replacement
+- `/pipeline-run-history` (PipelineRunHistoryComponent) - Full CSS + HTML inline template replacement
+- `/runpipelines` (RunpipelinesComponent) - Full CSS + HTML external template replacement
+
+**Key CSS class changes across all 3 pages:**
+- `.top-menu` → uses `.panel-title` + `.header-actions` pattern (icon + text + count-badge)
+- Custom `.action-btn` / `.refresh-btn` / `.cleanup-btn` → `.icon-btn` (36x36, transparent bg, `#3a3a3a` border, 6px radius)
+- `.run-count` / custom counts → `.count-badge` (`rgba(79, 195, 247, 0.2)` bg, `#4fc3f7` color)
+- `.empty-list` → `.empty-state` with icon + title + `<small>` description
+- List items use `.chevron` indicator (18px, `#555`, translateX on hover)
+- Action buttons → `.btn-primary` (accent-blue bordered) / `.btn-secondary` (neutral bordered)
+- Left panel → 420px, `linear-gradient(180deg, #1a1a1a 0%, #151515 100%)`
+- Backgrounds → `#0d0d0d` main, `#1e1e1e` headers, `#1a1a1a` list items
+- Selected items → `rgba(79, 195, 247, 0.08)` bg, `#4fc3f7` border/text
+- No-step-selected → `.empty-state` pattern with sub-text
+
+**Build status:** Frontend compiles successfully (0 errors)

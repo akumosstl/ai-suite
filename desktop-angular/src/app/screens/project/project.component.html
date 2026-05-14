@@ -238,26 +238,6 @@
                         </span>
                         <span class="info-value">{{ selectedPipeline.outputExtension }}</span>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">
-                            <mat-icon>flag</mat-icon>
-                            Status
-                        </span>
-                        <span class="info-value">
-                            <span [ngClass]="selectedPipeline.status || 'pending'">
-                                {{ selectedPipeline.status || 'pending' }}
-                            </span>
-                        </span>
-                    </div>
-                    <div class="info-row" *ngIf="selectedPipeline.type">
-                        <span class="info-label">
-                            <mat-icon>linear_scale</mat-icon>
-                            Type
-                        </span>
-                        <span class="info-value type-value">
-                            {{ selectedPipeline.type === 'step_by_step' ? 'Step by Step' : selectedPipeline.type }}
-                        </span>
-                    </div>
 
                     <!-- API Endpoints -->
                     <div class="info-row endpoint-row">

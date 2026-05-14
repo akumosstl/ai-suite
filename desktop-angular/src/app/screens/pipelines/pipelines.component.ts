@@ -31,46 +31,47 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
   template: `
     <div class="pipelines-screen">
       <div class="top-menu">
-        <div class="left-section">
-          <button class="back-btn" (click)="goBack()" title="Back">
-            <mat-icon>reply</mat-icon>
-            <span>Back</span>
-          </button>
-          <div class="page-title">
-            <mat-icon>alt_route</mat-icon>
-            <span>Pipeline Executions</span>
-          </div>
+        <div class="panel-title">
+          <mat-icon>alt_route</mat-icon>
+          <span>Pipeline Executions</span>
         </div>
-        <button class="refresh-btn" (click)="loadRuns()" title="Refresh">
-          <mat-icon>refresh</mat-icon>
-        </button>
-        <button class="cleanup-btn" (click)="cleanupRuns()" [disabled]="cleaningUp" title="Cleanup history (keeps running)">
-          <mat-icon>delete_sweep</mat-icon>
-          <span *ngIf="cleaningUp">Cleaning...</span>
-        </button>
+        <div class="header-actions">
+          <button class="icon-btn" (click)="goBack()" title="Back">
+            <mat-icon>reply</mat-icon>
+          </button>
+          <button class="icon-btn" (click)="loadRuns()" title="Refresh">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <button class="icon-btn danger-btn" (click)="cleanupRuns()" [disabled]="cleaningUp" title="Cleanup history (keeps running)">
+            <mat-icon>delete_sweep</mat-icon>
+          </button>
+        </div>
       </div>
-      
+
       <div class="main-content">
         <div class="left-panel">
           <div class="panel-header">
-            <mat-icon>list</mat-icon>
-            <h3>All Runs</h3>
-            <span class="run-count">{{ totalElements }}</span>
+            <div class="panel-title">
+              <mat-icon>list</mat-icon>
+              <span>All Runs</span>
+              <span class="count-badge">{{ totalElements }}</span>
+            </div>
           </div>
-          
-          <div class="search-box">
-            <mat-icon>search</mat-icon>
-            <input 
-              type="text" 
-              placeholder="Search by Project name..." 
-              [(ngModel)]="searchProjectName"
-              (keyup.enter)="searchRuns()"
-            >
-            <button *ngIf="searchProjectName" class="clear-btn" (click)="clearSearch()">
+
+          <div class="search-section">
+            <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+              <mat-label>Search by project name...</mat-label>
+              <input matInput [(ngModel)]="searchProjectName" (keyup.enter)="searchRuns()">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+            <button class="icon-btn" (click)="searchRuns()" title="Search">
+              <mat-icon>search</mat-icon>
+            </button>
+            <button class="icon-btn" (click)="clearSearch()" title="Clear" *ngIf="searchProjectName">
               <mat-icon>close</mat-icon>
             </button>
           </div>
-          
+
           <div class="runs-list">
             <div class="run-item" 
                  *ngFor="let run of runs; let i = index"
@@ -90,15 +91,17 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
                 <span class="run-project">{{ run.projectName || 'Project #' + run.projectId }}</span>
                 <span class="run-date">{{ formatDate(run.createdAt) }}</span>
               </div>
-              <div class="run-status-badge" [class]="run.status || 'pending'">
-                {{ run.status || 'pending' }}
-              </div>
+            <div class="run-status-badge" [class]="run.status || 'pending'">
+              {{ run.status || 'pending' }}
+            </div>
+            <mat-icon class="chevron">chevron_right</mat-icon>
             </div>
             
-            <div class="empty-list" *ngIf="runs.length === 0">
-              <mat-icon>info</mat-icon>
-              <span>No pipeline runs yet</span>
-            </div>
+          <div class="empty-state" *ngIf="runs.length === 0">
+            <mat-icon>alt_route</mat-icon>
+            <span>No pipeline runs yet</span>
+            <small>Run a pipeline to see results</small>
+          </div>
           </div>
           
           <div class="pagination" *ngIf="totalPages > 0">
@@ -179,33 +182,35 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
             </div>
           </div>
           
-          <div class="no-run-selected" *ngIf="!selectedRun">
-            <mat-icon>touch_app</mat-icon>
-            <span>Select a run from the left panel to view details</span>
-          </div>
-          
-          <div class="no-step-selected" *ngIf="selectedRun && !selectedStep && selectedRun.steps?.length">
-            <mat-icon>touch_app</mat-icon>
-            <span>Click on a step to view details</span>
-          </div>
+        <div class="no-run-selected" *ngIf="!selectedRun">
+          <mat-icon>touch_app</mat-icon>
+          <span>Select a run from the left panel</span>
+          <small>Click to view details</small>
+        </div>
+
+        <div class="no-step-selected" *ngIf="selectedRun && !selectedStep && selectedRun.steps?.length">
+          <mat-icon>touch_app</mat-icon>
+          <span>Click on a step to view details</span>
+          <small>Select a step above</small>
+        </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .pipelines-screen {
-      height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #121212;
-      color: #e0e0e0;
+      height: 100vh;
+      background: #0d0d0d;
+      color: #fff;
     }
-    
+
     .top-menu {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 20px;
+      padding: 16px 20px;
       background: #1e1e1e;
       border-bottom: 1px solid #2a2a2a;
     }
@@ -217,20 +222,22 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
     }
 
     .back-btn {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
-      background: #2a2a2a;
+      width: 36px;
+      height: 36px;
+      background: transparent;
       border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      color: #e0e0e0;
+      border-radius: 6px;
+      color: #888;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .back-btn:hover {
-      background: #3a3a3a;
+      background: #2a2a2a;
+      color: #fff;
       border-color: #4fc3f7;
     }
 
@@ -241,205 +248,227 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
     }
 
     .back-btn span {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
-    
+
     .page-title {
       display: flex;
       align-items: center;
       gap: 10px;
-      color: #ffffff;
-      font-size: 1.1rem;
-      font-weight: 500;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
     }
-    
+
     .page-title mat-icon {
       color: #4fc3f7;
-    }
-    
-    .refresh-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: #2a2a2a;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      color: #e0e0e0;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .refresh-btn:hover {
-      background: #3a3a3a;
-      border-color: #4fc3f7;
-    }
-    
-    .cleanup-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: #2a2a2a;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      color: #e0e0e0;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .cleanup-btn:hover:not(:disabled) {
-      background: #3a3a3a;
-      border-color: #f44336;
-    }
-    
-    .cleanup-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .main-content {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
-    
-    .left-panel {
-      width: 380px;
-      background: #1a1a1a;
-      border-right: 1px solid #2a2a2a;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .panel-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 16px;
-      border-bottom: 1px solid #2a2a2a;
-    }
-    
-    .panel-header mat-icon {
-      color: #4fc3f7;
-    }
-    
-    .panel-header h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 500;
-      flex: 1;
-    }
-    
-    .run-count {
-      background: #2a2a2a;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      color: #888;
-    }
-    
-    .search-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      margin: 0 12px;
-      background: #252525;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-    }
-    
-    .search-box mat-icon {
-      color: #666;
       font-size: 20px;
       width: 20px;
       height: 20px;
     }
-    
-    .search-box input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #e0e0e0;
-      font-size: 0.9rem;
-    }
-    
-    .search-box input::placeholder {
-      color: #666;
-    }
-    
-    .search-box .clear-btn {
+
+    .header-actions {
       display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      gap: 6px;
+      width: 36px;
+      height: 36px;
       background: transparent;
-      border: none;
-      border-radius: 4px;
-      color: #666;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #888;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
-    
-    .search-box .clear-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e0e0e0;
+
+    .icon-btn:hover:not(:disabled) {
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #4fc3f7;
     }
-    
-    .search-box .clear-btn mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+
+    .icon-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
-    
+
+    .icon-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .icon-btn.danger-btn:hover:not(:disabled) {
+      border-color: #ff5252;
+      color: #ff5252;
+      background: rgba(255, 82, 82, 0.1);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 420px;
+      background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
+      border-right: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #1e1e1e;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .panel-title mat-icon {
+      color: #4fc3f7;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      flex: 1;
+      color: #fff;
+    }
+
+    .count-badge {
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .search-section {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .search-field {
+      flex: 1;
+    }
+
+    ::ng-deep .search-field .mat-mdc-form-field-icon-prefix {
+      padding-right: 8px !important;
+      color: #888;
+    }
+
+    ::ng-deep .search-field .mdc-notched-outline__leading,
+    ::ng-deep .search-field .mdc-notched-outline__notch,
+    ::ng-deep .search-field .mdc-notched-outline__trailing {
+      border-color: #3a3a3a;
+    }
+
+    ::ng-deep .search-field .mdc-notched-outline__notch {
+      border-left: none !important;
+      border-right: none !important;
+    }
+
+    ::ng-deep .search-field.mat-focused .mdc-notched-outline__leading,
+    ::ng-deep .search-field.mat-focused .mdc-notched-outline__notch,
+    ::ng-deep .search-field.mat-focused .mdc-notched-outline__trailing {
+      border-color: #4fc3f7;
+    }
+
     .runs-list {
       flex: 1;
       overflow-y: auto;
       padding: 12px;
     }
-    
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+    }
+
+    .list-item:hover {
+      border-color: #3a3a3a;
+      background: #222;
+    }
+
+    .list-item.selected {
+      background: rgba(79, 195, 247, 0.08);
+      border-color: #4fc3f7;
+    }
+
     .run-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px;
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
+      gap: 14px;
+      padding: 14px 16px;
       margin-bottom: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
     }
-    
+
     .run-item:hover {
-      background: #252525;
       border-color: #3a3a3a;
+      background: #222;
     }
-    
+
     .run-item.selected {
+      background: rgba(79, 195, 247, 0.08);
       border-color: #4fc3f7;
-      background: rgba(79, 195, 247, 0.1);
     }
-    
+
     .run-item.completed .run-indicator {
-      background: rgba(76, 175, 80, 0.2);
+      background: rgba(76, 175, 80, 0.15);
       color: #81c784;
     }
-    
+
     .run-item.failed .run-indicator {
-      background: rgba(244, 67, 54, 0.2);
+      background: rgba(244, 67, 54, 0.15);
       color: #e57373;
     }
-    
+
     .run-item.running .run-indicator {
-      background: rgba(255, 152, 0, 0.2);
+      background: rgba(255, 152, 0, 0.15);
       color: #ffb74d;
     }
-    
+
     .run-indicator {
       width: 36px;
       height: 36px;
@@ -447,17 +476,21 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: #2a2a2a;
+      color: #4fc3f7;
       flex-shrink: 0;
     }
-    
-    .run-indicator mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+
+    .run-item.selected .run-indicator {
+      background: rgba(79, 195, 247, 0.15);
     }
-    
+
+    .run-indicator mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
     .run-details {
       flex: 1;
       display: flex;
@@ -465,95 +498,114 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       gap: 4px;
       min-width: 0;
     }
-    
+
     .run-name {
-      color: #e0e0e0;
-      font-weight: 500;
-      font-size: 0.9rem;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    
-    .run-project {
-      font-size: 0.75rem;
+
+    .run-item.selected .run-name {
       color: #4fc3f7;
     }
-    
+
+    .run-project {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .run-item.selected .run-project {
+      color: #4fc3f7;
+      opacity: 0.7;
+    }
+
     .run-date {
       font-size: 0.75rem;
       color: #888;
     }
-    
-    .run-actions {
-      display: flex;
-      gap: 4px;
-    }
-    
-    .icon-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      background: transparent;
-      border: none;
-      border-radius: 4px;
-      color: #888;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .icon-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e0e0e0;
-    }
-    
-    .view-running-btn {
-      color: #4fc3f7;
-    }
-    
-    .view-running-btn:hover {
-      background: rgba(79, 195, 247, 0.2);
-    }
-    
+
     .run-status-badge {
-      padding: 4px 10px;
-      border-radius: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
       font-size: 0.7rem;
       text-transform: capitalize;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-weight: 600;
     }
-    
+
     .run-status-badge.completed {
       background: rgba(76, 175, 80, 0.2);
       color: #81c784;
     }
-    
+
     .run-status-badge.failed {
       background: rgba(244, 67, 54, 0.2);
       color: #e57373;
     }
-    
+
     .run-status-badge.running {
       background: rgba(255, 152, 0, 0.2);
       color: #ffb74d;
     }
-    
-    .empty-list {
+
+    .run-status-badge.pending {
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+    }
+
+    .chevron {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #555;
+      transition: transform 0.15s;
+    }
+
+    .run-item:hover .chevron {
+      transform: translateX(4px);
+      color: #888;
+    }
+
+    .run-item.selected .chevron {
+      color: #4fc3f7;
+    }
+
+    .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px;
-      color: #666;
+      gap: 8px;
+      padding: 64px 32px;
+      color: #555;
     }
-    
-    .empty-list mat-icon {
+
+    .empty-state mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      margin-bottom: 12px;
+      color: #333;
     }
-    
+
+    .empty-state span {
+      font-size: 1rem;
+      color: #888;
+    }
+
+    .empty-state small {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
     .pagination {
       display: flex;
       align-items: center;
@@ -562,48 +614,44 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       padding: 16px;
       border-top: 1px solid #2a2a2a;
     }
-    
+
     .page-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: #2a2a2a;
+      width: 36px;
+      height: 36px;
+      background: transparent;
       border: 1px solid #3a3a3a;
       border-radius: 6px;
-      color: #e0e0e0;
+      color: #888;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
-    
+
     .page-btn:hover:not(:disabled) {
-      background: #3a3a3a;
+      background: #2a2a2a;
+      color: #fff;
       border-color: #4fc3f7;
     }
-    
+
     .page-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
-    
+
     .page-btn mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
-    
-    .page-info {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    
+
     .page-numbers {
       display: flex;
       align-items: center;
       gap: 4px;
     }
-    
+
     .page-num {
       display: flex;
       align-items: center;
@@ -611,59 +659,90 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       min-width: 28px;
       height: 28px;
       padding: 0 8px;
-      background: #2a2a2a;
+      background: transparent;
       border: 1px solid #3a3a3a;
       border-radius: 6px;
-      color: #e0e0e0;
+      color: #888;
       font-size: 0.8rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
-    
+
     .page-num:hover {
-      background: #3a3a3a;
+      background: #2a2a2a;
+      color: #fff;
       border-color: #4fc3f7;
     }
-    
+
     .page-num.active {
-      background: #4fc3f7;
+      background: rgba(79, 195, 247, 0.15);
       border-color: #4fc3f7;
-      color: #121212;
+      color: #4fc3f7;
     }
-    
+
     .right-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 20px;
+      background: #0d0d0d;
       overflow: hidden;
+      padding: 24px;
     }
-    
-    .pipeline-visualization {
-      background: #1e1e1e;
+
+    .pipeline-directory {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .pipeline-directory mat-icon {
+      color: #ff9800;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .dir-path {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #888;
+      word-break: break-all;
+    }
+
+    .pipeline-visualization {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
       padding: 20px;
       margin-bottom: 16px;
     }
-    
+
     .pipeline-header {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 20px;
     }
-    
+
     .pipeline-header mat-icon {
       color: #4fc3f7;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
-    
+
     .pipeline-header h3 {
       margin: 0;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: #fff;
     }
-    
+
     .pipeline-steps {
       display: flex;
       align-items: center;
@@ -672,59 +751,60 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       overflow-x: auto;
       padding: 10px 0;
     }
-    
+
     .pipeline-step {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
       padding: 16px 20px;
-      background: #252525;
-      border: 2px solid #3a3a3a;
-      border-radius: 12px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
       min-width: 120px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
       position: relative;
     }
-    
+
     .pipeline-step:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      border-color: #3a3a3a;
+      background: #222;
     }
-    
+
     .pipeline-step.selected {
       border-color: #4fc3f7;
+      background: rgba(79, 195, 247, 0.08);
     }
-    
+
     .pipeline-step.completed {
       border-color: #4caf50;
-      background: rgba(76, 175, 80, 0.1);
+      background: rgba(76, 175, 80, 0.08);
     }
-    
+
     .pipeline-step.completed .step-number {
       background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
     }
-    
+
     .pipeline-step.running {
       border-color: #ff9800;
-      background: rgba(255, 152, 0, 0.1);
+      background: rgba(255, 152, 0, 0.08);
     }
-    
+
     .pipeline-step.pending {
       border-color: #555;
-      background: #252525;
+      background: #1a1a1a;
     }
-    
+
     .pipeline-step.failed {
       border-color: #f44336;
-      background: rgba(244, 67, 54, 0.1);
+      background: rgba(244, 67, 54, 0.08);
     }
-    
+
     .pipeline-step.failed .step-number {
       background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
     }
-    
+
     .step-number {
       width: 28px;
       height: 28px;
@@ -741,32 +821,36 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       left: 50%;
       transform: translateX(-50%);
     }
-    
+
     .step-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: rgba(79, 195, 247, 0.2);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #2a2a2a;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    
+
+    .pipeline-step.selected .step-icon {
+      background: rgba(79, 195, 247, 0.15);
+    }
+
     .step-icon mat-icon {
       color: #4fc3f7;
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
-    
+
     .pipeline-step.completed .step-icon {
-      background: rgba(76, 175, 80, 0.2);
+      background: rgba(76, 175, 80, 0.15);
     }
-    
+
     .pipeline-step.completed .step-icon mat-icon {
       color: #81c784;
     }
-    
+
     .step-info {
       display: flex;
       flex-direction: column;
@@ -774,171 +858,220 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       gap: 4px;
       text-align: center;
     }
-    
+
     .step-info .step-name {
-      color: #e0e0e0;
-      font-weight: 500;
-      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
       max-width: 100px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
-    .step-namespace {
-      font-size: 0.7rem;
-      color: #888;
-      text-transform: capitalize;
+
+    .pipeline-step.selected .step-info .step-name {
+      color: #4fc3f7;
     }
-    
+
+    .step-namespace {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pipeline-step.selected .step-namespace {
+      color: #4fc3f7;
+      opacity: 0.7;
+    }
+
     .step-connector {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0 8px;
     }
-    
+
     .step-connector mat-icon {
       color: #555;
       font-size: 20px;
     }
-    
+
     .step-details-panel {
       flex: 1;
-      background: #1e1e1e;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 16px;
       display: flex;
       flex-direction: column;
       min-height: 200px;
     }
-    
+
     .details-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
     }
-    
+
     .details-header h3 {
       margin: 0;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: #fff;
     }
-    
+
     .step-badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 0.8rem;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
       text-transform: capitalize;
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
     }
-    
+
     .step-badge.completed {
       background: rgba(76, 175, 80, 0.2);
       color: #81c784;
     }
-    
+
     .step-badge.running {
       background: rgba(255, 152, 0, 0.2);
       color: #ffb74d;
     }
-    
+
     .step-badge.pending {
-      background: rgba(255, 255, 255, 0.1);
-      color: #888;
+      background: rgba(79, 195, 247, 0.2);
+      color: #4fc3f7;
     }
-    
+
     .step-badge.failed {
       background: rgba(244, 67, 54, 0.2);
       color: #e57373;
     }
-    
+
     .details-actions {
       display: flex;
       gap: 12px;
       margin-bottom: 16px;
     }
-    
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-primary {
+      background: rgba(79, 195, 247, 0.15);
+      color: #4fc3f7;
+      border: 1px solid #4fc3f7;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: rgba(79, 195, 247, 0.25);
+    }
+
+    .btn-primary:disabled {
+      background: #1a1a1a;
+      color: #555;
+      border-color: #2a2a2a;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #888;
+      border: 1px solid #3a3a3a;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #4fc3f7;
+    }
+
     .output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
-      background: #252525;
-      border: 1px solid #3a3a3a;
+      padding: 12px 20px;
+      background: rgba(79, 195, 247, 0.15);
+      border: 1px solid #4fc3f7;
       border-radius: 8px;
-      color: #e0e0e0;
+      color: #4fc3f7;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    
-    .output-btn:hover {
-      background: #3a3a3a;
-      border-color: #4fc3f7;
+
+    .output-btn:hover:not(:disabled) {
+      background: rgba(79, 195, 247, 0.25);
     }
-    
+
+    .output-btn:disabled {
+      background: #1a1a1a;
+      color: #555;
+      border-color: #2a2a2a;
+      cursor: not-allowed;
+    }
+
     .output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
       color: #4fc3f7;
     }
-    
+
     .file-output-btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
-      background: #252525;
-      border: 1px solid #3a3a3a;
+      padding: 12px 20px;
+      background: rgba(255, 152, 0, 0.15);
+      border: 1px solid #ff9800;
       border-radius: 8px;
-      color: #e0e0e0;
+      color: #ffb74d;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    
+
     .file-output-btn:hover:not(:disabled) {
-      background: #3a3a3a;
-      border-color: #ff9800;
+      background: rgba(255, 152, 0, 0.25);
     }
-    
+
     .file-output-btn:disabled {
-      opacity: 0.6;
+      background: #1a1a1a;
+      color: #555;
+      border-color: #2a2a2a;
       cursor: not-allowed;
     }
-    
+
     .file-output-btn mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
       color: #ff9800;
     }
-    
-    .pipeline-directory {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .pipeline-directory mat-icon {
-      color: #ff9800;
-    }
-    
-    .dir-path {
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.85rem;
-      color: #888;
-      word-break: break-all;
-    }
-    
+
     .console-output {
       flex: 1;
       display: flex;
@@ -949,7 +1082,7 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       overflow: hidden;
       min-height: 150px;
     }
-    
+
     .console-header {
       display: flex;
       align-items: center;
@@ -958,14 +1091,14 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       background: #1a1a1a;
       border-bottom: 1px solid #2a2a2a;
     }
-    
+
     .console-header mat-icon {
       color: #4caf50;
       font-size: 16px;
       width: 16px;
       height: 16px;
     }
-    
+
     .console-header span {
       font-size: 0.85rem;
       color: #888;
@@ -976,19 +1109,20 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 36px;
+      height: 36px;
       background: transparent;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
       color: #888;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .copy-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e0e0e0;
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #4fc3f7;
     }
 
     .copy-btn mat-icon {
@@ -1002,33 +1136,129 @@ import { OutputDialogComponent } from '../../components/output-dialog/output-dia
       padding: 12px;
       overflow: auto;
     }
-    
+
     .console-content pre {
       margin: 0;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.85rem;
-      color: #b0b0b0;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #e0e0e0;
       white-space: pre-wrap;
       word-break: break-all;
     }
-    
+
     .no-run-selected, .no-step-selected {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #1e1e1e;
+      gap: 8px;
+      padding: 64px 32px;
+      color: #555;
+      background: #1a1a1a;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      color: #666;
+      border-radius: 10px;
     }
-    
+
     .no-run-selected mat-icon, .no-step-selected mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .no-run-selected span, .no-step-selected span {
+      font-size: 1rem;
+      color: #888;
+    }
+
+    .status-message {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .status-message mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .status-message.success {
+      background: rgba(76, 175, 80, 0.1);
+      color: #4caf50;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+
+    .status-message.error {
+      background: rgba(255, 82, 82, 0.1);
+      color: #ff5252;
+      border: 1px solid rgba(255, 82, 82, 0.2);
+    }
+
+    .status-message.info {
+      background: rgba(79, 195, 247, 0.1);
+      color: #4fc3f7;
+      border: 1px solid rgba(79, 195, 247, 0.2);
+    }
+
+    ::ng-deep .mdc-notched-outline__leading,
+    ::ng-deep .mdc-notched-outline__notch,
+    ::ng-deep .mdc-notched-outline__trailing {
+      border-color: #3a3a3a !important;
+    }
+
+    ::ng-deep .mdc-notched-outline__notch {
+      border-left: none !important;
+      border-right: none !important;
+    }
+
+    ::ng-deep .mat-focused .mdc-notched-outline__leading,
+    ::ng-deep .mat-focused .mdc-notched-outline__notch,
+    ::ng-deep .mat-focused .mdc-notched-outline__trailing {
+      border-color: #4fc3f7 !important;
+    }
+
+    ::ng-deep .mdc-floating-label {
+      color: #888 !important;
+    }
+
+    ::ng-deep .mat-focused .mdc-floating-label {
+      color: #4fc3f7 !important;
+    }
+
+    ::ng-deep input[matInput], ::ng-deep textarea[matInput] {
+      color: #e0e0e0 !important;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+      font-size: 0.9rem !important;
+    }
+
+    ::ng-deep input[matInput]::placeholder, ::ng-deep textarea[matInput]::placeholder {
+      color: #666;
+    }
+
+    ::ng-deep .mat-mdc-form-field-icon-prefix {
+      padding-right: 8px !important;
+      color: #888;
+    }
+
+    ::ng-deep .custom-paginator {
+      background: #1a1a1a !important;
+      color: #e0e0e0 !important;
+      border-top: 1px solid #2a2a2a !important;
+    }
+
+    ::ng-deep .custom-paginator .mat-mdc-icon-button {
+      color: #b0b0b0 !important;
+    }
+
+    ::ng-deep .custom-paginator .mat-mdc-icon-button:hover {
+      background-color: #2a2a2a !important;
+      color: #ffffff !important;
     }
   `]
 })

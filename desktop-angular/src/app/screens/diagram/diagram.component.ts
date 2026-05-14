@@ -86,6 +86,8 @@ export class DiagramComponent implements OnInit, OnDestroy {
   totalPages = 0;
   statusMessage = '';
   leftPanelCollapsed = false;
+  diagramsExpanded = true;
+  projectsExpanded = true;
 
   graph!: Graph;
   undoManager!: UndoManager;
@@ -94,6 +96,9 @@ export class DiagramComponent implements OnInit, OnDestroy {
 
   pipelineGroups: PipelineGroup[] = [];
   pipelineLoading = false;
+  pipelineCurrentPage = 0;
+  pipelinePageSize = 5;
+  pipelineTotalPages = 1;
 
 currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 'line' | 'arrow' =
 'select';
@@ -1052,8 +1057,12 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
             }
             groupMap.get(s.projectId)!.pipelines.push(s);
           }
-          this.pipelineGroups = Array.from(groupMap.values());
-          this.pipelineLoading = false;
+        this.pipelineGroups = Array.from(groupMap.values());
+        this.pipelineTotalPages = Math.max(1, Math.ceil(this.pipelineGroups.length / this.pipelinePageSize));
+        if (this.pipelineCurrentPage >= this.pipelineTotalPages) {
+          this.pipelineCurrentPage = Math.max(0, this.pipelineTotalPages - 1);
+        }
+        this.pipelineLoading = false;
           this.cdr.detectChanges();
         });
       },
@@ -1068,6 +1077,43 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
 
   togglePipelineGroup(group: PipelineGroup): void {
     group.expanded = !group.expanded;
+  }
+
+  get displayedPipelineGroups(): PipelineGroup[] {
+    const start = this.pipelineCurrentPage * this.pipelinePageSize;
+    return this.pipelineGroups.slice(start, start + this.pipelinePageSize);
+  }
+
+  pipelinePrevPage(): void {
+    if (this.pipelineCurrentPage > 0) {
+      this.pipelineCurrentPage--;
+    }
+  }
+
+  pipelineNextPage(): void {
+    if (this.pipelineCurrentPage < this.pipelineTotalPages - 1) {
+      this.pipelineCurrentPage++;
+    }
+  }
+
+  pipelineGoToPage(page: number): void {
+    if (page >= 0 && page < this.pipelineTotalPages) {
+      this.pipelineCurrentPage = page;
+    }
+  }
+
+  getPipelinePageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(0, this.pipelineCurrentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.pipelineTotalPages - 1, start + maxVisible - 1);
+    if (end - start < maxVisible - 1) {
+      start = Math.max(0, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   onPipelineDragStart(event: DragEvent, pipeline: PipelineSummary): void {

@@ -55,23 +55,25 @@ export interface StepSettingsDialogData {
               </mat-select>
             </mat-form-field>
 
-            <div class="editor-container">
-              <div class="editor-header">
-                <mat-icon>code</mat-icon>
-                <span>Input Content</span>
-              </div>
-              <textarea 
-                #inputEditor
-                class="content-editor" 
-                [(ngModel)]="inputContent"
-                [class.json-syntax]="inputType === 'json'"
-                [class.yml-syntax]="inputType === 'yml'"
-                [class.cmd-syntax]="inputType === 'cmd'"
-                placeholder="Enter input content here..."
-                spellcheck="false"
-                (keydown)="onInputEditorKeydown($event)">
-              </textarea>
-            </div>
+<div class="editor-container">
+<div class="editor-header">
+<mat-icon>code</mat-icon>
+<span>Input Content</span>
+</div>
+<div class="editor-scroll-wrapper">
+<textarea
+#inputEditor
+class="content-editor"
+[(ngModel)]="inputContent"
+[class.json-syntax]="inputType === 'json'"
+[class.yml-syntax]="inputType === 'yml'"
+[class.cmd-syntax]="inputType === 'cmd'"
+placeholder="Enter input content here..."
+spellcheck="false"
+(keydown)="onInputEditorKeydown($event)">
+</textarea>
+</div>
+</div>
           </div>
         </mat-tab>
 
@@ -91,23 +93,25 @@ export interface StepSettingsDialogData {
               </mat-select>
             </mat-form-field>
 
-            <div class="editor-container">
-              <div class="editor-header">
-                <mat-icon>code</mat-icon>
-                <span>Output Content</span>
-              </div>
-              <textarea 
-                #outputEditor
-                class="content-editor" 
-                [(ngModel)]="outputContent"
-                [class.json-syntax]="outputType === 'json'"
-                [class.yml-syntax]="outputType === 'yml'"
-                [class.cmd-syntax]="outputType === 'cmd'"
-                placeholder="Enter output content here..."
-                spellcheck="false"
-                (keydown)="onOutputEditorKeydown($event)">
-              </textarea>
-            </div>
+<div class="editor-container">
+<div class="editor-header">
+<mat-icon>code</mat-icon>
+<span>Output Content</span>
+</div>
+<div class="editor-scroll-wrapper">
+<textarea
+#outputEditor
+class="content-editor"
+[(ngModel)]="outputContent"
+[class.json-syntax]="outputType === 'json'"
+[class.yml-syntax]="outputType === 'yml'"
+[class.cmd-syntax]="outputType === 'cmd'"
+placeholder="Enter output content here..."
+spellcheck="false"
+(keydown)="onOutputEditorKeydown($event)">
+</textarea>
+</div>
+</div>
           </div>
         </mat-tab>
 
@@ -203,19 +207,21 @@ export interface StepSettingsDialogData {
               <span class="prompt-type-label">Type:</span>
               <span class="prompt-type-value">{{ step.agent ? 'Agent' : 'Script' }}</span>
             </div>
-            <div class="editor-container">
-              <div class="editor-header">
-                <mat-icon>description</mat-icon>
-                <span>Prompt Content</span>
-              </div>
-              <textarea 
-                #promptEditor
-                class="content-editor prompt-editor" 
-                [(ngModel)]="promptContent"
-                placeholder="Enter prompt content here..."
-                spellcheck="false">
-              </textarea>
-            </div>
+<div class="editor-container">
+<div class="editor-header">
+<mat-icon>description</mat-icon>
+<span>Prompt Content</span>
+</div>
+<div class="editor-scroll-wrapper">
+<textarea
+#promptEditor
+class="content-editor prompt-editor"
+[(ngModel)]="promptContent"
+placeholder="Enter prompt content here..."
+spellcheck="false">
+</textarea>
+</div>
+</div>
           </div>
         </mat-tab>
       </mat-tab-group>
@@ -423,52 +429,67 @@ export interface StepSettingsDialogData {
       border-color: #4fc3f7;
     }
 
-    .editor-container {
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #252525;
-    }
+.editor-container {
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #252525;
+  }
 
-    .editor-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: #2a2a2a;
-      border-bottom: 1px solid #3a3a3a;
-      color: #888;
-      font-size: 0.85rem;
-    }
+  .editor-scroll-wrapper {
+    overflow: hidden;
+    max-height: 250px;
+  }
 
-    .editor-header mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
+  .editor-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #2a2a2a;
+    border-bottom: 1px solid #3a3a3a;
+    color: #888;
+    font-size: 0.85rem;
+  }
 
-    .content-editor {
-      width: 100%;
-      min-height: 180px;
-      max-height: 250px;
-      padding: 16px;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      border: none;
-      outline: none;
-      resize: vertical;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      tab-size: 2;
-    }
+  .editor-header mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .content-editor {
+    width: calc(100% + 18px);
+    min-height: 180px;
+    max-height: 268px;
+    padding: 12px 26px 12px 16px;
+    border: none;
+    outline: none;
+    resize: none;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    tab-size: 2;
+  }
 
     .content-editor::placeholder {
-      color: #555;
+      color: #666;
     }
 
     .prompt-editor {
       min-height: 200px;
+    }
+
+    .json-syntax,
+    .yml-syntax,
+    .cmd-syntax {
+      background: #1a1a1a;
+      color: #e0e0e0;
     }
 
     .json-syntax {
