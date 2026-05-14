@@ -1206,4 +1206,8 @@ export class RecipeComponent implements OnInit, OnDestroy {
     const match = yaml.match(/description:\s*["']?(.*?)["']?\s*\n/)
     return match ? match[1] : ''
   }
+
+  trackByIndex(index: number): number {
+    return index
+  }
 }

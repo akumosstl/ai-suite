@@ -77,6 +77,9 @@ export interface PipelineStep {
   arguments?: string;
   type?: string;
   runtime?: string;
+  engine?: string;
+  llmProvider?: string;
+  llmModel?: string;
   loadedFromServer?: boolean;
 }
 
@@ -129,6 +132,9 @@ export interface PipelineRunStep {
   cli?: string;
   parameters?: string;
   arguments?: string;
+  engine?: string;
+  llmProvider?: string;
+  llmModel?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -450,6 +456,44 @@ export interface PipelineSummary {
   pipelineId: number;
   pipelineName: string;
   pipelineStatus: string;
+}
+
+export interface AppConfig {
+  id?: number;
+  configKey: string;
+  configValue?: string;
+  description?: string;
+  isSecret?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AppConfigTestResult {
+  success: boolean;
+  error?: string;
+}
+
+export interface LlmMetricRecord {
+  timestamp: string;
+  model: string;
+  provider: string;
+  latencyMs: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  status: string;
+  errorMessage?: string;
+}
+
+export interface LlmMetricsSummary {
+  totalCalls: number;
+  totalTokens: number;
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
+  avgLatencyMs: number;
+  errorCount: number;
+  successCount: number;
+  successRate: number;
 }
 
 /**
@@ -1526,6 +1570,69 @@ getNamespacesByType(type: string): Observable<string[]> {
   getPluginRegistry(): Observable<any> {
     return this.http.get(`${this.baseUrl}/plugins/registry`).pipe(
       catchError(this.handleError('getPluginRegistry', { plugins: [] }))
+    );
+  }
+
+  // App Config
+  getAppConfigs(): Observable<AppConfig[]> {
+    return this.http.get<AppConfig[]>(`${this.baseUrl}/app-config`).pipe(
+      catchError(this.handleError('getAppConfigs', []))
+    );
+  }
+
+  getAppConfigByKey(key: string): Observable<AppConfig> {
+    return this.http.get<AppConfig>(`${this.baseUrl}/app-config/${key}`).pipe(
+      catchError(this.handleError('getAppConfigByKey', {} as AppConfig))
+    );
+  }
+
+  updateAppConfig(key: string, value: string): Observable<AppConfig> {
+    return this.http.put<AppConfig>(`${this.baseUrl}/app-config/${key}`, { value }).pipe(
+      catchError(this.handleError('updateAppConfig', {} as AppConfig))
+    );
+  }
+
+  seedAppConfig(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/app-config/seed`, {}).pipe(
+      catchError(this.handleError('seedAppConfig', {}))
+    );
+  }
+
+  testAppConfig(provider: string): Observable<AppConfigTestResult> {
+    return this.http.get<AppConfigTestResult>(`${this.baseUrl}/app-config/test/${provider}`).pipe(
+      catchError(this.handleError('testAppConfig', { success: false, error: 'Connection failed' } as AppConfigTestResult))
+    );
+  }
+
+  saveStepEngine(pipelineId: number, stepId: number, engine: string, llmProvider?: string, llmModel?: string): Observable<PipelineStep> {
+    return this.http.put<PipelineStep>(`${this.baseUrl}/pipelines/${pipelineId}/steps/${stepId}/engine`, {
+      engine,
+      llmProvider,
+      llmModel
+    }).pipe(
+      catchError(this.handleError('saveStepEngine', {} as PipelineStep))
+    );
+  }
+
+  getLlmMetrics(): Observable<LlmMetricRecord[]> {
+    return this.http.get<LlmMetricRecord[]>(`${this.baseUrl}/llm-metrics`).pipe(
+      catchError(this.handleError('getLlmMetrics', []))
+    );
+  }
+
+  getLlmMetricsSummary(): Observable<LlmMetricsSummary> {
+    return this.http.get<LlmMetricsSummary>(`${this.baseUrl}/llm-metrics/summary`).pipe(
+      catchError(this.handleError('getLlmMetricsSummary', {
+        totalCalls: 0, totalTokens: 0, totalPromptTokens: 0,
+        totalCompletionTokens: 0, avgLatencyMs: 0, errorCount: 0,
+        successCount: 0, successRate: 100
+      }))
+    );
+  }
+
+  clearLlmMetrics(): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/llm-metrics`).pipe(
+      catchError(this.handleError('clearLlmMetrics', {}))
     );
   }
 }

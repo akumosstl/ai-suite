@@ -516,6 +516,51 @@ A visual pipeline flow diagram editor using maxGraph (TypeScript fork of mxGraph
 
 **Build status:** Frontend + Backend both compile successfully (0 errors)
 
+### LangChain4j Native AI Engine Integration (Session: 2026-05-13)
+
+Integrated langchain4j 1.0.0-beta2 as a native LLM execution engine alongside the existing CLI engine. Steps can now execute via direct LLM API calls (streaming) instead of CLI tools.
+
+**Architecture:**
+- Engine selection: explicit `engine` field → use that; explicit `cli` field → CLI engine; default → langchain4j
+- Script steps always use CLI mechanism regardless of engine setting
+- API keys stored in H2 via AppConfig entity, masked in GET responses (last 4 chars)
+- Streaming responses forwarded via SSE (same pattern as CLI step output)
+- Pipeline stop support: langchain4j respects `stoppedPipelines` flag
+
+**Backend files created:**
+- `model/AppConfig.java` - JPA entity (configKey, configValue, description, isSecret, timestamps) with `@JsonProperty("configValue")` on `getMaskedConfigValue()` for auto-masking
+- `repository/AppConfigRepository.java` - findByConfigKey, findByIsSecretTrue
+- `service/AppConfigService.java` - CRUD + seedDefaults (7 keys) + testProviderConnection
+- `service/LangchainEngineService.java` - Core engine: executeStreaming() with StreamingChatLanguageModel, CountDownLatch, SSE forwarding; createStreamingModel() switch (openai/google/anthropic); resolveProvider/resolveModelName with per-provider defaults; @Lazy injection of PipelineStepService for stop support
+- `config/AppConfigSeedLoader.java` - @EventListener(ApplicationReadyEvent.class) seeds defaults on startup
+- `controller/AppConfigController.java` - REST API: /api/app-config (GET all, GET by key, PUT value, POST seed, GET test/{provider})
+
+**Backend files modified:**
+- `pom.xml` - Added langchain4j 1.0.0-beta2 dependencies (core, open-ai, google-ai-gemini, anthropic)
+- `model/PipelineStep.java` - Added engine, llmProvider, llmModel columns
+- `model/PipelineRunStep.java` - Added engine, llmProvider, llmModel columns
+- `service/PipelineRunService.java` - createRun() snapshots engine/llmProvider/llmModel from step
+- `service/PipelineStepService.java` - Added resolveEngine(), executeLangchainStep(), saveStepEngine(); modified executeStep() to branch on engine type; injected LangchainEngineService
+- `controller/PipelineStepController.java` - Added PUT /{stepId}/engine endpoint
+
+**AppConfig seed keys (dot notation):**
+- `openai.api.key`, `google.api.key`, `anthropic.api.key` (secret, masked)
+- `openai.default.model` (gpt-4o-mini), `google.default.model` (gemini-2.0-flash), `anthropic.default.model` (claude-3-5-haiku-20241022)
+- `default.llm.provider` (openai)
+
+**Frontend files modified:**
+- `services/api.service.ts` - Added AppConfig, AppConfigTestResult interfaces; engine/llmProvider/llmModel to PipelineStep and PipelineRunStep; getAppConfigs, getAppConfigByKey, updateAppConfig, seedAppConfig, testAppConfig, saveStepEngine API methods
+- `screens/config/config.component.ts` - Added "AI Engine" menu item in left panel; full AI Engine tab with provider table (API key inputs with reveal toggle, model inputs, test/save buttons); added MatSelectModule, MatProgressSpinnerModule imports; added AI engine properties (aiConfigs, revealedKeys, editingKeys, editingModels, testingProvider, provider maps); added methods (showAiEngine, loadAppConfigs, getProviderLabel, getProviderIcon, getModelDefault, toggleKeyReveal, onKeyInput, onModelInput, saveAiConfig, testProvider)
+- `components/step-settings-dialog/step-settings-dialog.component.ts` - Added "Engine" tab (langchain4j/CLI selection, LLM provider dropdown, model input, hint about API keys); engine properties (selectedEngine, selectedLlmProvider, selectedLlmModel); onEngineChange, getModelPlaceholder methods; updated onSave() to also call saveStepEngine(); onCliChange() auto-switches engine to 'cli'
+
+**Key langchain4j API notes:**
+- Class is `StreamingChatLanguageModel` (not `StreamingChatModel`) in 1.0.0-beta2
+- Handler method is `onCompleteResponse()` (not `onComplete()`)
+- Builder pattern: `OpenAiStreamingChatModel.builder().apiKey(x).modelName(y).build()`
+- `model.chat(List<ChatMessage>, StreamingChatResponseHandler)`
+
+**Build status:** Frontend + Backend both compile successfully (0 errors); all 34 backend tests pass
+
 ### Namespace Export/Import Feature (Session: 2026-05-12)
 
 **Changes:**
@@ -693,5 +738,40 @@ A complete propagation system ensuring Agent/Script changes flow to dependent Pi
 - `agents.component.ts` -- Shows propagation notification on save
 - `scripts.component.ts` -- Shows propagation notification on save
 - `diagram.component.ts` -- Stale pipeline node detection: deleted pipelines shown with red dashed border, strikethrough name, deleted status; auto-recover if pipeline restored
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)
+
+### LLM Observability / Logs Feature (Session: 2026-05-13)
+
+Added an "Observability" dashboard under Management > Logs for monitoring LLM API calls via langchain4j ChatModelListener. No external tools — pure Java/Angular implementation.
+
+**Backend files created:**
+- `model/LlmMetricRecord.java` - DTO record (timestamp, model, provider, latencyMs, promptTokens, completionTokens, totalTokens, status, errorMessage)
+- `service/LangChainObservabilityListener.java` - Implements ChatModelListener; tracks request start times via `attributes` map; computes latency in onResponse/onError; ConcurrentLinkedQueue with MAX_RECORDS=500; setLastProvider() for provider tracking
+- `controller/LlmMetricsController.java` - REST API: `/api/llm-metrics` (GET history, GET /summary, DELETE to clear)
+
+**Backend files modified:**
+- `service/LangchainEngineService.java` - Added ChatModelListener import; `List<ChatModelListener> listeners = Collections.singletonList(observabilityListener)` in createStreamingModel(); `.listeners(listeners)` on all 3 streaming model builders
+
+**Key langchain4j API notes:**
+- `ChatModelResponseContext` / `ChatModelErrorContext` have NO `duration()` method in 1.0.0-beta2
+- Latency must be tracked manually: store `System.currentTimeMillis()` in `context.attributes()` on onRequest, compute elapsed on onResponse/onError
+- `context.request()` returns `ChatModelRequest` (listener version) with `.model()`, `.messages()`
+- `context.response()` returns `ChatModelResponse` (listener version) with `.tokenUsage()`
+- List type for `.listeners()` must be `List<ChatModelListener>` (not `List<LangChainObservabilityListener>`) — use explicit type declaration
+
+**Frontend files created:**
+- `screens/logs/logs.component.ts` - Full Logs component with left panel (stats cards, provider filter, status filter, auto-refresh, clear button) and right panel (call history table with timestamp, status, provider, model, latency, token counts, error message)
+
+**Frontend files modified:**
+- `services/api.service.ts` - Added LlmMetricRecord and LlmMetricsSummary interfaces; added getLlmMetrics(), getLlmMetricsSummary(), clearLlmMetrics() API methods
+- `app.routes.ts` - Added `/logs` route with LogsComponent
+- `components/menu-bar/menu-bar.component.ts` - Added "Logs" menu item under Management menu (monitoring icon); added `/logs` to internalPages array; added Ctrl+Shift+O keyboard shortcut
+- `angular.json` - Increased bundle maximumError budget from 2MB to 3MB
+
+**REST API Endpoints:**
+- `GET /api/llm-metrics` - Returns all LLM metric records (newest first)
+- `GET /api/llm-metrics/summary` - Returns LlmMetricsSummary (totalCalls, totalTokens, totalPromptTokens, totalCompletionTokens, avgLatencyMs, errorCount, successCount, successRate)
+- `DELETE /api/llm-metrics` - Clears all metrics
 
 **Build status:** Frontend + Backend both compile successfully (0 errors)

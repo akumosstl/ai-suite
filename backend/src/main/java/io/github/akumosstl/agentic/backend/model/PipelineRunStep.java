@@ -88,6 +88,15 @@ public class PipelineRunStep {
     @Column(name = "arguments")
     private String arguments;
 
+    @Column(name = "engine")
+    private String engine;
+
+    @Column(name = "llm_provider")
+    private String llmProvider;
+
+    @Column(name = "llm_model")
+    private String llmModel;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -189,6 +198,15 @@ public class PipelineRunStep {
 
     public String getArguments() { return arguments; }
     public void setArguments(String arguments) { this.arguments = arguments; }
+
+    public String getEngine() { return engine; }
+    public void setEngine(String engine) { this.engine = engine; }
+
+    public String getLlmProvider() { return llmProvider; }
+    public void setLlmProvider(String llmProvider) { this.llmProvider = llmProvider; }
+
+    public String getLlmModel() { return llmModel; }
+    public void setLlmModel(String llmModel) { this.llmModel = llmModel; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

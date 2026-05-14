@@ -10,7 +10,9 @@ import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ApiService, Target } from '../../services/api.service';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ApiService, Target, AppConfig, AppConfigTestResult } from '../../services/api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
 /**
@@ -35,7 +37,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     MatTableModule,
     FormsModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSelectModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <div class="config-container">
@@ -68,101 +72,201 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
             <mat-icon>settings</mat-icon>
             <span>Configuration</span>
           </div>
-          <mat-nav-list>
-            <a mat-list-item (click)="showTargetList()" [class.active]="selectedMenu === 'target'">
-              <mat-icon matListItemIcon>flag</mat-icon>
-              <span matListItemTitle>Target</span>
-            </a>
-          </mat-nav-list>
+        <mat-nav-list>
+          <a mat-list-item (click)="showTargetList()" [class.active]="selectedMenu === 'target'">
+            <mat-icon matListItemIcon>flag</mat-icon>
+            <span matListItemTitle>Target</span>
+          </a>
+          <a mat-list-item (click)="showAiEngine()" [class.active]="selectedMenu === 'ai-engine'">
+            <mat-icon matListItemIcon>smart_toy</mat-icon>
+            <span matListItemTitle>AI Engine</span>
+          </a>
+        </mat-nav-list>
         </div>
 
-        <div class="right-panel" *ngIf="selectedMenu === 'target'">
-          <div class="content-area">
-            <div class="targets-table-section" *ngIf="viewMode === 'list' || viewMode === 'form'">
-              <div class="section-header">
-                <h2><mat-icon>flag</mat-icon> Targets</h2>
-                <button mat-mini-fab color="primary" (click)="addNewTarget()" class="add-btn" title="Add New Target">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </div>
+    <div class="right-panel" *ngIf="selectedMenu === 'target'">
+      <div class="content-area">
+        <div class="targets-table-section" *ngIf="viewMode === 'list' || viewMode === 'form'">
+          <div class="section-header">
+            <h2><mat-icon>flag</mat-icon> Targets</h2>
+            <button mat-mini-fab color="primary" (click)="addNewTarget()" class="add-btn" title="Add New Target">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
 
-              <table class="targets-table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Agents Path</th>
-      <th class="actions-col">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-  <tr
-    *ngFor="let target of targets"
-    (click)="selectTargetToEdit(target)"
-    [class.selected]="selectedTarget?.id === target.id"
-    class="target-row"
-  >
-    <td>
-      <mat-icon class="row-icon">flag</mat-icon>
-      {{ target.name }}
-    </td>
-    <td>{{ target.agentsPath }}</td>
-    <td class="actions-col" (click)="$event.stopPropagation()">
-                      <button mat-icon-button (click)="deleteTarget(target, $event)" class="delete-btn" title="Delete Target">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr *ngIf="targets.length === 0">
-                    <td colspan="9" class="empty-row">No targets found. Click + to add one.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="target-form-section" *ngIf="viewMode === 'form'">
-              <div class="form-header">
-                <h3>
-                  <mat-icon>edit</mat-icon>
-                  {{ isEditing ? 'Edit Target' : 'New Target' }}
-                </h3>
-                <button mat-icon-button (click)="closeForm()" class="close-form-btn">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-              
-              <div class="target-form">
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>Name</mat-label>
-                  <input matInput [(ngModel)]="targetForm.name" placeholder="Enter target name">
-                  <mat-icon matPrefix>badge</mat-icon>
-                </mat-form-field>
-
-    <mat-form-field class="full-width" appearance="outline">
-      <mat-label>Agents Path</mat-label>
-      <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
-      <mat-icon matPrefix>folder</mat-icon>
-    </mat-form-field>
-
-                <div class="form-actions">
-                  <button mat-stroked-button (click)="cancelTarget()" class="cancel-btn" *ngIf="isEditing">
+          <table class="targets-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Agents Path</th>
+                <th class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let target of targets"
+                (click)="selectTargetToEdit(target)"
+                [class.selected]="selectedTarget?.id === target.id"
+                class="target-row"
+              >
+                <td>
+                  <mat-icon class="row-icon">flag</mat-icon>
+                  {{ target.name }}
+                </td>
+                <td>{{ target.agentsPath }}</td>
+                <td class="actions-col" (click)="$event.stopPropagation()">
+                  <button mat-icon-button (click)="deleteTarget(target, $event)" class="delete-btn" title="Delete Target">
                     <mat-icon>delete</mat-icon>
-                    Delete
                   </button>
-                  <button mat-stroked-button (click)="closeForm()" class="cancel-btn">
-                    <mat-icon>close</mat-icon>
-                    Cancel
-                  </button>
-                  <button mat-raised-button color="primary" (click)="saveTarget()" [disabled]="!targetForm.name" class="save-btn">
-                    <mat-icon>save</mat-icon>
-                    {{ isEditing ? 'Update' : 'Create' }}
-                  </button>
-                </div>
-              </div>
+                </td>
+              </tr>
+              <tr *ngIf="targets.length === 0">
+                <td colspan="9" class="empty-row">No targets found. Click + to add one.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="target-form-section" *ngIf="viewMode === 'form'">
+          <div class="form-header">
+            <h3>
+              <mat-icon>edit</mat-icon>
+              {{ isEditing ? 'Edit Target' : 'New Target' }}
+            </h3>
+            <button mat-icon-button (click)="closeForm()" class="close-form-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="target-form">
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Name</mat-label>
+              <input matInput [(ngModel)]="targetForm.name" placeholder="Enter target name">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Agents Path</mat-label>
+              <input matInput [(ngModel)]="targetForm.agentsPath" placeholder="e.g., .opencode/agents">
+              <mat-icon matPrefix>folder</mat-icon>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-stroked-button (click)="cancelTarget()" class="cancel-btn" *ngIf="isEditing">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
+              <button mat-stroked-button (click)="closeForm()" class="cancel-btn">
+                <mat-icon>close</mat-icon>
+                Cancel
+              </button>
+              <button mat-raised-button color="primary" (click)="saveTarget()" [disabled]="!targetForm.name" class="save-btn">
+                <mat-icon>save</mat-icon>
+                {{ isEditing ? 'Update' : 'Create' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+        <div class="right-panel" *ngIf="selectedMenu === 'ai-engine'">
+          <div class="content-area">
+            <div class="targets-table-section">
+              <div class="section-header">
+                <h2><mat-icon>smart_toy</mat-icon> AI Engine Configuration</h2>
+                <button mat-mini-fab color="primary" (click)="loadAppConfigs()" class="add-btn" title="Refresh">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
+
+              <div class="ai-config-info">
+                <mat-icon>info</mat-icon>
+                <span>Configure API keys for LLM providers. Keys are stored locally and masked in the UI. The default engine is <strong>langchain4j</strong>; steps with CLI configured will use the CLI engine.</span>
+              </div>
+
+              <div class="default-provider-section" *ngIf="!aiConfigLoading">
+                <div class="default-provider-row">
+                  <mat-icon class="row-icon">tune</mat-icon>
+                  <span class="default-provider-label">Default Provider</span>
+                <mat-form-field appearance="outline" class="provider-select-field">
+                  <mat-select [value]="defaultProvider" (selectionChange)="onDefaultProviderChange($event.value)">
+                    <mat-option value="openai">OpenAI</mat-option>
+                    <mat-option value="google">Google Gemini</mat-option>
+                    <mat-option value="anthropic">Anthropic</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                </div>
+      </div>
+
+      <table class="targets-table" *ngIf="!aiConfigLoading">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>API Key</th>
+            <th>Base URL</th>
+            <th>Default Model</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let provider of providerList" class="target-row">
+            <td>
+              <mat-icon class="row-icon">{{ provider.icon }}</mat-icon>
+              {{ provider.label }}
+            </td>
+            <td>
+              <div class="api-key-cell">
+                <input
+                  [type]="revealedKeys[provider.apiKey] ? 'text' : 'password'"
+                  class="api-key-input"
+                  [value]="editingKeys[provider.apiKey] ?? getSavedApiKeyValue(provider.apiKey)"
+                  (input)="onKeyInput(provider.apiKey, $event)"
+                  [placeholder]="hasKeyConfigured(provider.apiKey) ? 'Key configured (masked)' : 'Enter API key'"
+                />
+                <button mat-icon-button (click)="toggleKeyReveal(provider.apiKey)" class="reveal-btn">
+                  <mat-icon>{{ revealedKeys[provider.apiKey] ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </div>
+            </td>
+            <td>
+              <input
+                class="api-key-input base-url-input"
+                [value]="editingBaseUrls[provider.baseUrlKey] ?? getSavedBaseUrl(provider.baseUrlKey)"
+                (input)="onBaseUrlInput(provider.baseUrlKey, $event)"
+                [placeholder]="provider.baseUrlPlaceholder"
+                [disabled]="!provider.hasBaseUrl"
+              />
+            </td>
+            <td>
+              <input
+                class="api-key-input model-input"
+                [value]="editingModels[provider.modelKey] ?? getSavedModelValue(provider.modelKey, provider.defaultModel)"
+                (input)="onModelInput(provider.modelKey, $event)"
+                [placeholder]="provider.defaultModel"
+              />
+            </td>
+            <td class="actions-col">
+              <button mat-icon-button (click)="testProvider(provider.name)" class="test-btn" [disabled]="testingProvider === provider.name">
+                <mat-icon *ngIf="testingProvider !== provider.name">wifi_tethering</mat-icon>
+                <mat-spinner *ngIf="testingProvider === provider.name" [diameter]="20"></mat-spinner>
+              </button>
+              <button mat-icon-button (click)="saveAiConfig(provider)" class="save-key-btn" title="Save">
+                <mat-icon>save</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ai-config-loading" *ngIf="aiConfigLoading">
+        <mat-spinner [diameter]="40"></mat-spinner>
+        <span>Loading configuration...</span>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
   `,
   styles: [`
     .config-container {
@@ -549,10 +653,153 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       color: #888;
     }
 
-    ::ng-deep mat-nav-list a.mat-mdc-list-item.active mat-icon {
-      color: #4fc3f7;
+::ng-deep mat-nav-list a.mat-mdc-list-item.active mat-icon {
+  color: #4fc3f7;
+}
+
+.ai-config-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(79, 195, 247, 0.08);
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 0.85rem;
+  color: #b0b0b0;
+  line-height: 1.5;
+}
+
+.ai-config-info mat-icon {
+  color: #4fc3f7;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-config-info strong {
+  color: #4fc3f7;
+}
+
+.api-key-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.api-key-input {
+  background: #1e1e1e;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: monospace;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.api-key-input:focus {
+  border-color: #4fc3f7;
+}
+
+.api-key-input::placeholder {
+  color: #555;
+}
+
+.api-key-input.model-input {
+  width: 180px;
+  font-family: inherit;
+}
+
+.api-key-input.base-url-input {
+  width: 220px;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.api-key-input.base-url-input:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.reveal-btn {
+  color: #888;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+.reveal-btn:hover {
+  color: #4fc3f7;
+}
+
+.reveal-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.test-btn {
+  color: #888;
+}
+
+.test-btn:hover:not(:disabled) {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.test-btn:disabled {
+  color: #555;
+}
+
+.save-key-btn {
+  color: #888;
+}
+
+.save-key-btn:hover {
+  color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.1);
+}
+
+.ai-config-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  color: #888;
+}
+
+.default-provider-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.default-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.default-provider-label {
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 120px;
+}
+
+  .provider-select-field {
+    min-width: 160px;
+    font-size: 0.85rem;
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
     }
-  `]
+  }
+`]
 })
 export class ConfigComponent implements OnInit {
   targets: Target[] = [];
@@ -578,6 +825,22 @@ export class ConfigComponent implements OnInit {
     pluginsPath: '',
     toolsPath: ''
   };
+
+  aiConfigs: AppConfig[] = [];
+  aiConfigLoading = false;
+  revealedKeys: Record<string, boolean> = {};
+  editingKeys: Record<string, string> = {};
+  editingModels: Record<string, string> = {};
+  editingBaseUrls: Record<string, string> = {};
+  testingProvider: string | null = null;
+  defaultProvider: string = 'openai';
+  configMap: Record<string, string> = {};
+
+  providerList = [
+    { name: 'openai', apiKey: 'openai.api.key', modelKey: 'openai.default.model', baseUrlKey: 'openai.base.url', label: 'OpenAI', icon: 'psychology', defaultModel: 'gpt-4o-mini', hasBaseUrl: true, baseUrlPlaceholder: 'e.g. https://integrate.api.nvidia.com' },
+    { name: 'google', apiKey: 'google.api.key', modelKey: 'google.default.model', baseUrlKey: '', label: 'Google Gemini', icon: 'cloud', defaultModel: 'gemini-2.0-flash', hasBaseUrl: false, baseUrlPlaceholder: '' },
+    { name: 'anthropic', apiKey: 'anthropic.api.key', modelKey: 'anthropic.default.model', baseUrlKey: '', label: 'Anthropic', icon: 'auto_awesome', defaultModel: 'claude-3-5-haiku-20241022', hasBaseUrl: false, baseUrlPlaceholder: '' }
+  ];
 
   constructor(
     private router: Router,
@@ -617,14 +880,6 @@ export class ConfigComponent implements OnInit {
     });
   }
 
-  /**
-   * Cria um target padrão com caminhos pré-definidos para recursos do projeto.
-   * Usado quando não existem targets cadastrados.
-   */
-  /**
-   * Cria um target padrão com caminhos pré-definidos para recursos do projeto.
-   * Usado quando não existem targets cadastrados.
-   */
   createDefaultTarget(): void {
     const defaultTarget: Target = {
       name: 'opencode',
@@ -635,39 +890,19 @@ export class ConfigComponent implements OnInit {
         this.targets = [created];
         this.cdr.detectChanges();
       }
-  });
+    });
   }
 
-  /**
-   * Navega para a tela inicial (menu).
-   */
-  /**
-   * Navega para a tela inicial (menu).
-   */
   goHome(): void {
     this.router.navigate(['/menu']);
   }
 
-  /**
-   * Exibe a lista de targets e reseta o estado de edição.
-   */
-  /**
-   * Exibe a lista de targets e reseta o estado de edição.
-   */
   showTargetList(): void {
     this.selectedMenu = 'target';
     this.viewMode = 'list';
     this.selectedTarget = null;
   }
 
-  /**
-   * Seleciona um target para edição e preenche o formulário.
-   * @param target - Target a ser editado
-   */
-  /**
-   * Seleciona um target para edição e preenche o formulário.
-   * @param target - Target a ser editado
-   */
   selectTargetToEdit(target: Target): void {
     this.selectedTarget = target;
     this.isEditing = true;
@@ -682,12 +917,6 @@ export class ConfigComponent implements OnInit {
     };
   }
 
-  /**
-   * Abre o formulário para criar um novo target.
-   */
-  /**
-   * Abre o formulário para criar um novo target.
-   */
   addNewTarget(): void {
     this.selectedTarget = null;
     this.isEditing = false;
@@ -702,12 +931,6 @@ export class ConfigComponent implements OnInit {
     };
   }
 
-  /**
-   * Fecha o formulário e limpa os dados.
-   */
-  /**
-   * Fecha o formulário e limpa os dados.
-   */
   closeForm(): void {
     this.viewMode = 'list';
     this.selectedTarget = null;
@@ -722,19 +945,9 @@ export class ConfigComponent implements OnInit {
     };
   }
 
-  /**
-   * Exibe um diálogo de confirmação e deleta o target se confirmado.
-   * @param target - Target a ser deletado
-   * @param event - Evento do clique para stopPropagation
-   */
-  /**
-   * Exibe um diálogo de confirmação e deleta o target se confirmado.
-   * @param target - Target a ser deletado
-   * @param event - Evento do clique para stopPropagation
-   */
   deleteTarget(target: Target, event: Event): void {
     event.stopPropagation();
-    
+
     const dialogData: ConfirmDialogData = {
       title: 'Delete Target',
       message: `Are you sure you want to delete the target "${target.name}"? This action cannot be undone.`
@@ -765,19 +978,12 @@ export class ConfigComponent implements OnInit {
     });
   }
 
-  /**
-   * Deleta o target atualmente selecionado.
-   */
   cancelTarget(): void {
     if (this.selectedTarget?.id) {
       this.deleteTarget(this.selectedTarget, new Event('click'));
     }
   }
 
-  /**
-   * Salva o target (cria novo ou atualiza existente).
-   * Se estiver editando, atualiza o target existente; caso contrário, cria um novo.
-   */
   saveTarget(): void {
     const target: Target = {
       name: this.targetForm.name,
@@ -818,5 +1024,146 @@ export class ConfigComponent implements OnInit {
         }
       });
     }
+  }
+
+  showAiEngine(): void {
+    this.selectedMenu = 'ai-engine';
+    this.loadAppConfigs();
+  }
+
+  loadAppConfigs(): void {
+    this.aiConfigLoading = true;
+    this.apiService.getAppConfigs().subscribe({
+      next: (configs) => {
+        this.aiConfigs = configs;
+        this.configMap = {};
+        for (const cfg of configs) {
+          this.configMap[cfg.configKey] = cfg.configValue ?? '';
+        }
+        this.defaultProvider = this.configMap['default.llm.provider'] || 'openai';
+        this.aiConfigLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.aiConfigs = [];
+        this.configMap = {};
+        this.aiConfigLoading = false;
+        this.cdr.detectChanges();
+        this.snackBar.open('Failed to load AI configuration', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  getSavedApiKeyValue(apiKey: string): string {
+    const masked = this.configMap[apiKey] ?? '';
+    if (masked && masked.startsWith('****')) {
+      return masked;
+    }
+    return masked;
+  }
+
+  hasKeyConfigured(apiKey: string): boolean {
+    const val = this.configMap[apiKey] ?? '';
+    return val.length > 0;
+  }
+
+  getSavedModelValue(modelKey: string, defaultModel: string): string {
+    return this.configMap[modelKey] || defaultModel;
+  }
+
+  getSavedBaseUrl(baseUrlKey: string): string {
+    if (!baseUrlKey) return '';
+    return this.configMap[baseUrlKey] || '';
+  }
+
+  onBaseUrlInput(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.editingBaseUrls[key] = input.value;
+  }
+
+  onDefaultProviderChange(provider: string): void {
+    this.defaultProvider = provider;
+    this.apiService.updateAppConfig('default.llm.provider', provider).subscribe({
+      next: () => {
+        this.snackBar.open('Default provider updated', 'Close', { duration: 3000 });
+      },
+      error: () => {
+        this.snackBar.open('Failed to update default provider', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  toggleKeyReveal(key: string): void {
+    this.revealedKeys[key] = !this.revealedKeys[key];
+  }
+
+  onKeyInput(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.editingKeys[key] = input.value;
+  }
+
+  onModelInput(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.editingModels[key] = input.value;
+  }
+
+  saveAiConfig(provider: { name: string; apiKey: string; modelKey: string; defaultModel: string; baseUrlKey: string; hasBaseUrl: boolean }): void {
+    const apiKeyKey = provider.apiKey;
+    const modelKey = provider.modelKey;
+    const keyValue = this.editingKeys[apiKeyKey];
+    const modelValue = this.editingModels[modelKey];
+    const baseUrlValue = provider.hasBaseUrl ? this.editingBaseUrls[provider.baseUrlKey] : undefined;
+
+    const saves: Promise<any>[] = [];
+
+    if (keyValue !== undefined && keyValue !== '') {
+      saves.push(this.apiService.updateAppConfig(apiKeyKey, keyValue).toPromise()!.then(() => {
+        delete this.editingKeys[apiKeyKey];
+        this.revealedKeys[apiKeyKey] = false;
+      }));
+    }
+
+    if (modelValue !== undefined && modelValue !== '') {
+      saves.push(this.apiService.updateAppConfig(modelKey, modelValue).toPromise()!.then(() => {
+        delete this.editingModels[modelKey];
+      }));
+    }
+
+    if (provider.hasBaseUrl && baseUrlValue !== undefined) {
+      saves.push(this.apiService.updateAppConfig(provider.baseUrlKey, baseUrlValue).toPromise()!.then(() => {
+        delete this.editingBaseUrls[provider.baseUrlKey];
+      }));
+    }
+
+    if (saves.length > 0) {
+      Promise.all(saves).then(() => {
+        this.snackBar.open('Configuration saved', 'Close', { duration: 3000 });
+        this.loadAppConfigs();
+      }).catch(() => {
+        this.snackBar.open('Failed to save configuration', 'Close', { duration: 3000 });
+      });
+    }
+  }
+
+  testProvider(providerName: string): void {
+    this.testingProvider = providerName;
+    const p = this.providerList.find(pr => pr.name === providerName);
+    const label = p ? p.label : providerName;
+    this.apiService.testAppConfig(providerName).subscribe({
+      next: (result: AppConfigTestResult) => {
+        this.testingProvider = null;
+        if (result.success) {
+          this.snackBar.open(`${label}: Connection successful`, 'Close', { duration: 3000 });
+        } else {
+          this.snackBar.open(`${label}: ${result.error || 'Connection failed'}`, 'Close', { duration: 5000 });
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.testingProvider = null;
+        this.snackBar.open(`${label}: Connection failed`, 'Close', { duration: 5000 });
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

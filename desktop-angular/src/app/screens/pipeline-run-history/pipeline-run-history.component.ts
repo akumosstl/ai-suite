@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.service';
 import { ProjectContextService } from '../../services/project-context.service';
 import { OutputDialogComponent } from '../../components/output-dialog/output-dialog.component';
@@ -19,6 +21,8 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     MatIconModule,
     MatTooltipModule,
     MatDialogModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
     OutputDialogComponent,
     ConfirmDialogComponent
   ],
@@ -29,10 +33,14 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
           <mat-icon>arrow_back</mat-icon>
           <span>Back</span>
         </button>
-        <div class="page-title">
-          <mat-icon>history</mat-icon>
-          <span>Pipeline Run History</span>
-        </div>
+      <div class="page-title">
+        <mat-icon>history</mat-icon>
+        <span>Pipeline Run History</span>
+      </div>
+      <button class="refresh-btn" (click)="refresh()" title="Refresh" [disabled]="loading">
+        <mat-icon [class.spinning]="loading">refresh</mat-icon>
+        <span>Refresh</span>
+      </button>
       </div>
       
       <div class="main-content">
@@ -42,8 +50,13 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
             <h3>Run History</h3>
           </div>
           
-          <div class="runs-list">
-            <div class="run-item" 
+        <div class="runs-list">
+        <div *ngIf="loading" class="loading-state">
+          <mat-spinner diameter="32" color="primary"></mat-spinner>
+          <span>Loading runs...</span>
+        </div>
+        <ng-container *ngIf="!loading">
+        <div class="run-item"
                  *ngFor="let run of runs; let i = index"
                  [class.completed]="run.status === 'completed'"
                  [class.failed]="run.status === 'failed'"
@@ -65,21 +78,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
               </div>
             </div>
             
-            <div class="empty-list" *ngIf="runs.length === 0">
-              <mat-icon>info</mat-icon>
-              <span>No runs yet</span>
-            </div>
+          <div class="empty-list" *ngIf="runs.length === 0">
+            <mat-icon>info</mat-icon>
+            <span>No runs yet</span>
           </div>
+        </ng-container>
+        </div>
           
-          <div class="pagination" *ngIf="totalPages > 1">
-            <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 0">
-              <mat-icon>chevron_left</mat-icon>
-            </button>
-            <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
-            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-              <mat-icon>chevron_right</mat-icon>
-            </button>
-          </div>
+      <mat-paginator class="custom-paginator"
+        [length]="totalElements"
+        [pageSize]="pageSize"
+        [pageIndex]="currentPage"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
         </div>
         
         <div class="right-panel">
@@ -204,9 +216,49 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       font-weight: 500;
     }
     
-    .page-title mat-icon {
-      color: #4fc3f7;
-    }
+.page-title mat-icon {
+  color: #4fc3f7;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #4fc3f7;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refresh-btn mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.refresh-btn mat-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
     
     .main-content {
       flex: 1;
@@ -354,56 +406,52 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       color: #666;
     }
     
-    .empty-list mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-    }
-    
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 16px;
-      border-top: 1px solid #2a2a2a;
-    }
-    
-    .page-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: #2a2a2a;
-      border: 1px solid #3a3a3a;
-      border-radius: 6px;
-      color: #e0e0e0;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .page-btn:hover:not(:disabled) {
-      background: #3a3a3a;
-      border-color: #4fc3f7;
-    }
-    
-    .page-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    
-    .page-btn mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-    
-    .page-info {
-      font-size: 0.85rem;
-      color: #888;
-    }
+.empty-list mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: #888;
+}
+
+::ng-deep .custom-paginator {
+  background: #1a1a1a !important;
+  color: #e0e0e0 !important;
+  border-top: 1px solid #2a2a2a !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-icon-button {
+  color: #b0b0b0 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-icon-button:hover {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-paginator-range-label {
+  color: #888 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-paginator-page-size-label {
+  color: #888 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-select-value {
+  color: #e0e0e0 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-select-arrow {
+  color: #888 !important;
+}
     
     .right-panel {
       flex: 1;
@@ -826,7 +874,8 @@ export class PipelineRunHistoryComponent implements OnInit {
   selectedStep: PipelineRunStep | null = null;
   projectId: number | null = null;
   pipelineId: number | null = null;
-  
+  loading = false;
+
   currentPage = 0;
   totalPages = 0;
   totalElements = 0;
@@ -858,6 +907,7 @@ export class PipelineRunHistoryComponent implements OnInit {
    */
   loadRuns(page = 0) {
     if (!this.projectId) return;
+    this.loading = true;
 
     const runsObservable = this.pipelineId
       ? this.apiService.getPipelineRunsByPipeline(this.pipelineId, page, this.pageSize)
@@ -869,39 +919,30 @@ export class PipelineRunHistoryComponent implements OnInit {
         this.currentPage = response.currentPage || 0;
         this.totalPages = response.totalPages || 0;
         this.totalElements = response.totalElements || 0;
+        this.loading = false;
         if (this.runs.length > 0 && !this.selectedRun) {
           this.selectRun(this.runs[0]);
         }
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading runs:', err)
+      error: (err) => {
+        console.error('Error loading runs:', err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
-  
-  /**
-   * Navega para uma página específica do histórico.
-   * @param page O número da página.
-   */
-  goToPage(page: number) {
-    if (page >= 0 && page < this.totalPages) {
-      this.selectedRun = null;
-      this.selectedStep = null;
-      this.loadRuns(page);
-    }
+
+  refresh() {
+    this.loadRuns(this.currentPage);
   }
-  
-  /**
-   * Navega para a próxima página do histórico.
-   */
-  nextPage() {
-    this.goToPage(this.currentPage + 1);
-  }
-  
-  /**
-   * Navega para a página anterior do histórico.
-   */
-  prevPage() {
-    this.goToPage(this.currentPage - 1);
+
+  onPageChange(event: PageEvent) {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.selectedRun = null;
+    this.selectedStep = null;
+    this.loadRuns(this.currentPage);
   }
   
   /**

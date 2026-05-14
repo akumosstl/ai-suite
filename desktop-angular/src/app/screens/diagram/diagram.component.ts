@@ -332,9 +332,10 @@ currentTool: 'select' | 'hand' | 'rectangle' | 'ellipse' | 'rhombus' | 'text' | 
         const projectId = target.getAttribute('data-project-id');
         const pipelineId = target.getAttribute('data-pipeline-id');
         if (projectId && pipelineId) {
-          e.preventDefault();
-          e.stopPropagation();
-          this.router.navigate(['/project', projectId], { queryParams: { pipelineId } });
+        e.preventDefault();
+        e.stopPropagation();
+        const url = this.router.serializeUrl(this.router.createUrlTree(['/project', projectId], { queryParams: { pipelineId } }));
+        window.open(url, '_blank');
         }
       }
       if (target.classList.contains('pipeline-run-btn')) {

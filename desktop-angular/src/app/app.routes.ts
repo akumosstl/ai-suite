@@ -13,6 +13,7 @@ import { PipelineRunHistoryComponent } from './screens/pipeline-run-history/pipe
 import { PipelinesComponent } from './screens/pipelines/pipelines.component';
 import { RecipeComponent } from './screens/recipe/recipe.component';
 import { DiagramComponent } from './screens/diagram/diagram.component';
+import { LogsComponent } from './screens/logs/logs.component';
 
 /**
  * Definição de rotas da aplicação AI Suite.
@@ -51,5 +52,6 @@ export const routes: Routes = [
   { path: 'pipelines', component: PipelinesComponent },
   { path: 'recipe', component: RecipeComponent },
   { path: 'diagram', component: DiagramComponent },
+  { path: 'logs', component: LogsComponent },
   { path: '**', redirectTo: '/menu' }
 ];

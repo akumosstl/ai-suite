@@ -210,4 +210,14 @@ public class PipelineStepController {
         String runtime = cliData.get("runtime");
         return pipelineStepService.saveCli(stepId, cli, parameters, arguments, runtime);
     }
+
+    @PutMapping("/{stepId}/engine")
+    public PipelineStep saveEngine(@PathVariable Long pipelineId,
+                                   @PathVariable Long stepId,
+                                   @RequestBody Map<String, String> engineData) {
+        String engine = engineData.get("engine");
+        String llmProvider = engineData.get("llmProvider");
+        String llmModel = engineData.get("llmModel");
+        return pipelineStepService.saveStepEngine(stepId, engine, llmProvider, llmModel);
+    }
 }

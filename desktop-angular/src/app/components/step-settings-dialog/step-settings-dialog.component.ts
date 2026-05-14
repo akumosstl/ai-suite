@@ -150,14 +150,54 @@ export interface StepSettingsDialogData {
               <mat-label>Arguments</mat-label>
               <input matInput [(ngModel)]="arguments_" placeholder="Enter arguments">
             </mat-form-field>
-          </div>
-        </mat-tab>
+    </div>
+  </mat-tab>
 
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon>description</mat-icon>
-            <span>Prompt</span>
-          </ng-template>
+  <mat-tab *ngIf="!isScriptStep">
+    <ng-template mat-tab-label>
+      <mat-icon>smart_toy</mat-icon>
+      <span>Engine</span>
+    </ng-template>
+    <div class="tab-content engine-tab">
+      <div class="engine-info">
+        <mat-icon>info</mat-icon>
+        <span>Select the execution engine. <strong>langchain4j</strong> uses native LLM APIs directly. <strong>CLI</strong> uses the configured CLI tool.</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Engine</mat-label>
+        <mat-select [(ngModel)]="selectedEngine" (selectionChange)="onEngineChange()">
+          <mat-option value="langchain">langchain4j (Native LLM)</mat-option>
+          <mat-option value="cli">CLI (External Tool)</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'">
+        <mat-label>LLM Provider</mat-label>
+        <mat-select [(ngModel)]="selectedLlmProvider" (selectionChange)="onEngineChange()">
+          <mat-option value="openai">OpenAI</mat-option>
+          <mat-option value="google">Google Gemini</mat-option>
+          <mat-option value="anthropic">Anthropic</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'">
+        <mat-label>Model</mat-label>
+        <input matInput [(ngModel)]="selectedLlmModel" [placeholder]="getModelPlaceholder()">
+      </mat-form-field>
+
+      <div class="engine-hint" *ngIf="selectedEngine === 'langchain'">
+        <mat-icon>vpn_key</mat-icon>
+        <span>API keys are configured in <strong>Settings &gt; AI Engine</strong></span>
+      </div>
+    </div>
+  </mat-tab>
+
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon>description</mat-icon>
+      <span>Prompt</span>
+    </ng-template>
           <div class="tab-content prompt-tab">
             <div class="prompt-type-selector">
               <span class="prompt-type-label">Type:</span>
@@ -229,8 +269,8 @@ export interface StepSettingsDialogData {
     
     .dialog-content {
       padding: 0 !important;
-      min-width: 550px;
-      max-width: 650px;
+      min-width: 750px;
+      max-width: 900px;
       max-height: 70vh;
       background: #1e1e1e !important;
     }
@@ -238,11 +278,17 @@ export interface StepSettingsDialogData {
     ::ng-deep .mat-mdc-tab-labels {
       background: #252525;
       border-bottom: 1px solid #3a3a3a;
+      justify-content: space-between;
+    }
+
+    ::ng-deep .mat-mdc-tab-header {
+      overflow-x: hidden;
     }
 
     ::ng-deep .mat-mdc-tab {
       color: #888 !important;
-      min-width: 100px;
+      min-width: 120px;
+      flex: 1;
     }
 
     ::ng-deep .mat-mdc-tab.mat-mdc-tab-label-active {
@@ -271,9 +317,62 @@ export interface StepSettingsDialogData {
       gap: 12px;
     }
 
-    .prompt-tab {
-      gap: 12px;
-    }
+.prompt-tab {
+  gap: 12px;
+}
+
+.engine-tab {
+  gap: 12px;
+}
+
+.engine-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #b0b0b0;
+  line-height: 1.5;
+}
+
+.engine-info mat-icon {
+  color: #4fc3f7;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.engine-info strong {
+  color: #4fc3f7;
+}
+
+.engine-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.engine-hint mat-icon {
+  color: #ffc107;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.engine-hint strong {
+  color: #e0e0e0;
+}
 
     .prompt-type-selector {
       display: flex;
@@ -473,6 +572,10 @@ export class StepSettingsDialogComponent {
 
   promptContent = '';
 
+  selectedEngine: string = 'langchain';
+  selectedLlmProvider: string = 'openai';
+  selectedLlmModel: string = '';
+
   step: PipelineStep;
   targets: { name: string }[] = [];
 
@@ -521,6 +624,14 @@ export class StepSettingsDialogComponent {
     this.arguments_ = data.step.arguments || '';
 
     this.promptContent = data.step.agent?.prompt || data.step.script?.content || '';
+
+    if (data.step.engine) {
+      this.selectedEngine = data.step.engine;
+    } else if (data.step.cli) {
+      this.selectedEngine = 'cli';
+    }
+    this.selectedLlmProvider = data.step.llmProvider || 'openai';
+    this.selectedLlmModel = data.step.llmModel || '';
   }
 
   private initializeCliFromProjectTarget(projectTarget?: string): void {
@@ -557,7 +668,23 @@ export class StepSettingsDialogComponent {
   }
 
   onCliChange(): void {
+    if (this.selectedCli && this.selectedCli !== 'custom') {
+      this.selectedEngine = 'cli';
+    }
     this.cdr.detectChanges();
+  }
+
+  onEngineChange(): void {
+    this.cdr.detectChanges();
+  }
+
+  getModelPlaceholder(): string {
+    const defaults: Record<string, string> = {
+      openai: 'gpt-4o-mini',
+      google: 'gemini-2.0-flash',
+      anthropic: 'claude-3-5-haiku-20241022'
+    };
+    return defaults[this.selectedLlmProvider] || '';
   }
 
   onInputEditorKeydown(event: KeyboardEvent): void {
@@ -614,15 +741,31 @@ export class StepSettingsDialogComponent {
         this.apiService.saveStepConfigOutput(pipelineId, stepId, this.outputContent, this.outputType).subscribe({
           next: () => {
             this.apiService.saveStepCli(
-              pipelineId, 
-              stepId, 
-              this.isScriptStep ? '' : this.getCliValue(), 
-              this.parameters, 
+              pipelineId,
+              stepId,
+              this.isScriptStep ? '' : this.getCliValue(),
+              this.parameters,
               this.arguments_,
               this.getRuntimeValue()
             ).subscribe({
-              next: (updatedStep) => {
-                this.dialogRef.close(updatedStep);
+              next: () => {
+                const engineToSave = this.isScriptStep ? undefined : this.selectedEngine;
+                const providerToSave = this.selectedEngine === 'langchain' ? this.selectedLlmProvider : undefined;
+                const modelToSave = this.selectedEngine === 'langchain' && this.selectedLlmModel ? this.selectedLlmModel : undefined;
+
+                if (engineToSave) {
+                  this.apiService.saveStepEngine(pipelineId, stepId, engineToSave, providerToSave, modelToSave).subscribe({
+                    next: (updatedStep) => {
+                      this.dialogRef.close(updatedStep);
+                    },
+                    error: (err) => {
+                      console.error('Error saving engine:', err);
+                      this.dialogRef.close();
+                    }
+                  });
+                } else {
+                  this.dialogRef.close();
+                }
               },
               error: (err) => {
                 console.error('Error saving CLI:', err);

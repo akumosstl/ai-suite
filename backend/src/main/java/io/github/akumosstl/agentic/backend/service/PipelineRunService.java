@@ -93,10 +93,13 @@ public class PipelineRunService {
                 runStep.setOutputType(step.getOutputType());
                 runStep.setStepOutput(step.getStepOutput());
                 runStep.setStepOutputType(step.getStepOutputType());
-                runStep.setCli(step.getCli());
-                runStep.setParameters(step.getParameters());
-                runStep.setArguments(step.getArguments());
-                run.addStep(runStep);
+            runStep.setCli(step.getCli());
+            runStep.setParameters(step.getParameters());
+            runStep.setArguments(step.getArguments());
+            runStep.setEngine(step.getEngine());
+            runStep.setLlmProvider(step.getLlmProvider());
+            runStep.setLlmModel(step.getLlmModel());
+            run.addStep(runStep);
             }
         }
 

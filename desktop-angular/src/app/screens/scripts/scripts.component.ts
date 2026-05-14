@@ -7,7 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,7 +39,6 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatAutocompleteModule,
     MatProgressSpinnerModule,
     MatDialogModule,
     MatIconModule,
@@ -801,9 +799,7 @@ export class ScriptsComponent implements OnInit, OnDestroy {
   scripts: Script[] = [];
   selectedScript: Script | null = null;
   namespaces: string[] = [];
-  filteredNamespaces: string[] = [];
-  filteredSearchNamespaces: string[] = [];
-  formScript: Script = this.getEmptyScript();
+  formScript: Script = { name: '', namespace: '', description: '', content: '', scope: 'global', path: '' };
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -832,7 +828,7 @@ export class ScriptsComponent implements OnInit, OnDestroy {
   private getEmptyScript(): Script {
     return {
       name: '',
-      namespace: this.namespaces.length > 0 ? this.namespaces[0] : '',
+      namespace: '',
       description: '',
       content: '',
       scope: 'global',
@@ -840,37 +836,6 @@ export class ScriptsComponent implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Filtra namespaces disponíveis no autocomplete de namespace do formulário.
-   * @param value - Valor digitado pelo usuário
-   */
-  onNamespaceChange(value: string): void {
-    const filterValue = value.toLowerCase();
-    this.filteredNamespaces = this.namespaces.filter(ns => 
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredNamespaces.includes(value)) {
-      this.filteredNamespaces = [value, ...this.filteredNamespaces];
-    }
-  }
-
-  /**
-   * Filtra namespaces disponíveis no autocomplete de busca.
-   * @param value - Valor digitado pelo usuário
-   */
-  onSearchNamespaceChange(value: string): void {
-    const filterValue = value.toLowerCase();
-    this.filteredSearchNamespaces = this.namespaces.filter(ns => 
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
-      this.filteredSearchNamespaces = [value, ...this.filteredSearchNamespaces];
-    }
-  }
-
-  /**
-   * Inicializa o componente carregando namespaces e lista de scripts.
-   */
   ngOnInit(): void {
     console.log('ScriptsComponent ngOnInit');
     this.loadScripts();
@@ -920,7 +885,7 @@ export class ScriptsComponent implements OnInit, OnDestroy {
     this.toggleLeftPanel();
   }
 
-  @HostListener('document:keydown.control.shift.e')
+  @HostListener('document:keydown.control.alt.e')
   onOpenInEditor(): void {
     if (this.selectedScript) {
       this.openContentEditor();

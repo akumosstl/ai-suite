@@ -170,7 +170,7 @@
           <div class="section-card" [class.expanded]="expandedSections['env']">
             <div class="section-header" (click)="toggleSection('env')">
               <mat-icon class="expand-icon">{{ expandedSections['env'] ? 'expand_more' : 'chevron_right' }}</mat-icon>
-              <mat-icon>env_variables</mat-icon>
+              <mat-icon>code</mat-icon>
               <span>Environment Variables</span>
               <span class="badge" *ngIf="getSectionCount('env') > 0">{{ getSectionCount('env') }}</span>
               <button class="icon-btn add-btn small" (click)="addEnvVar(); $event.stopPropagation()" title="Add env var">
@@ -442,7 +442,7 @@
                         </button>
                       </div>
                       <div class="nested-list">
-                        <div class="nested-row" *ngFor="let ag of project.agents; let j = index">
+                        <div class="nested-row" *ngFor="let ag of project.agents; let j = index; trackBy: trackByIndex">
                           <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                             <mat-label>Agent ID</mat-label>
                             <input matInput [(ngModel)]="project.agents[j]" placeholder="agent1">
@@ -464,7 +464,7 @@
                   </button>
                 </div>
                 <div class="nested-list">
-                  <div class="nested-row" *ngFor="let sc of project.scripts; let j = index">
+                  <div class="nested-row" *ngFor="let sc of project.scripts; let j = index; trackBy: trackByIndex">
                     <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                       <mat-label>Script ID</mat-label>
                       <input matInput [(ngModel)]="project.scripts[j]" placeholder="script1">
@@ -487,7 +487,7 @@
                   </button>
                 </div>
                 <div class="nested-list">
-                  <div class="nested-row" *ngFor="let ag of project.agent_names; let j = index">
+                  <div class="nested-row" *ngFor="let ag of project.agent_names; let j = index; trackBy: trackByIndex">
                     <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                       <mat-label>Agent Name</mat-label>
                       <input matInput [(ngModel)]="project.agent_names[j]" placeholder="my-agent-name">
@@ -510,7 +510,7 @@
                   </button>
                 </div>
                 <div class="nested-list">
-                  <div class="nested-row" *ngFor="let sc of project.script_names; let j = index">
+                  <div class="nested-row" *ngFor="let sc of project.script_names; let j = index; trackBy: trackByIndex">
                     <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                       <mat-label>Script Name</mat-label>
                       <input matInput [(ngModel)]="project.script_names[j]" placeholder="my-script-name">
@@ -899,7 +899,7 @@
                         </button>
                       </div>
                       <div class="nested-list">
-                        <div class="nested-row" *ngFor="let dep of task.depends_on; let j = index">
+                        <div class="nested-row" *ngFor="let dep of task.depends_on; let j = index; trackBy: trackByIndex">
                           <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                             <mat-label>Task ID</mat-label>
                             <input matInput [(ngModel)]="task.depends_on[j]" placeholder="create_pipeline">
@@ -935,7 +935,7 @@
                             <mat-icon>add</mat-icon>
                           </button>
                         </div>
-                        <div class="nested-row" *ngFor="let st of task.retry.on_status; let k = index">
+                        <div class="nested-row" *ngFor="let st of task.retry.on_status; let k = index; trackBy: trackByIndex">
                           <mat-form-field class="nested-field" appearance="outline" floatLabel="always">
                             <mat-label>Status</mat-label>
                             <mat-select [(ngModel)]="task.retry.on_status[k]">

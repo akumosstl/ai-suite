@@ -127,7 +127,12 @@ import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/impor
             <mat-icon>file_upload</mat-icon>
             <span>Import</span>
           </button>
-        <div class="menu-separator"></div>
+          <div class="menu-separator"></div>
+          <button mat-menu-item routerLink="/logs" class="menu-item">
+            <mat-icon>monitoring</mat-icon>
+            <span>Logs</span>
+          </button>
+          <div class="menu-separator"></div>
           <button mat-menu-item (click)="checkUpdate()" class="menu-item">
             <mat-icon>system_update</mat-icon>
             <span>Update</span>
@@ -369,62 +374,74 @@ ngOnInit(): void {
     
     this.updateNavigationState(this.router.url);
 
-    this.keydownHandler = (event: KeyboardEvent) => {
-      if (!event.ctrlKey || !event.shiftKey) return;
-      
+  this.keydownHandler = (event: KeyboardEvent) => {
+    if (event.ctrlKey && event.altKey && !event.shiftKey) {
       const key = event.key.toLowerCase();
-      
-      switch (key) {
-        case 'a':
-          event.preventDefault();
-          this.router.navigate(['/agents']);
-          break;
-        case 's':
-          event.preventDefault();
-          this.router.navigate(['/scripts']);
-          break;
-        case 't':
-          event.preventDefault();
-          this.router.navigate(['/templates']);
-          break;
-        case 'n':
-          event.preventDefault();
-          this.router.navigate(['/namespaces']);
-          break;
-        case 'l':
-          event.preventDefault();
-          this.router.navigate(['/pipelines']);
-          break;
-        case 'y':
-          event.preventDefault();
-          this.router.navigate(['/recipe']);
-          break;
-        case 'd':
-          event.preventDefault();
-          this.router.navigate(['/diagram']);
-          break;
-        case 'p':
-          event.preventDefault();
-          if (!this.isMainPage() && !this.isProjectPage()) {
-            this.goToProject();
-          }
-          break;
-        case 'q':
-          event.preventDefault();
-          this.openShortcuts();
-          break;
-        case 'x':
-          event.preventDefault();
-          this.openPluginsModal();
-          break;
-        case 'h':
-          if (event.altKey && event.ctrlKey) {
-            event.preventDefault();
-            this.goHome();
-          }
-          break;
+      if (key === 'h') {
+        event.preventDefault();
+        this.goHome();
+        return;
       }
-    };
+    }
+
+    if (event.ctrlKey && event.shiftKey) {
+      const key = event.key.toLowerCase();
+      if (key === 'k') return;
+    }
+
+    if (!event.ctrlKey || !event.shiftKey) return;
+
+    const key = event.key.toLowerCase();
+
+    switch (key) {
+      case 'a':
+        event.preventDefault();
+        this.router.navigate(['/agents']);
+        break;
+      case 's':
+        event.preventDefault();
+        this.router.navigate(['/scripts']);
+        break;
+      case 't':
+        event.preventDefault();
+        this.router.navigate(['/templates']);
+        break;
+      case 'n':
+        event.preventDefault();
+        this.router.navigate(['/namespaces']);
+        break;
+      case 'l':
+        event.preventDefault();
+        this.router.navigate(['/pipelines']);
+        break;
+      case 'y':
+        event.preventDefault();
+        this.router.navigate(['/recipe']);
+        break;
+      case 'd':
+        event.preventDefault();
+        this.router.navigate(['/diagram']);
+        break;
+      case 'o':
+        event.preventDefault();
+        this.router.navigate(['/logs']);
+        break;
+      case 'p':
+        event.preventDefault();
+        if (!this.isMainPage() && !this.isProjectPage()) {
+          this.goToProject();
+        }
+        break;
+      case 'q':
+        event.preventDefault();
+        this.openShortcuts();
+        break;
+      case 'x':
+        event.preventDefault();
+        this.openPluginsModal();
+        break;
+    }
+  };
     document.addEventListener('keydown', this.keydownHandler);
   }
 
@@ -441,7 +458,7 @@ ngOnDestroy(): void {
   }
 
   private updateNavigationState(currentUrl: string): void {
-    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe', '/diagram'];
+    const internalPages = ['/agents', '/scripts', '/templates', '/namespaces', '/pipelines', '/recipe', '/diagram', '/logs'];
     
     if (internalPages.includes(currentUrl)) {
       const hasProjectId = this.projectContext.getProjectId() !== null;

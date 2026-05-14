@@ -57,3 +57,22 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+## opencode
+
+Examples of use:
+
+```bash
+
+/material3-clean-design Refatore o arquivo 'src/styles.scss'. Remova as propriedades manuais de cor do body, remova os blocos com !important de .mat-mdc-button e .mat-mdc-card, e configure o mixin 'mat.theme' para gerenciar o Dark Mode nativo através da propriedade 'theme-type: dark'.
+
+
+opencode run "Varra a pasta 'src/app' buscando por arquivos *.component.scss que contenham a expressão '!important' aplicada a elementos ou seletores do Material Design e liste-os."
+
+
+opencode run --skill material3-clean-design "Corrija todos os arquivos *.component.scss na pasta 'src/app'. Remova as declarações '!important' e mova as customizações de estilo para dentro do escopo do seletor ':host', utilizando as variáveis CSS nativas de componente do Angular Material 21."
+
+
+
+```

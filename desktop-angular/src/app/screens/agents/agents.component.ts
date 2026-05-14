@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -38,7 +37,6 @@ import { ProjectContextService } from '../../services/project-context.service';
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatAutocompleteModule,
     MatCardModule,
     MatListModule,
     MatProgressSpinnerModule,
@@ -58,9 +56,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
   agents: Agent[] = [];
   selectedAgent: Agent | null = null;
   namespaces: string[] = [];
-  filteredNamespaces: string[] = [];
-  filteredSearchNamespaces: string[] = [];
-  formAgent: Agent = this.getEmptyAgent();
+  formAgent: Agent = { name: '', namespace: '', description: '', prompt: '', scope: 'global', path: '' };
   searchTerm = '';
   searchNamespace = '';
   loading = false;
@@ -102,7 +98,7 @@ toggleLeftPanel(): void {
     this.toggleLeftPanel();
   }
 
-  @HostListener('document:keydown.control.shift.e')
+  @HostListener('document:keydown.control.alt.e')
   onOpenInEditor(): void {
     if (this.selectedAgent) {
       this.openPromptEditor();
@@ -119,7 +115,7 @@ toggleLeftPanel(): void {
   private getEmptyAgent(): Agent {
     return {
       name: '',
-      namespace: this.namespaces.length > 0 ? this.namespaces[0] : '',
+      namespace: '',
       description: '',
       prompt: '',
       scope: 'global',
@@ -127,56 +123,8 @@ toggleLeftPanel(): void {
     };
   }
 
-  loadNamespaces(): void {
-    this.apiService.getAgentNamespaces().subscribe({
-      next: (namespaces) => {
-        this.namespaces = namespaces;
-        this.filteredNamespaces = [...this.namespaces];
-        this.filteredSearchNamespaces = [...this.namespaces];
-        if (this.namespaces.length > 0 && !this.formAgent.namespace) {
-          this.formAgent.namespace = this.namespaces[0];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading namespaces:', err);
-      }
-    });
-  }
-
-  onNamespaceChange(value: string): void {
-    this.formAgent.namespace = value;
-    const filterValue = value.toLowerCase();
-    this.filteredNamespaces = this.namespaces.filter(ns =>
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredNamespaces.includes(value)) {
-      this.filteredNamespaces = [value, ...this.filteredNamespaces];
-    }
-  }
-
-  displayNamespace(value: string): string {
-    return value || '';
-  }
-
-  onSearchNamespaceChange(value: string): void {
-    this.searchNamespace = value;
-    const filterValue = value.toLowerCase();
-    this.filteredSearchNamespaces = this.namespaces.filter(ns =>
-      ns.toLowerCase().startsWith(filterValue)
-    );
-    if (filterValue && !this.filteredSearchNamespaces.includes(value)) {
-      this.filteredSearchNamespaces = [value, ...this.filteredSearchNamespaces];
-    }
-  }
-
-  displaySearchNamespace(value: string): string {
-    return value || '';
-  }
-
   ngOnInit(): void {
     console.log('AgentsComponent ngOnInit');
-    this.loadNamespaces();
     this.loadAgents();
     this.loadTemplates();
   }

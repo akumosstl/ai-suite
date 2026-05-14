@@ -14,16 +14,16 @@
             </div>
 
             <div class="search-section">
-<mat-form-field class="search-field" appearance="outline" floatLabel="always">
-      <mat-label>Search by name...</mat-label>
-      <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
-      <mat-icon matPrefix>search</mat-icon>
-    </mat-form-field>
-    <mat-form-field class="search-field" appearance="outline" floatLabel="always">
-      <mat-label>Namespace</mat-label>
-      <input matInput [(ngModel)]="searchNamespace">
-      <mat-icon matPrefix>category</mat-icon>
-    </mat-form-field>
+                <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+                    <mat-label>Search by name...</mat-label>
+                    <input matInput [(ngModel)]="searchTerm" (keyup.enter)="search()">
+                    <mat-icon matPrefix>search</mat-icon>
+                </mat-form-field>
+                <mat-form-field class="search-field" appearance="outline" floatLabel="always">
+                    <mat-label>Namespace</mat-label>
+                    <input matInput [(ngModel)]="searchNamespace">
+                    <mat-icon matPrefix>category</mat-icon>
+                </mat-form-field>
                 <button class="icon-btn search-btn" (click)="search()" title="Search">
                     <mat-icon>search</mat-icon>
                 </button>
@@ -88,33 +88,33 @@
 
             <div class="form-container">
                 <div class="form-row">
-<mat-form-field class="form-field" appearance="outline" floatLabel="always">
-        <mat-label>Name</mat-label>
-        <input matInput [(ngModel)]="formAgent.name">
-        <mat-icon matPrefix>badge</mat-icon>
-      </mat-form-field>
+                    <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Name</mat-label>
+                        <input matInput [(ngModel)]="formAgent.name">
+                        <mat-icon matPrefix>badge</mat-icon>
+                    </mat-form-field>
 
-      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-        <mat-label>Namespace</mat-label>
-        <input matInput [(ngModel)]="formAgent.namespace">
-        <mat-icon matPrefix>category</mat-icon>
-      </mat-form-field>
+                    <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Namespace</mat-label>
+                        <input matInput [(ngModel)]="formAgent.namespace">
+                        <mat-icon matPrefix>category</mat-icon>
+                    </mat-form-field>
 
-      <mat-form-field class="form-field" appearance="outline" floatLabel="always">
-        <mat-label>Path</mat-label>
-        <input matInput [(ngModel)]="formAgent.path">
-        <mat-icon matPrefix>link</mat-icon>
-      </mat-form-field>
+                    <mat-form-field class="form-field" appearance="outline" floatLabel="always">
+                        <mat-label>Path</mat-label>
+                        <input matInput [(ngModel)]="formAgent.path">
+                        <mat-icon matPrefix>link</mat-icon>
+                    </mat-form-field>
                 </div>
 
-<mat-form-field class="full-width" appearance="outline" floatLabel="always">
-      <mat-label>Description</mat-label>
-      <textarea matInput [(ngModel)]="formAgent.description" rows="3"></textarea>
-      <mat-icon matPrefix>description</mat-icon>
-    </mat-form-field>
+                <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput [(ngModel)]="formAgent.description" rows="3"></textarea>
+                    <mat-icon matPrefix>description</mat-icon>
+                </mat-form-field>
 
-    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-      <mat-label>Template</mat-label>
+                <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+                    <mat-label>Template</mat-label>
                     <mat-select (selectionChange)="onTemplateSelect($event)">
                         <mat-option [value]="null">-- Select a template --</mat-option>
                         <mat-option *ngFor="let template of templates" [value]="template.id">
@@ -133,12 +133,12 @@
                     </button>
                 </div>
 
-<mat-form-field class="full-width prompt-field" appearance="outline" floatLabel="always">
-      <mat-label>Prompt</mat-label>
-      <textarea matInput [(ngModel)]="formAgent.prompt" rows="10"
-        [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
-      <mat-icon matPrefix>code</mat-icon>
-    </mat-form-field>
+                <mat-form-field class="full-width prompt-field" appearance="outline" floatLabel="always">
+                    <mat-label>Prompt</mat-label>
+                    <textarea matInput [(ngModel)]="formAgent.prompt" rows="10"
+                        [ngStyle]="{'font-family': 'Consolas, Monaco, Courier New, monospace', 'font-size': '0.9rem'}"></textarea>
+                    <mat-icon matPrefix>code</mat-icon>
+                </mat-form-field>
 
                 <div *ngIf="statusMessage" class="status-message" [ngClass]="getStatusClass()">
                     <mat-icon>{{ statusMessage.includes('Error') ? 'error' : 'check_circle' }}</mat-icon>

@@ -39,19 +39,19 @@ import { PathInfoDialogComponent } from '../path-info-dialog/path-info-dialog.co
     
     <mat-dialog-content class="dialog-content">
       <div class="form-section">
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Project Name</mat-label>
           <input matInput [(ngModel)]="project.name" required maxlength="64" autocomplete="off" placeholder="Enter project name">
           <mat-icon matPrefix>badge</mat-icon>
         </mat-form-field>
 
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <textarea matInput [(ngModel)]="project.description" rows="3" maxlength="256" placeholder="Describe your project (optional)"></textarea>
+          <textarea matInput [(ngModel)]="project.description" rows="3" maxlength="256" placeholder="Describe your project (optional)" floatLabel="always"></textarea>
           <mat-icon matPrefix>description</mat-icon>
         </mat-form-field>
 
-        <mat-form-field class="full-width" appearance="outline">
+        <mat-form-field class="full-width" appearance="outline" floatLabel="always">
           <mat-label>Project Location</mat-label>
           <input matInput [(ngModel)]="project.path" placeholder="Enter full path (e.g., C:\Projects\MyApp)" autocomplete="off">
           <mat-icon matPrefix>folder</mat-icon>

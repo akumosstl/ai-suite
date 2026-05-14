@@ -85,6 +85,15 @@ public class PipelineStep {
     @Column(name = "runtime")
     private String runtime; // "cmd", "node", "java", "py", "custom" - only for script type
 
+    @Column(name = "engine")
+    private String engine; // "langchain", "cli", null (null = default = "langchain")
+
+    @Column(name = "llm_provider")
+    private String llmProvider; // "openai", "gemini", "anthropic", null (null = use default from app_config)
+
+    @Column(name = "llm_model")
+    private String llmModel; // "gpt-4o", "gemini-2.0-flash", null (null = use default from app_config)
+
     public PipelineStep() {
     }
 
@@ -287,5 +296,29 @@ public class PipelineStep {
 
     public void setRuntime(String runtime) {
         this.runtime = runtime;
+    }
+
+    public String getEngine() {
+        return engine;
+    }
+
+    public void setEngine(String engine) {
+        this.engine = engine;
+    }
+
+    public String getLlmProvider() {
+        return llmProvider;
+    }
+
+    public void setLlmProvider(String llmProvider) {
+        this.llmProvider = llmProvider;
+    }
+
+    public String getLlmModel() {
+        return llmModel;
+    }
+
+    public void setLlmModel(String llmModel) {
+        this.llmModel = llmModel;
     }
 }

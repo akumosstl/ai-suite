@@ -42,6 +42,7 @@ public class PipelineStepService {
     private final SseService sseService;
     private final ObjectProvider<PipelineService> pipelineServiceProvider;
     private final ObjectProvider<PipelineRunService> pipelineRunServiceProvider;
+    private final LangchainEngineService langchainEngineService;
     private final Set<Long> stoppedPipelines = ConcurrentHashMap.newKeySet();
     private final Map<Long, ReentrantLock> pipelineLocks = new ConcurrentHashMap<>();
     private final Map<Long, Process> runningProcesses = new ConcurrentHashMap<>();
@@ -49,16 +50,17 @@ public class PipelineStepService {
 
     @Autowired
     public PipelineStepService(
-            PipelineStepRepository pipelineStepRepository,
-            PipelineRunRepository pipelineRunRepository,
-            EntityManager entityManager,
-            AgentService agentService,
-            ScriptService scriptService,
-            TargetRepository targetRepository,
-            PipelineRepository pipelineRepository,
-            SseService sseService,
-            ObjectProvider<PipelineService> pipelineServiceProvider,
-            ObjectProvider<PipelineRunService> pipelineRunServiceProvider) {
+        PipelineStepRepository pipelineStepRepository,
+        PipelineRunRepository pipelineRunRepository,
+        EntityManager entityManager,
+        AgentService agentService,
+        ScriptService scriptService,
+        TargetRepository targetRepository,
+        PipelineRepository pipelineRepository,
+        SseService sseService,
+        ObjectProvider<PipelineService> pipelineServiceProvider,
+        ObjectProvider<PipelineRunService> pipelineRunServiceProvider,
+        LangchainEngineService langchainEngineService) {
         this.pipelineStepRepository = pipelineStepRepository;
         this.pipelineRunRepository = pipelineRunRepository;
         this.entityManager = entityManager;
@@ -69,6 +71,7 @@ public class PipelineStepService {
         this.sseService = sseService;
         this.pipelineServiceProvider = pipelineServiceProvider;
         this.pipelineRunServiceProvider = pipelineRunServiceProvider;
+        this.langchainEngineService = langchainEngineService;
     }
 
     private PipelineService getPipelineService() {
@@ -91,31 +94,6 @@ public class PipelineStepService {
                 .replace(">", "^>")
                 .replace("\r", "")
                 .replace("\n", " ");
-    }
-
-    private List<String> parseCommandWindows(String commandLine) {
-        List<String> args = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-
-        for (int i = 0; i < commandLine.length(); i++) {
-            char c = commandLine.charAt(i);
-            if (c == '"') {
-                inQuotes = !inQuotes;
-            } else if (c == ' ' && !inQuotes) {
-                if (current.length() > 0) {
-                    args.add(current.toString());
-                    current = new StringBuilder();
-                }
-            } else {
-                current.append(c);
-            }
-        }
-        if (current.length() > 0) {
-            args.add(current.toString());
-        }
-
-        return args.isEmpty() ? java.util.List.of("node") : args;
     }
 
     private String resolveInputContent(String inputContent, Long pipelineId, int currentStepOrder, String runDir) {
@@ -419,10 +397,6 @@ public class PipelineStepService {
         return pipelineLocks.computeIfAbsent(pipelineId, k -> new ReentrantLock());
     }
 
-    public void executePipeline(Long pipelineId, String workingDir, String runDir, String outputExtension) {
-        executePipeline(pipelineId, null, workingDir, runDir, outputExtension);
-    }
-
     public void executePipeline(Long pipelineId, Long runId, String workingDir, String runDir, String outputExtension) {
         stoppedPipelines.remove(pipelineId);
 
@@ -596,18 +570,24 @@ public class PipelineStepService {
         System.out.println("DEBUG: Step agent: " + (step.getAgent() != null ? step.getAgent().getName() : "null"));
         System.out.println("DEBUG: Step script: " + (step.getScript() != null ? step.getScript().getName() : "null"));
 
-        if ("script".equals(stepType)) {
-            if (step.getScript() == null) {
-                String errorMsg = "Error: Step references a script that no longer exists (orphaned step). Please reconfigure this step.";
-                throw new RuntimeException(errorMsg);
-            }
-            System.out.println("DEBUG: BRANCH: executing script");
-            output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
-            System.out.println("DEBUG: Script execution completed");
-        } else if (step.getAgent() != null) {
-            System.out.println("DEBUG: BRANCH: executing agent");
-            output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
-        } else if (step.getScript() != null) {
+            if ("script".equals(stepType)) {
+                if (step.getScript() == null) {
+                    String errorMsg = "Error: Step references a script that no longer exists (orphaned step). Please reconfigure this step.";
+                    throw new RuntimeException(errorMsg);
+                }
+                System.out.println("DEBUG: BRANCH: executing script");
+                output = executeScriptStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+                System.out.println("DEBUG: Script execution completed");
+            } else if (step.getAgent() != null) {
+                String engine = resolveEngine(step);
+                if ("langchain".equals(engine)) {
+                    System.out.println("DEBUG: BRANCH: executing agent via langchain4j engine");
+                    output = executeLangchainStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+                } else {
+                    System.out.println("DEBUG: BRANCH: executing agent via CLI engine");
+                    output = executeAgentStep(step, pipelineId, runId, step.getId(), workingDir, runDir, previousOutputFile);
+                }
+            } else if (step.getScript() != null) {
             System.out.println("DEBUG: BRANCH: fallback script execution (type not set)");
             output = "Script execution not implemented yet";
         } else {
@@ -690,6 +670,49 @@ public class PipelineStepService {
         } catch (Exception e) {
             System.out.println("DEBUG: Error persisting output incrementally: " + e.getMessage());
         }
+    }
+
+    private String resolveEngine(PipelineStep step) {
+        if (step.getEngine() != null && !step.getEngine().isEmpty()) {
+            return step.getEngine();
+        }
+        if (step.getCli() != null && !step.getCli().isEmpty()) {
+            return "cli";
+        }
+        return "langchain";
+    }
+
+    private String executeLangchainStep(PipelineStep step, Long pipelineId, Long runId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
+        Agent agent = step.getAgent();
+        String prompt = agent != null ? agent.getPrompt() : "Hello, please respond.";
+
+        if (prompt.contains("{{previous-output-file}}")) {
+            prompt = prompt.replace("{{previous-output-file}}",
+                    previousOutputFile != null ? previousOutputFile.replace("\\", "/") : "");
+        }
+
+        String inputContent = step.getInputContent() != null ? step.getInputContent() : "";
+        inputContent = resolveInputContent(inputContent, pipelineId, step.getStepOrder(), runDir);
+        prompt = prompt.replace("{{agentic-input:file}}", inputContent);
+
+        String stepOutput = step.getStepOutput() != null ? step.getStepOutput() : "";
+        prompt = prompt.replace("{{agentic-output:file}}", stepOutput);
+
+        sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(),
+                "Executing via langchain4j (provider: " + (step.getLlmProvider() != null ? step.getLlmProvider() : "default") + ")\n", "running");
+
+        return langchainEngineService.executeStreaming(
+                prompt, pipelineId, runId, stepId, step.getStepOrder(),
+                step.getLlmProvider(), step.getLlmModel()
+        );
+    }
+
+    public PipelineStep saveStepEngine(Long stepId, String engine, String llmProvider, String llmModel) {
+        PipelineStep step = getStepById(stepId);
+        step.setEngine(engine);
+        step.setLlmProvider(llmProvider);
+        step.setLlmModel(llmModel);
+        return pipelineStepRepository.save(step);
     }
 
     private String executeAgentStep(PipelineStep step, Long pipelineId, Long runId, Long stepId, String workingDir, String runDir, String previousOutputFile) throws Exception {
