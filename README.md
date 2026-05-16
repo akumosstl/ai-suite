@@ -213,3 +213,12 @@ curl http://localhost:1488/api/recipes/174
 curl http://localhost:1488/api/recipes/174/tasks
 
 ```
+
+
+* orchestration loops
+* tool execution
+* context engineering
+* memory management
+* guardrails
+* evaluator agents
+* agent harnesses

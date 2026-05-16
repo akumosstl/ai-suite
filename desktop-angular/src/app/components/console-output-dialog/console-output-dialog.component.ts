@@ -8,8 +8,9 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 export interface ConsoleOutputDialogData {
-  step: PipelineStep;
+  step: any;
   pipelineId?: number;
+  runId?: number;
 }
 
 @Component({
@@ -158,14 +159,17 @@ export interface ConsoleOutputDialogData {
 })
 export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('consoleWrapper') consoleWrapper?: ElementRef;
-  
+
   currentOutput: string = '';
   currentStatus: string = 'pending';
-  
+
   private destroy$ = new Subject<void>();
   private pollingInterval?: any;
+  private eventSource?: EventSource;
   private lastOutputLength = 0;
   private autoScroll = true;
+  private runId?: number;
+  private stepOrder?: number;
   
   constructor(
     public dialogRef: MatDialogRef<ConsoleOutputDialogComponent>,
@@ -178,7 +182,11 @@ export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, O
   }
   
   ngOnInit() {
-    if (this.data.pipelineId && this.data.step.id) {
+    if (this.data.runId && this.data.step.stepOrder) {
+      this.runId = this.data.runId;
+      this.stepOrder = this.data.step.stepOrder;
+      this.connectSse();
+    } else if (this.data.pipelineId && this.data.step.id) {
       this.startPolling();
     }
   }
@@ -193,6 +201,7 @@ export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, O
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.disconnectSse();
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
     }
@@ -200,7 +209,26 @@ export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, O
   
   private startPolling() {
     this.pollingInterval = setInterval(() => {
-      if (this.data.pipelineId && this.data.step.id) {
+      if (this.runId && this.stepOrder) {
+        this.apiService.getPipelineRunById(this.runId).subscribe({
+          next: (run) => {
+            if (run && run.steps) {
+              const step = run.steps.find((s: any) => s.stepOrder === this.stepOrder);
+              if (step) {
+                if (step.outputContent && step.outputContent !== this.currentOutput) {
+                  this.currentOutput = step.outputContent;
+                  this.lastOutputLength = this.currentOutput.length;
+                }
+                if (step.status && step.status !== this.currentStatus) {
+                  this.currentStatus = step.status || 'pending';
+                }
+                this.cdr.detectChanges();
+              }
+            }
+          },
+          error: (err) => console.error('Error polling step output:', err)
+        });
+      } else if (this.data.pipelineId && this.data.step.id) {
         this.apiService.getPipelineSteps(this.data.pipelineId).subscribe({
           next: (steps) => {
             const step = steps.find((s: PipelineStep) => s.id === this.data.step.id);
@@ -226,8 +254,72 @@ export class ConsoleOutputDialogComponent implements OnInit, AfterViewChecked, O
       element.scrollTop = element.scrollHeight;
     }
   }
-  
+
+  private connectSse() {
+    if (!this.runId) return;
+
+    this.disconnectSse();
+    const baseUrl = 'http://localhost:1488';
+    const sseUrl = `${baseUrl}/api/pipeline-runs/${this.runId}/stream`;
+    console.log('Console: Connecting to SSE:', sseUrl);
+
+    this.eventSource = new EventSource(sseUrl);
+
+    this.eventSource.addEventListener('connected', (event) => {
+      console.log('Console SSE connected:', event);
+    });
+
+    this.eventSource.addEventListener('step-output', (event) => {
+      console.log('Console SSE step-output received:', event.data);
+      try {
+        const data = JSON.parse(event.data);
+        this.handleStepOutput(data);
+      } catch (e) {
+        console.error('Error parsing SSE data in console:', e);
+      }
+    });
+
+    this.eventSource.onerror = (error) => {
+      console.error('Console SSE error:', error);
+      this.disconnectSse();
+    };
+  }
+
+  private disconnectSse() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = undefined;
+    }
+  }
+
+  private handleStepOutput(data: { runId?: number; pipelineId?: number; stepId: number; stepOrder: number; output: string; status: string }) {
+    if (data.stepOrder !== this.stepOrder) return;
+
+    if (data.output) {
+      if (data.status === 'completed' || data.status === 'failed') {
+        this.currentOutput = data.output;
+      } else {
+        this.currentOutput = (this.currentOutput || '') + data.output;
+      }
+      this.lastOutputLength = this.currentOutput.length;
+    }
+    if (data.status && data.status !== this.currentStatus) {
+      this.currentStatus = data.status;
+    }
+    this.cdr.detectChanges();
+  }
+
   close() {
     this.dialogRef.close();
+  }
+  
+  updateOutput(output: string, status: string) {
+    if (output && output !== this.currentOutput) {
+      this.currentOutput = output;
+    }
+    if (status && status !== this.currentStatus) {
+      this.currentStatus = status;
+    }
+    this.cdr.detectChanges();
   }
 }

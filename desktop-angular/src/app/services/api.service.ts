@@ -483,6 +483,7 @@ export interface LlmMetricRecord {
   totalTokens: number;
   status: string;
   errorMessage?: string;
+  userPrompt?: string;
 }
 
 export interface LlmMetricsSummary {
@@ -1633,6 +1634,34 @@ getNamespacesByType(type: string): Observable<string[]> {
   clearLlmMetrics(): Observable<any> {
     return this.http.delete(`${this.baseUrl}/llm-metrics`).pipe(
       catchError(this.handleError('clearLlmMetrics', {}))
+    );
+  }
+
+  private formatDateForBackend(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toISOString();
+  }
+
+  clearLlmMetricsByDate(startDate: string, endDate: string, provider?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('startDate', this.formatDateForBackend(startDate))
+      .set('endDate', this.formatDateForBackend(endDate));
+    if (provider && provider !== 'all') {
+      params = params.set('provider', provider);
+    }
+    return this.http.delete(`${this.baseUrl}/llm-metrics`, { params }).pipe(
+      catchError(this.handleError('clearLlmMetricsByDate', { deletedCount: 0, message: 'Error' }))
+    );
+  }
+
+  getLlmMetricsCount(startDate?: string, endDate?: string, provider?: string): Observable<any> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', this.formatDateForBackend(startDate));
+    if (endDate) params = params.set('endDate', this.formatDateForBackend(endDate));
+    if (provider && provider !== 'all') params = params.set('provider', provider);
+    return this.http.get<{count: number}>(`${this.baseUrl}/llm-metrics/count`, { params }).pipe(
+      catchError(this.handleError('getLlmMetricsCount', { count: 0 }))
     );
   }
 }

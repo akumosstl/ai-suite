@@ -176,7 +176,7 @@ spellcheck="false"
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'">
+      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'" floatLabel="always">
         <mat-label>LLM Provider</mat-label>
         <mat-select [(ngModel)]="selectedLlmProvider" (selectionChange)="onEngineChange()">
           <mat-option value="openai">OpenAI</mat-option>
@@ -185,7 +185,7 @@ spellcheck="false"
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'">
+      <mat-form-field appearance="outline" class="full-width" *ngIf="selectedEngine === 'langchain'" floatLabel="always">
         <mat-label>Model</mat-label>
         <input matInput [(ngModel)]="selectedLlmModel" [placeholder]="getModelPlaceholder()">
       </mat-form-field>

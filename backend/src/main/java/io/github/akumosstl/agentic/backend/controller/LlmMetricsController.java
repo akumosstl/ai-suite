@@ -5,8 +5,10 @@ import io.github.akumosstl.agentic.backend.service.LangChainObservabilityListene
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,22 @@ public class LlmMetricsController {
     @GetMapping
     public List<LlmMetricRecord> getHistory() {
         return listener.getMetrics();
+    }
+
+    @GetMapping("/count")
+    public Map<String, Object> getMetricsCount(
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate,
+            @RequestParam(required = false) String provider) {
+
+        int count;
+        if (startDate == null && endDate == null && (provider == null || provider.isEmpty())) {
+            count = listener.getMetrics().size();
+        } else {
+            count = listener.getMetricsCountByDateAndProvider(startDate, endDate, provider);
+        }
+
+        return Map.of("count", count);
     }
 
     @GetMapping("/summary")
@@ -50,8 +68,22 @@ public class LlmMetricsController {
     }
 
     @DeleteMapping
-    public Map<String, String> clearMetrics() {
-        listener.clearMetrics();
-        return Map.of("message", "Metrics cleared");
+    public Map<String, Object> clearMetrics(
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate,
+            @RequestParam(required = false) String provider) {
+
+        int deletedCount;
+        if (startDate == null && endDate == null && (provider == null || provider.isEmpty())) {
+            listener.clearMetrics();
+            deletedCount = 0;
+        } else {
+            deletedCount = listener.clearMetricsByDateAndProvider(startDate, endDate, provider);
+        }
+
+        return Map.of(
+            "deletedCount", deletedCount,
+            "message", deletedCount + " records deleted"
+        );
     }
 }

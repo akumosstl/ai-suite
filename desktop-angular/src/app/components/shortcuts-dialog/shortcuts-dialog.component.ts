@@ -208,6 +208,7 @@ export class ShortcutsDialogComponent {
     { keys: 'Ctrl+Shift+Y', action: 'Recipe', description: 'Go to Recipe page' },
     { keys: 'Ctrl+Shift+D', action: 'Diagram', description: 'Go to Diagram page' },
     { keys: 'Ctrl+Shift+P', action: 'Project', description: 'Go to Project page' },
+    { keys: 'Ctrl+Alt+L', action: 'Logs', description: 'Go to Logs page' },
     { keys: 'Ctrl+B', action: 'Toggle Panel', description: 'Toggle left panel' },
     { keys: 'Ctrl+Shift+Q', action: 'Shortcuts', description: 'Open shortcuts info' },
     { keys: 'Ctrl+Shift+X', action: 'Tools', description: 'Open tools menu' },

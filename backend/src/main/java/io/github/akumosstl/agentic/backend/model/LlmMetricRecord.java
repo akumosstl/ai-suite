@@ -13,5 +13,6 @@ public record LlmMetricRecord(
     @JsonProperty("completionTokens") int completionTokens,
     @JsonProperty("totalTokens") int totalTokens,
     @JsonProperty("status") String status,
-    @JsonProperty("errorMessage") String errorMessage
+    @JsonProperty("errorMessage") String errorMessage,
+    @JsonProperty("userPrompt") String userPrompt
 ) {}

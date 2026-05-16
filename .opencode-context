@@ -798,3 +798,114 @@ Applied the templates page visual design (`#0d0d0d` background, `420px` left pan
 - No-step-selected → `.empty-state` pattern with sub-text
 
 **Build status:** Frontend compiles successfully (0 errors)
+
+### Real-Time Pipeline Execution - SSE & Console Output (Session: 2026-05-15)
+
+Implemented real-time pipeline execution monitoring across both runpipelines and pipeline-run-history pages using SSE (Server-Sent Events) and polling fallback.
+
+#### Architecture Overview
+
+**Backend SSE Support:**
+- Endpoint: `/api/pipeline-runs/{runId}/stream` - Returns SseEmitter
+- Uses `CopyOnWriteArrayList<SseEmitter>` mapped by runId to support multiple concurrent connections
+- Both pages can connect to the same runId and receive the same events simultaneously
+- Events sent: `step-output`, `step-error`, `pipeline-complete`, `connected`
+
+**Frontend SSE Implementation (both pages):**
+- EventSource connection to backend SSE endpoint
+- Event listeners for step-output, pipeline-complete, step-error
+- Automatic reconnection on error (3 second delay)
+- Fallback to polling (3 second interval) if SSE fails
+
+#### Runpipelines Page Changes
+
+**Files modified:**
+- `screens/runpipelines/runpipelines.component.ts`:
+  - Added SSE connection for pipelines with status 'running', 'completed', 'failed'
+  - Added `loadPipelineSteps()` updates to sync selectedStep when steps are refreshed
+  - Fixed `pipeline-complete` event to reload steps after completion
+  - `openOutput()` now opens ConsoleOutputDialogComponent with live output
+  - Removed `[disabled]` from Output/Input buttons to allow viewing during execution
+- `screens/runpipelines/runpipelines.component.html`:
+  - Enabled Output/Input buttons for all statuses (not just completed)
+
+#### Pipeline-Run-History Page Changes
+
+**Files modified:**
+- `screens/pipeline-run-history/pipeline-run-history.component.ts`:
+  - Added Auto-Refresh button (sync icon) in header - toggles SSE connection
+  - Button only enabled for pipelines with status 'running' or 'pending'
+  - Auto-refresh automatically finds the running pipeline from the run list
+  - Added `connectSse()`, `disconnectSse()`, `startPolling()`, `stopPolling()`, `pollRunStatus()`, `handleStepUpdate()` methods
+  - `toggleAutoRefresh()` - finds running pipeline from server and connects to SSE
+  - `selectRun()` - now fetches latest runs and prioritizes running pipeline
+  - Added Console button to Step Details panel (opens real-time output modal)
+  - Added `openConsoleOutput()` method that passes runId to dialog
+  - Added `ConsoleOutputDialogComponent` to imports
+
+- `screens/pipeline-run-history/pipeline-run-history.component.html`:
+  - Added Auto-Refresh button with sync icon
+  - Added Console button next to Output button
+
+**Console Button CSS:**
+```scss
+.console-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  color: #81c784;
+}
+
+.icon-btn.active {
+  border-color: #4caf50;
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.icon-btn.running:not(.active) {
+  border-color: #ff9800;
+  color: #ff9800;
+}
+```
+
+#### ConsoleOutputDialogComponent Changes
+
+**Files modified:**
+- `components/console-output-dialog/console-output-dialog.component.ts`:
+  - Added `runId?: number` and `stepOrder?: number` to `ConsoleOutputDialogData` interface
+  - Added private properties `runId` and `stepOrder`
+  - Modified `ngOnInit()` to check for runId first (priority) then pipelineId fallback
+  - Modified `startPolling()` to use:
+    - `getPipelineRunById(runId)` when runId is available (fetches run with outputContent)
+    - `getPipelineSteps(pipelineId)` as fallback (legacy behavior for runpipelines)
+  - Polling interval: 2 seconds
+  - Added `updateOutput(output, status)` public method for external updates
+
+**Key Insight:** The dialog uses `getPipelineRunById()` instead of `getPipelineSteps()` because:
+- `getPipelineSteps()` returns pipeline definition steps (no execution output)
+- `getPipelineRunById()` returns run with steps that include `outputContent` field
+
+#### Usage Flow
+
+**Runpipelines page:**
+1. User clicks "Run Pipeline" - new run created
+2. SSE connects automatically via `createPipelineRun` response
+3. Step output streams in real-time via `step-output` events
+4. Pipeline status updates from running → completed/failed
+5. User can click Output button anytime to view live console
+
+**Pipeline-Run-History page:**
+1. User navigates to history page (projectId + pipelineId in query params)
+2. User clicks Auto-Refresh (sync) button
+3. System fetches latest runs from server, finds running pipeline
+4. SSE connects to that run's stream
+5. Panel shows real-time status updates and step progress
+6. User clicks Console button to open modal with live output (polling every 2s)
+
+**Key behavior:** Both pages connect to the same SSE endpoint (`/api/pipeline-runs/{runId}/stream`), so both receive the same events in real-time.
+
+**Build status:** Frontend + Backend both compile successfully (0 errors)

@@ -155,7 +155,9 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
         this.processedStepOutputs.clear();
         this.isRunning = false;
         this.showLoading = false;
+        this.runStatus = data.status || 'completed';
         this.stopPolling();
+        this.loadPipelineSteps(false, false);
         this.cdr.detectChanges();
       } catch (e) {
         console.error('Error parsing SSE data:', e);
@@ -306,7 +308,11 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
     }
     
     step.status = data.status;
-    step.outputContent = data.output;
+    if (data.status === 'completed' || data.status === 'failed') {
+      step.outputContent = data.output;
+    } else {
+      step.outputContent = (step.outputContent || '') + data.output;
+    }
     step.loadedFromServer = false;
     
     if (data.status === 'completed' || data.status === 'failed') {
@@ -328,7 +334,9 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
       });
     }
     
-    if (!this.selectedStep || this.selectedStep.stepOrder !== step.stepOrder) {
+    if (this.selectedStep && this.selectedStep.stepOrder === step.stepOrder) {
+      this.selectedStep = step;
+    } else if (!this.selectedStep || this.selectedStep.stepOrder !== step.stepOrder) {
       this.selectedStep = step;
     }
     
@@ -383,20 +391,28 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
                 this.connectSse(this.currentRunId);
               }
               this.startPolling();
-            } else if (run && run.status === 'completed') {
+} else if (run && run.status === 'completed') {
               this.currentRunId = run.id || null;
-        this.runStatus = run.status || 'running';
+              this.runStatus = run.status || 'running';
               this.isRunning = false;
               this.showLoading = false;
               this.cdr.markForCheck();
               this.loadPipelineSteps(true, false);
-            } else if (run && run.status === 'failed') {
+              if (this.currentRunId) {
+                this.connectSse(this.currentRunId);
+              }
+              this.startPolling();
+} else if (run && run.status === 'failed') {
               this.currentRunId = run.id || null;
-        this.runStatus = run.status || 'running';
+              this.runStatus = run.status || 'running';
               this.isRunning = false;
               this.showLoading = false;
               this.cdr.markForCheck();
               this.loadPipelineSteps(true, false);
+              if (this.currentRunId) {
+                this.connectSse(this.currentRunId);
+              }
+              this.startPolling();
             } else {
               this.cdr.markForCheck();
               this.createPipelineRun();
@@ -544,6 +560,11 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
               this.selectedStep = null;
             } else if (!this.selectedStep && this.pipelineSteps.length > 0) {
               this.selectedStep = this.pipelineSteps[0];
+            } else if (this.selectedStep) {
+              const updatedStep = this.pipelineSteps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+              if (updatedStep) {
+                this.selectedStep = updatedStep;
+              }
             }
           } else {
             this.apiService.getPipelineSteps(pipelineId).subscribe({
@@ -559,6 +580,11 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
                   this.isRunning = true;
                 } else if (!this.selectedStep && this.pipelineSteps.length > 0) {
                   this.selectedStep = this.pipelineSteps[0];
+                } else if (this.selectedStep) {
+                  const updatedStep = this.pipelineSteps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+                  if (updatedStep) {
+                    this.selectedStep = updatedStep;
+                  }
                 }
                 this.updateCurrentStepIndex();
               }
@@ -580,6 +606,11 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
                 this.isRunning = true;
               } else if (!this.selectedStep && this.pipelineSteps.length > 0) {
                 this.selectedStep = this.pipelineSteps[0];
+              } else if (this.selectedStep) {
+                const updatedStep = this.pipelineSteps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+                if (updatedStep) {
+                  this.selectedStep = updatedStep;
+                }
               }
               this.updateCurrentStepIndex();
               this.cdr.detectChanges();
@@ -604,6 +635,11 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
             this.isRunning = true;
           } else if (!this.selectedStep && this.pipelineSteps.length > 0) {
             this.selectedStep = this.pipelineSteps[0];
+          } else if (this.selectedStep) {
+            const updatedStep = this.pipelineSteps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+            if (updatedStep) {
+              this.selectedStep = updatedStep;
+            }
           }
           this.updateCurrentStepIndex();
           this.cdr.detectChanges();
@@ -629,6 +665,13 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
         
         const previousSteps = this.pipelineSteps;
         this.pipelineSteps = normalizeStepStatus(steps);
+        
+        if (this.selectedStep) {
+          const updatedSelectedStep = this.pipelineSteps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+          if (updatedSelectedStep) {
+            this.selectedStep = updatedSelectedStep;
+          }
+        }
         
         for (const step of this.pipelineSteps) {
           const prevStep = previousSteps.find(ps => ps.stepOrder === step.stepOrder);
@@ -754,12 +797,24 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
   openOutput(step: PipelineStep) {
     if (!this.pipeline?.id || !step.stepOrder) return;
     
+    if (!this.pipeline?.id) return;
+
     this.apiService.getPipelineSteps(this.pipeline.id).subscribe({
       next: (steps) => {
         const updatedStep = steps.find(s => s.stepOrder === step.stepOrder);
         if (updatedStep) {
+          step.outputContent = updatedStep.outputContent;
+          step.status = updatedStep.status;
           this.cdr.detectChanges();
         }
+this.dialog.open(ConsoleOutputDialogComponent, {
+            data: { step, pipelineId: this.pipeline!.id, runId: this.currentRunId },
+          width: '95vw',
+          height: '90vh',
+          maxWidth: 'none',
+          maxHeight: 'none',
+          panelClass: 'console-dialog-panel'
+        });
       }
     });
   }
@@ -770,7 +825,7 @@ export class RunpipelinesComponent implements OnInit, OnDestroy {
    */
   openConsoleOutput(step: PipelineStep) {
     this.dialog.open(ConsoleOutputDialogComponent, {
-      data: { step, pipelineId: this.pipeline?.id },
+      data: { step, pipelineId: this.pipeline?.id, runId: this.currentRunId },
       width: '95vw',
       height: '90vh',
       maxWidth: 'none',

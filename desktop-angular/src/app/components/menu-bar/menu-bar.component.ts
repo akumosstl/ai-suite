@@ -175,7 +175,7 @@ import { ImportNamespaceDialogComponent } from '../import-namespace-dialog/impor
     .logo-text {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #ffffff;
+      color: #ca7B09;
       letter-spacing: 0.5px;
     }
     
@@ -364,6 +364,11 @@ ngOnInit(): void {
       if (key === 'h') {
         event.preventDefault();
         this.goHome();
+        return;
+      }
+      if (key === 'l') {
+        event.preventDefault();
+        this.router.navigate(['/logs']);
         return;
       }
     }

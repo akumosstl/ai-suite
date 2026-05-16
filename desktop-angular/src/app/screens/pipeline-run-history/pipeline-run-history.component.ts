@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { ApiService, PipelineRun, PipelineRunStep } from '../../services/api.ser
 import { ProjectContextService } from '../../services/project-context.service';
 import { OutputDialogComponent } from '../../components/output-dialog/output-dialog.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
+import { ConsoleOutputDialogComponent } from '../../components/console-output-dialog/console-output-dialog.component';
 
 @Component({
   selector: 'app-pipeline-run-history',
@@ -24,7 +25,8 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     MatPaginatorModule,
     MatProgressSpinnerModule,
     OutputDialogComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    ConsoleOutputDialogComponent
   ],
   template: `
     <div class="history-screen">
@@ -39,6 +41,14 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
           </button>
           <button class="icon-btn" (click)="refresh()" title="Refresh" [disabled]="loading">
             <mat-icon [class.spinning]="loading">refresh</mat-icon>
+          </button>
+          <button class="icon-btn" 
+            [class.active]="autoRefresh" 
+            [class.running]="selectedRun?.status === 'running'"
+            (click)="toggleAutoRefresh()" 
+            [title]="autoRefresh ? 'Stop auto-refresh' : 'Auto-refresh'"
+            [disabled]="selectedRun?.status !== 'running' && selectedRun?.status !== 'pending'">
+            <mat-icon [class.spinning]="autoRefresh">sync</mat-icon>
           </button>
         </div>
       </div>
@@ -150,6 +160,10 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
                 <mat-icon>output</mat-icon>
                 <span>Output</span>
               </button>
+              <button class="console-btn" (click)="openConsoleOutput()">
+                <mat-icon>terminal</mat-icon>
+                <span>Console</span>
+              </button>
               <button class="file-output-btn" (click)="openFileOutputModal()" [disabled]="selectedRun?.status === 'running'">
                 <mat-icon>insert_drive_file</mat-icon>
                 <span>File output</span>
@@ -257,6 +271,21 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
 
     .icon-btn .spinning {
       animation: spin 1s linear infinite;
+    }
+
+    .icon-btn.active {
+      border-color: #4caf50;
+      color: #4caf50;
+      background: rgba(76, 175, 80, 0.1);
+    }
+
+    .icon-btn.active:hover:not(:disabled) {
+      background: rgba(76, 175, 80, 0.2);
+    }
+
+    .icon-btn.running:not(.active) {
+      border-color: #ff9800;
+      color: #ff9800;
     }
 
     .main-content {
@@ -870,6 +899,32 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
       color: #ff9800;
     }
 
+    .console-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: rgba(76, 175, 80, 0.15);
+      border: 1px solid #4caf50;
+      border-radius: 8px;
+      color: #81c784;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .console-btn:hover {
+      background: rgba(76, 175, 80, 0.25);
+    }
+
+    .console-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #81c784;
+    }
+
     .console-output {
       flex: 1;
       display: flex;
@@ -976,18 +1031,22 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/conf
     }
   `]
 })
-export class PipelineRunHistoryComponent implements OnInit {
+export class PipelineRunHistoryComponent implements OnInit, OnDestroy {
   runs: PipelineRun[] = [];
   selectedRun: PipelineRun | null = null;
   selectedStep: PipelineRunStep | null = null;
   projectId: number | null = null;
   pipelineId: number | null = null;
   loading = false;
+  autoRefresh = false;
 
   currentPage = 0;
   totalPages = 0;
   totalElements = 0;
   pageSize = 10;
+  
+  private eventSource?: EventSource;
+  private pollingInterval: any;
   
   constructor(
     private router: Router,
@@ -1007,6 +1066,11 @@ export class PipelineRunHistoryComponent implements OnInit {
         this.loadRuns();
       }
     });
+  }
+  
+  ngOnDestroy() {
+    this.disconnectSse();
+    this.stopPolling();
   }
   
   /**
@@ -1042,7 +1106,31 @@ export class PipelineRunHistoryComponent implements OnInit {
   }
 
   refresh() {
+    const previousSelectedId = this.selectedRun?.id;
     this.loadRuns(this.currentPage);
+    if (previousSelectedId) {
+      setTimeout(() => {
+        const updatedRun = this.runs.find(r => r.id === previousSelectedId);
+        if (updatedRun) {
+          this.selectedRun = updatedRun;
+          if (updatedRun.steps && updatedRun.steps.length > 0) {
+            const currentSelectedStepId = this.selectedStep?.id;
+            if (currentSelectedStepId) {
+              const updatedStep = updatedRun.steps.find(s => s.id === currentSelectedStepId);
+              if (updatedStep) {
+                this.selectedStep = updatedStep;
+              }
+            } else if (this.selectedStep) {
+              const matchingStep = updatedRun.steps.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+              if (matchingStep) {
+                this.selectedStep = matchingStep;
+              }
+            }
+          }
+          this.cdr.detectChanges();
+        }
+      }, 100);
+    }
   }
 
   onPageChange(event: PageEvent) {
@@ -1058,11 +1146,236 @@ export class PipelineRunHistoryComponent implements OnInit {
    * @param run A execução do pipeline a ser selecionada.
    */
   selectRun(run: PipelineRun) {
-    this.selectedRun = run;
+    if (!this.projectId) return;
+    
     this.selectedStep = null;
     
-    if (run.steps && run.steps.length > 0) {
-      this.selectStep(run.steps[0]);
+    this.apiService.getPipelineRunsByPipeline(this.pipelineId || run.pipelineId || 0, 0, 10).subscribe({
+      next: (response: any) => {
+        const runs = response.runs || [];
+        const runningRun = runs.find((r: PipelineRun) => r.status === 'running' || r.status === 'pending');
+        
+        if (runningRun) {
+          this.selectedRun = runningRun;
+          if (runningRun.steps && runningRun.steps.length > 0) {
+            this.selectStep(runningRun.steps[0]);
+          }
+          
+          if (this.autoRefresh) {
+            this.connectSse(runningRun.id!);
+            this.startPolling();
+          }
+        } else {
+          this.selectedRun = run;
+          if (run.steps && run.steps.length > 0) {
+            this.selectStep(run.steps[0]);
+          }
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.selectedRun = run;
+        if (run.steps && run.steps.length > 0) {
+          this.selectStep(run.steps[0]);
+        }
+        this.cdr.detectChanges();
+        console.error('Error fetching runs:', err);
+      }
+    });
+  }
+  
+  toggleAutoRefresh() {
+    if (this.autoRefresh) {
+      this.autoRefresh = false;
+      this.disconnectSse();
+      this.stopPolling();
+    } else {
+      this.loadingRunsAndConnect();
+    }
+  }
+  
+  private loadingRunsAndConnect() {
+    if (!this.projectId) return;
+    
+    this.loading = true;
+    this.cdr.detectChanges();
+    
+    const runsObservable = this.pipelineId
+      ? this.apiService.getPipelineRunsByPipeline(this.pipelineId, 0, 1)
+      : this.apiService.getPipelineRunsByProject(this.projectId, 0, 1);
+
+    runsObservable.subscribe({
+      next: (response: any) => {
+        this.loading = false;
+        const runs = response.runs || [];
+        
+        const runningRun = runs.find((r: PipelineRun) => r.status === 'running' || r.status === 'pending');
+        
+        if (runningRun) {
+          this.selectedRun = runningRun;
+          if (runningRun.steps && runningRun.steps.length > 0) {
+            this.selectStep(runningRun.steps[0]);
+          }
+          this.autoRefresh = true;
+          this.connectSse(runningRun.id!);
+          this.startPolling();
+          console.log('History: Connected to running run:', runningRun.id);
+        } else if (runs.length > 0) {
+          this.selectedRun = runs[0];
+          if (runs[0].steps && runs[0].steps.length > 0) {
+            this.selectStep(runs[0].steps[0]);
+          }
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error('Error loading runs:', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+  
+  connectSse(runId: number) {
+    this.disconnectSse();
+    const baseUrl = 'http://localhost:1488';
+    const sseUrl = `${baseUrl}/api/pipeline-runs/${runId}/stream`;
+    console.log('History: Connecting to SSE:', sseUrl);
+    this.eventSource = new EventSource(sseUrl);
+    
+    this.eventSource.addEventListener('connected', (event) => {
+      console.log('History SSE connected:', event);
+    });
+    
+    this.eventSource.addEventListener('step-output', (event) => {
+      console.log('History SSE step-output received:', event.data);
+      try {
+        const data = JSON.parse(event.data);
+        this.handleStepUpdate(data);
+      } catch (e) {
+        console.error('Error parsing SSE data:', e);
+      }
+    });
+    
+    this.eventSource.addEventListener('pipeline-complete', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('History Pipeline complete:', data);
+        this.autoRefresh = false;
+        this.disconnectSse();
+        this.stopPolling();
+        this.loadRuns(this.currentPage);
+        this.cdr.detectChanges();
+      } catch (e) {
+        console.error('Error parsing SSE data:', e);
+      }
+    });
+    
+    this.eventSource.addEventListener('step-error', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('History Step error:', data);
+        if (this.selectedRun?.steps) {
+          const step = this.selectedRun.steps.find(s => s.stepOrder === data.stepOrder);
+          if (step) {
+            step.status = 'failed';
+          }
+        }
+        this.cdr.detectChanges();
+      } catch (e) {
+        console.error('Error parsing SSE step-error:', e);
+      }
+    });
+    
+    this.eventSource.onerror = (error) => {
+      console.error('History SSE error:', error);
+      this.disconnectSse();
+      if (this.autoRefresh && this.selectedRun?.id) {
+        console.log('History: Attempting to reconnect SSE in 3 seconds...');
+        setTimeout(() => {
+          if (this.autoRefresh && this.selectedRun?.id) {
+            this.connectSse(this.selectedRun.id);
+          }
+        }, 3000);
+      }
+    };
+  }
+  
+  disconnectSse() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = undefined;
+    }
+  }
+  
+  startPolling(intervalMs: number = 3000) {
+    this.stopPolling();
+    this.pollingInterval = setInterval(() => {
+      if (this.autoRefresh && this.selectedRun?.id) {
+        this.pollRunStatus();
+      } else {
+        this.stopPolling();
+      }
+    }, intervalMs);
+  }
+  
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = undefined;
+    }
+  }
+  
+  pollRunStatus() {
+    if (!this.selectedRun?.id) return;
+    
+    this.apiService.getPipelineRunById(this.selectedRun.id).subscribe({
+      next: (run) => {
+        if (run) {
+          this.selectedRun = run;
+          if (this.selectedStep) {
+            const updatedStep = run.steps?.find(s => s.id === this.selectedStep?.id || s.stepOrder === this.selectedStep?.stepOrder);
+            if (updatedStep) {
+              this.selectedStep = updatedStep;
+            }
+          }
+          if (run.status === 'completed' || run.status === 'failed' || run.status === 'stopped') {
+            this.autoRefresh = false;
+            this.disconnectSse();
+            this.stopPolling();
+          }
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => console.error('Error polling run status:', err)
+    });
+  }
+  
+  handleStepUpdate(data: { runId?: number; pipelineId?: number; stepId: number; stepOrder: number; output: string; status: string }) {
+    if (!this.selectedRun?.steps) return;
+    
+    const step = this.selectedRun.steps.find(s => s.stepOrder === data.stepOrder);
+    if (step) {
+      step.status = data.status;
+      step.outputContent = data.output;
+      
+      if (data.status === 'completed') {
+        const nextStep = this.selectedRun.steps.find(s => s.stepOrder === data.stepOrder + 1);
+        if (nextStep) {
+          nextStep.status = 'running';
+        }
+      } else if (data.status === 'running') {
+        const prevStep = this.selectedRun.steps.find(s => s.stepOrder === data.stepOrder - 1);
+        if (prevStep && prevStep.status !== 'completed' && prevStep.status !== 'failed') {
+          prevStep.status = 'completed';
+        }
+      }
+      
+      if (this.selectedStep?.stepOrder === data.stepOrder) {
+        this.selectedStep = step;
+      }
+      
+      this.cdr.detectChanges();
     }
   }
   
@@ -1087,6 +1400,32 @@ export class PipelineRunHistoryComponent implements OnInit {
         panelClass: 'output-dialog-panel'
       });
     }
+  }
+  
+  openConsoleOutput() {
+    if (!this.selectedStep || !this.selectedRun?.id) return;
+    
+    this.apiService.getPipelineRunById(this.selectedRun.id).subscribe({
+      next: (run) => {
+        if (run) {
+          const updatedStep = run.steps?.find(s => s.stepOrder === this.selectedStep?.stepOrder);
+          if (updatedStep) {
+            this.selectedStep = updatedStep;
+          }
+        }
+        
+        this.dialog.open(ConsoleOutputDialogComponent, {
+          data: { step: this.selectedStep, pipelineId: this.pipelineId, runId: this.selectedRun?.id },
+          width: '95vw',
+          height: '90vh',
+          maxWidth: 'none',
+          maxHeight: 'none',
+          panelClass: 'console-dialog-panel'
+        });
+        
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   openFileOutputModal() {

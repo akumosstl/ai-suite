@@ -90,6 +90,10 @@ public class LangchainEngineService {
         StringBuilder fullResponse = new StringBuilder();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> error = new AtomicReference<>();
+        AtomicReference<Long> startTime = new AtomicReference<>(System.currentTimeMillis());
+        AtomicReference<Integer> promptTokens = new AtomicReference<>(0);
+        AtomicReference<Integer> completionTokens = new AtomicReference<>(0);
+        AtomicReference<Integer> totalTokens = new AtomicReference<>(0);
 
         streamingModel.chat(List.of(userMessage), new StreamingChatResponseHandler() {
             @Override
@@ -103,6 +107,12 @@ public class LangchainEngineService {
 
             @Override
             public void onCompleteResponse(ChatResponse response) {
+                var tokenUsage = response.tokenUsage();
+                if (tokenUsage != null) {
+                    promptTokens.set(tokenUsage.inputTokenCount());
+                    completionTokens.set(tokenUsage.outputTokenCount());
+                    totalTokens.set(tokenUsage.totalTokenCount());
+                }
                 latch.countDown();
             }
 
@@ -110,6 +120,7 @@ public class LangchainEngineService {
             public void onError(Throwable t) {
                 log.error("LangChain4j streaming error for provider={}, model={}, attempt={}: {}",
                     provider, model, attempt, t.getMessage(), t);
+                long latencyMs = System.currentTimeMillis() - startTime.get();
                 error.set(t);
                 latch.countDown();
             }
@@ -125,6 +136,8 @@ public class LangchainEngineService {
             throw new RuntimeException("LangChain4j streaming error: " + error.get().getMessage()
                 + " (provider=" + provider + ", model=" + model + ")", error.get());
         }
+
+        long latencyMs = System.currentTimeMillis() - startTime.get();
 
         return fullResponse.toString();
     }
