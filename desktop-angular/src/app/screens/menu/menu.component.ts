@@ -117,10 +117,7 @@ h1 {
       font-weight: 600;
       margin: 0;
       letter-spacing: 1px;
-      background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #ca7B09;
     }
     
     .subtitle {
