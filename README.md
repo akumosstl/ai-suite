@@ -1,3 +1,4 @@
+mvn -Pnative clean package -DskipTests
 mvn clean install -U 
 
 

@@ -72,5 +72,261 @@
     "name": "org.hibernate.proxy.pojo.bytebuddy.ByteBuddyProxyHelper",
     "allPublicMethods": true,
     "allDeclaredConstructors": true
+  },
+
+  {
+    "name": "org.springframework.cglib.proxy.Dispatcher",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.Callback",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.MethodInterceptor",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.InvocationHandler",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.NoOp",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.CallbackHelper",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.cglib.proxy.Enhancer",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.springframework.cglib.core.AbstractClassGenerator",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.springframework.aop.framework.CglibAopProxy",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.springframework.aop.framework.CglibAopProxy$SerializableNoOp",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.springframework.aop.framework.Advised",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.springframework.aop.framework.AopProxy",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.springframework.aop.SpringProxy",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.springframework.aop.TargetClassAware",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.springframework.aop.framework.ProxyFactory",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.aop.framework.DefaultAopProxyFactory",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.springframework.aop.support.DefaultIntroductionAdvisor",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.LangchainEngineService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.LangchainEngineService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineStepService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineStepService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineRunService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineRunService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.AgentService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.AgentService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.SseService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.SseService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.AppConfigService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.AppConfigService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ScriptService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ScriptService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.TargetService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.TargetService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ProjectService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ProjectService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ConfigService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.ConfigService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.TemplateService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.TemplateService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineRecoveryService",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.PipelineRecoveryService$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.LangChainObservabilityListener",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.github.akumosstl.agentic.backend.service.LangChainObservabilityListener$$SpringCGLIB$$0",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
   }
 ]

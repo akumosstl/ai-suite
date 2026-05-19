@@ -120,9 +120,50 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter</artifactId>
                 </dependency>
+                <dependency>
+                    <groupId>org.aspectj</groupId>
+                    <artifactId>aspectjweaver</artifactId>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>21</source>
+                            <target>21</target>
+                            <parameters>true</parameters>
+                            <compilerArgs>
+                                <arg>-parameters</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>aspectj-maven-plugin</artifactId>
+                        <version>1.15.0</version>
+                        <configuration>
+                            <complianceLevel>21</complianceLevel>
+                            <source>21</source>
+                            <target>21</target>
+                            <showWeaveInfo>true</showWeaveInfo>
+                            <weaver>
+                                <includeWithinBounds>io.github.akumosstl.agentic.backend.**</includeWithinBounds>
+                                <excludes>
+                                    <exclude>io.github.akumosstl.agentic.backend.model.**</exclude>
+                                    <exclude>io.github.akumosstl.agentic.backend.repository.**</exclude>
+                                </excludes>
+                            </weaver>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -153,6 +194,15 @@
                                 <jvmArg>-Djdk.net.URL.ClassPathDisableNonFinalizableCloseable=1</jvmArg>
                             </jvmArgs>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

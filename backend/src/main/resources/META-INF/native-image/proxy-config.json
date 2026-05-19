@@ -1,0 +1,100 @@
+[
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.LangchainEngineService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.PipelineStepService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.PipelineService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.PipelineRunService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.AgentService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.SseService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.AppConfigService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.ScriptService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.TargetService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.ProjectService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.ConfigService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.TemplateService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.PipelineRecoveryService"
+  },
+  {
+    "interfaces": [
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.FrameworkInterface"
+    ],
+    "target": "io.github.akumosstl.agentic.backend.service.LangChainObservabilityListener"
+  }
+]
