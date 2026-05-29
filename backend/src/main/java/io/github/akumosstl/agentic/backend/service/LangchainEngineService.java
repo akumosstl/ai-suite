@@ -12,7 +12,6 @@ import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -25,23 +24,26 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class LangchainEngineService {
 
-    private static final Logger log = LoggerFactory.getLogger(LangchainEngineService.class);
-    private static final Duration STREAM_TIMEOUT = Duration.ofMinutes(5);
-    private static final int MAX_RETRIES = 3;
-    private static final long RETRY_DELAY_MS = 2000;
+	private static final Logger log = LoggerFactory.getLogger(LangchainEngineService.class);
+	private static final Duration STREAM_TIMEOUT = Duration.ofMinutes(5);
+	private static final int MAX_RETRIES = 3;
+	private static final long RETRY_DELAY_MS = 2000;
 
-    @Autowired
-    private AppConfigService appConfigService;
+	private final AppConfigService appConfigService;
+	private final SseService sseService;
+	private final PipelineStepService pipelineStepService;
+	private final LangChainObservabilityListener observabilityListener;
 
-    @Autowired
-    private SseService sseService;
-
-    @Autowired
-    @Lazy
-    private PipelineStepService pipelineStepService;
-
-    @Autowired
-    private LangChainObservabilityListener observabilityListener;
+	@Autowired
+	public LangchainEngineService(AppConfigService appConfigService,
+			SseService sseService,
+			PipelineStepService pipelineStepService,
+			LangChainObservabilityListener observabilityListener) {
+		this.appConfigService = appConfigService;
+		this.sseService = sseService;
+		this.pipelineStepService = pipelineStepService;
+		this.observabilityListener = observabilityListener;
+	}
 
     public String executeStreaming(
         String prompt, Long pipelineId, Long runId, Long stepId, int stepOrder,

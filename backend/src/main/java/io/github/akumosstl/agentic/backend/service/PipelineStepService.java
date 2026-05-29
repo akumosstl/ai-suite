@@ -41,9 +41,9 @@ public class PipelineStepService {
     private final PipelineRepository pipelineRepository;
     private final SseService sseService;
     private final ObjectProvider<PipelineService> pipelineServiceProvider;
-    private final ObjectProvider<PipelineRunService> pipelineRunServiceProvider;
-    private final LangchainEngineService langchainEngineService;
-    private final Set<Long> stoppedPipelines = ConcurrentHashMap.newKeySet();
+	private final ObjectProvider<PipelineRunService> pipelineRunServiceProvider;
+	private final ObjectProvider<LangchainEngineService> langchainEngineServiceProvider;
+	private final Set<Long> stoppedPipelines = ConcurrentHashMap.newKeySet();
     private final Map<Long, ReentrantLock> pipelineLocks = new ConcurrentHashMap<>();
     private final Map<Long, Process> runningProcesses = new ConcurrentHashMap<>();
     private int lineCount = 0;
@@ -58,29 +58,33 @@ public class PipelineStepService {
         TargetRepository targetRepository,
         PipelineRepository pipelineRepository,
         SseService sseService,
-        ObjectProvider<PipelineService> pipelineServiceProvider,
-        ObjectProvider<PipelineRunService> pipelineRunServiceProvider,
-        LangchainEngineService langchainEngineService) {
-        this.pipelineStepRepository = pipelineStepRepository;
-        this.pipelineRunRepository = pipelineRunRepository;
-        this.entityManager = entityManager;
-        this.agentService = agentService;
-        this.scriptService = scriptService;
-        this.targetRepository = targetRepository;
-        this.pipelineRepository = pipelineRepository;
-        this.sseService = sseService;
-        this.pipelineServiceProvider = pipelineServiceProvider;
-        this.pipelineRunServiceProvider = pipelineRunServiceProvider;
-        this.langchainEngineService = langchainEngineService;
-    }
+		ObjectProvider<PipelineService> pipelineServiceProvider,
+			ObjectProvider<PipelineRunService> pipelineRunServiceProvider,
+			ObjectProvider<LangchainEngineService> langchainEngineServiceProvider) {
+		this.pipelineStepRepository = pipelineStepRepository;
+		this.pipelineRunRepository = pipelineRunRepository;
+		this.entityManager = entityManager;
+		this.agentService = agentService;
+		this.scriptService = scriptService;
+		this.targetRepository = targetRepository;
+		this.pipelineRepository = pipelineRepository;
+		this.sseService = sseService;
+		this.pipelineServiceProvider = pipelineServiceProvider;
+		this.pipelineRunServiceProvider = pipelineRunServiceProvider;
+		this.langchainEngineServiceProvider = langchainEngineServiceProvider;
+	}
 
     private PipelineService getPipelineService() {
         return pipelineServiceProvider.getObject();
     }
 
-    private PipelineRunService getPipelineRunService() {
-        return pipelineRunServiceProvider.getObject();
-    }
+	private PipelineRunService getPipelineRunService() {
+		return pipelineRunServiceProvider.getObject();
+	}
+
+	private LangchainEngineService getLangchainEngineService() {
+		return langchainEngineServiceProvider.getObject();
+	}
 
     private String escapeWindowsCommand(String input) {
         if (input == null) return "";
@@ -701,7 +705,7 @@ public class PipelineStepService {
         sendSseStepOutput(runId, pipelineId, stepId, step.getStepOrder(),
                 "Executing via langchain4j (provider: " + (step.getLlmProvider() != null ? step.getLlmProvider() : "default") + ")\n", "running");
 
-        return langchainEngineService.executeStreaming(
+		return getLangchainEngineService().executeStreaming(
                 prompt, pipelineId, runId, stepId, step.getStepOrder(),
                 step.getLlmProvider(), step.getLlmModel()
         );
